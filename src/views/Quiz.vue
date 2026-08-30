@@ -113,6 +113,23 @@ const sessionResults = ref([])
 const showPicker = ref(false)
 const fullyRandom = ref(false)
 let flashTimer = null
+const shuffleCache = new Map()
+
+function shuffleQuestion(q) {
+  const indices = [0, 1, 2, 3]
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = indices[i]
+    indices[i] = indices[j]
+    indices[j] = tmp
+  }
+  return {
+    ...q,
+    options: indices.map(i => q.options[i]),
+    answer: indices.indexOf(q.answer - 1) + 1,
+    _optionOrder: indices,
+  }
+}
 
 const sequentialAll = computed(() => {
   if (mode.value === 'unit') {
@@ -121,7 +138,12 @@ const sequentialAll = computed(() => {
   return questions.filter(q => !q.mock).sort((a, b) => a.id - b.id)
 })
 
-const currentQuestion = computed(() => questionList.value[currentIndex.value] || {})
+const currentQuestion = computed(() => {
+  const q = questionList.value[currentIndex.value]
+  if (!q) return {}
+  if (!shuffleCache.has(q.id)) shuffleCache.set(q.id, shuffleQuestion(q))
+  return shuffleCache.get(q.id)
+})
 const progressPercent = computed(() => Math.round((currentIndex.value + 1) / questionList.value.length * 100))
 const isFav = computed(() => store.isFavorite(currentQuestion.value.id))
 
@@ -144,6 +166,7 @@ function saveRandomSetting() {
 }
 
 function buildList() {
+  shuffleCache.clear()
   let list = []
   if (mode.value === 'sequential') {
     list = questions.filter(q => !q.mock).sort((a, b) => a.id - b.id)
@@ -214,7 +237,8 @@ function handleSelect(num) {
 function submitAnswer() {
   if (!selected.value) return
   const correct = selected.value === currentQuestion.value.answer
-  store.recordAnswer(currentQuestion.value.id, selected.value, correct)
+  const origSelected = currentQuestion.value._optionOrder[selected.value - 1] + 1
+  store.recordAnswer(currentQuestion.value.id, origSelected, correct)
   sessionResults.value.push({ qid: currentQuestion.value.id, selected: selected.value, correct })
 
   if (correct) {
@@ -257,7 +281,7 @@ function resetState() {
   const q = currentQuestion.value
   const prev = store.getAnswer(q.id)
   if (prev) {
-    selected.value = prev.selected
+    selected.value = q._optionOrder ? q._optionOrder.indexOf(prev.selected - 1) + 1 : prev.selected
     showResult.value = true
   } else {
     selected.value = 0
