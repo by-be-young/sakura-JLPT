@@ -271,6 +271,7 @@ function submitAnswer() {
   } else {
     // 答错：停留当前题，展开解析，自动开启振假名
     showResult.value = true
+    furigana.setLocked(false)
     furigana.enable()
   }
 }
