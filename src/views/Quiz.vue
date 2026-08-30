@@ -39,7 +39,7 @@
       <!-- 答题区（带左右箭头） -->
       <div class="quiz-area">
         <!-- 左箭头 -->
-        <button class="side-arrow side-arrow-left" :disabled="currentIndex === 0" @click="prevQuestion" title="上一题">
+        <button class="side-arrow side-arrow-left" :disabled="currentIndex === 0" @click="prevQuestion" title="上一题 (A)">
           <span class="arrow-icon">‹</span>
         </button>
 
@@ -73,7 +73,7 @@
         </div>
 
         <!-- 右箭头 -->
-        <button class="side-arrow side-arrow-right" :disabled="currentIndex >= questionList.length - 1" @click="nextQuestion" title="下一题">
+        <button class="side-arrow side-arrow-right" :disabled="currentIndex >= questionList.length - 1" @click="nextQuestion" title="下一题 (D)">
           <span class="arrow-icon">›</span>
         </button>
       </div>
@@ -155,14 +155,26 @@ watch(showResult, (val) => {
 onUnmounted(() => {
   furigana.setLocked(false)
   if (flashTimer) clearTimeout(flashTimer)
+  window.removeEventListener("keydown", handleKeydown)
 })
 
 const RANDOM_KEY = 'sakura_random_fully_random'
 onMounted(() => {
   fullyRandom.value = localStorage.getItem(RANDOM_KEY) === '1'
+  window.addEventListener('keydown', handleKeydown)
 })
 function saveRandomSetting() {
   localStorage.setItem(RANDOM_KEY, fullyRandom.value ? '1' : '0')
+}
+
+function handleKeydown(e) {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
+  if (e.key === 'l' || e.key === 'L') furigana.toggle()
+  else if (e.key === 'a' || e.key === 'A') prevQuestion()
+  else if (e.key === 'd' || e.key === 'D') nextQuestion()
+  else if (['1','2','3','4'].includes(e.key)) {
+    if (!showResult.value && !flash.value) handleSelect(Number(e.key))
+  }
 }
 
 function buildList() {

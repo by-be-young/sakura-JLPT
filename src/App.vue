@@ -22,7 +22,7 @@
             </router-link>
             <router-link to="/favorites" class="nav-link" :class="{ active: $route.path === '/favorites' }">收藏</router-link>
           </div>
-          <button class="furigana-toggle" :class="{ active: furigana.isEnabled.value, locked: furigana.isLocked.value }" @click="furigana.toggle()" :title="furigana.isLocked.value ? '提交答案后可开启振假名' : (furigana.isEnabled.value ? '关闭振假名' : '开启振假名（汉字上方标注平假名）')">
+          <button class="furigana-toggle" :class="{ active: furigana.isEnabled.value, locked: furigana.isLocked.value }" @click="furigana.toggle()" :title="furigana.isLocked.value ? '提交答案后可开启振假名' : (furigana.isEnabled.value ? '关闭振假名 (L)' : '开启振假名（汉字上方标注平假名）(L)')">
             <span class="furi-icon">あ</span>
             <span class="furi-text">{{ furigana.isEnabled.value ? '振假名开' : '振假名关' }}</span>
           </button>
