@@ -200,6 +200,10 @@ function buildList() {
   }
   questionList.value = list
   currentIndex.value = 0
+  if (mode.value === 'sequential' && !route.query.start) {
+    const firstUnanswered = list.findIndex(q => !store.getAnswer(q.id))
+    if (firstUnanswered > 0) currentIndex.value = firstUnanswered
+  }
   resetState()
   sessionResults.value = []
 }
