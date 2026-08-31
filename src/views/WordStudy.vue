@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="container words-page">
     <!-- 顶部导航 -->
     <div class="words-header">
@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { wordsByLevel, levels, pitchToCircle } from '../data/words'
 import { useWordStore } from '../store/wordStore'
@@ -124,7 +124,8 @@ const router = useRouter()
 const store = useWordStore()
 const furigana = useFurigana()
 
-const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N4N5')
+const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N5')
+if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
 const levelName = computed(() => (levels.find(l => l.id === level.value) || {}).name || level.value)
 const pool = computed(() => wordsByLevel(level.value))
 
@@ -162,6 +163,15 @@ function initLearn() {
   expandedIndex.value = -1
 }
 initLearn()
+// 等级变化时重建（组件复用场景）
+watch(() => route.query.level, () => {
+  if (route.query.level) level.value = route.query.level
+  if (level.value === 'N4N5') level.value = 'N5'
+  learnIndex.value = 0
+  quizIndex.value = 0
+  quizFinished.value = false
+  initLearn()
+})
 
 function learnNext() {
   store.markLearned(learnWords.value[learnIndex.value].id)
@@ -491,3 +501,4 @@ onUnmounted(() => {
   }
 }
 </style>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="container words-page">
     <!-- 顶部导航 -->
     <div class="words-header">
@@ -90,7 +90,8 @@ import WordNoteModal from '../components/word/WordNoteModal.vue'
 const route = useRoute()
 const store = useWordStore()
 
-const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N4N5')
+const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N5')
+if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
 const levelName = computed(() => (levels.find(l => l.id === level.value) || {}).name || level.value)
 const pool = computed(() => wordsByLevel(level.value))
 
@@ -315,3 +316,4 @@ function restartReview() {
 .result-rate { font-size: 22px; font-weight: 700; color: #c2556f; margin-bottom: 16px; }
 .result-actions { display: flex; gap: 12px; justify-content: center; }
 </style>
+
