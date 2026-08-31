@@ -837,8 +837,8 @@ watch(currentPointId, () => {
 :deep(.cont-prefix), :deep(.cont-suffix), :deep(.cont-plus) { display: inline-flex; align-items: center; }
 :deep(.cont-opts) { display: inline-flex; flex-direction: column; }
 :deep(.cont-opts .opt) { display: block; white-space: nowrap; line-height: 1.5; padding: 0 1px; }
-:deep(.cont-brace-wrap) { position: relative; display: inline-flex; align-self: stretch; }
-:deep(.cont-brace) { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; width: 12px; color: #d06a86; }
+:deep(.cont-brace-wrap) { position: relative; display: inline-flex; align-self: stretch; width: 16px; flex: 0 0 auto; }
+:deep(.cont-brace) { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; width: 100%; color: #d06a86; }
 
 /* 例句中的中文译文：独占一行 + 略不同颜色 */
 .gp-tr { color: #9a6240; }
