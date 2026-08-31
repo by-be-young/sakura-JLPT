@@ -17,6 +17,7 @@
           <div class="nav-links">
             <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">首页</router-link>
             <router-link to="/words" class="nav-link" :class="{ active: $route.path.startsWith('/words') }">背词</router-link>
+            <router-link to="/study" class="nav-link" :class="{ active: $route.path.startsWith('/study') }">学习</router-link>
             <router-link to="/stats" class="nav-link" :class="{ active: $route.path === '/stats' }">统计</router-link>
             <router-link to="/wrong" class="nav-link" :class="{ active: $route.path === '/wrong' }">
               错题本<span v-if="store.state.wrong.length" class="badge">{{ store.state.wrong.length }}</span>

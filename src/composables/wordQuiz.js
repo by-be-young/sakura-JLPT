@@ -7,6 +7,7 @@
 // 5. fillblank    例句挖空选单词（需例句包含目标词）
 // 6. synonym      看单词选近义词（需配置近义词）
 // 7. antonym      看单词选反义词（需配置反义词）
+// 8. related      看单词选相关词（需配置相关词）
 
 import { wordRelationsOf } from '../data/words'
 
@@ -30,6 +31,7 @@ export function availableTypes(word) {
   const rel = wordRelationsOf(word.id)
   if (rel.syn.length) types.push('synonym')
   if (rel.ant.length) types.push('antonym')
+  if (rel.rel && rel.rel.length) types.push('related')
   return types
 }
 
@@ -40,7 +42,7 @@ function buildRelationPool(pool, excludeId) {
   for (const w of pool) {
     if (w.id === excludeId) continue
     const rel = wordRelationsOf(w.id)
-    for (const item of [...rel.syn, ...rel.ant]) {
+    for (const item of [...rel.syn, ...rel.ant, ...(rel.rel || [])]) {
       const key = item.t
       if (!seen.has(key)) {
         seen.add(key)
@@ -54,13 +56,13 @@ function buildRelationPool(pool, excludeId) {
 // 近反义词题：正确项 = 目标词的近/反义条目；干扰项从其他词的近反义条目池随机抽
 function buildRelationQuestion(target, pool, kind) {
   const rel = wordRelationsOf(target.id)
-  const answers = kind === 'syn' ? rel.syn : rel.ant
+  const answers = kind === 'syn' ? rel.syn : kind === 'rel' ? rel.rel : rel.ant
   if (!answers.length) return null
   const correct = answers[Math.floor(Math.random() * answers.length)]
   const relPool = buildRelationPool(pool, target.id)
   const { options, correctIndex } = buildOptions(relPool, correct, r => r.t)
   return {
-    type: kind === 'syn' ? 'synonym' : 'antonym',
+    type: kind === 'syn' ? 'synonym' : kind === 'rel' ? 'related' : 'antonym',
     prompt: target,
     options, // 每条为 { t: 表记, y: 读音 }
     correctIndex,
@@ -205,6 +207,9 @@ export function generateQuestion(target, pool, type) {
     }
     case 'antonym': {
       return buildRelationQuestion(target, pool, 'ant')
+    }
+    case 'related': {
+      return buildRelationQuestion(target, pool, 'rel')
     }
     default:
       return null

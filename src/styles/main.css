@@ -539,3 +539,8 @@ button {
   .hero h1 { font-size: 28px; }
   .question-sentence { font-size: 16px; }
 }
+
+/* ===== 振假名（ruby 注音） ===== */
+ruby { ruby-position: over; }
+rt { font-size: 0.5em; color: #e884a0; }
+rp { display: none; }

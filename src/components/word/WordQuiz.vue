@@ -52,9 +52,9 @@
     </template>
 
     <!-- 看单词选近义词 / 反义词 -->
-    <template v-else-if="type === 'synonym' || type === 'antonym'">
+    <template v-else-if="type === 'synonym' || type === 'antonym' || type === 'related'">
       <div class="quiz-prompt">
-        <div class="prompt-label">{{ type === 'synonym' ? '选出下列单词的近义词' : '选出下列单词的反义词' }}</div>
+        <div class="prompt-label">{{ type === 'synonym' ? '选出下列单词的近义词' : type === 'antonym' ? '选出下列单词的反义词' : '选出下列单词的相关词' }}</div>
         <div class="prompt-word word-big" v-html="promptHtml"></div>
         <div class="prompt-pitch" v-if="question.prompt.pitch && question.prompt.pitch.length">
           音调：{{ question.prompt.pitch.map(pitchToCircle).join(' ') }}
@@ -115,7 +115,7 @@ const typeHtml = computed(() => {
     if (furigana.isEnabled.value && w && w.kanjiFurigana) return w.kanjiFurigana
     return props.question.prompt
   }
-  if (props.type === 'word2meaning' || props.type === 'synonym' || props.type === 'antonym') {
+  if (props.type === 'word2meaning' || props.type === 'synonym' || props.type === 'antonym' || props.type === 'related') {
     const w = props.question.prompt
     if (furigana.isEnabled.value && w && w.kanjiFurigana) return w.kanjiFurigana
     return w.kanji || w.kana
