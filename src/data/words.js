@@ -7211,10 +7211,10 @@ export function pitchToCircle(n) {
   return map[n] || String(n)
 }
 
-// 等级列表
+// 等级列表（由易到难）
 export const levels = [
-  { id: 'N4', name: 'N4', desc: '初级' },
   { id: 'N5', name: 'N5', desc: '入门 · 基础' },
+  { id: 'N4', name: 'N4', desc: '初级' },
   { id: 'N3', name: 'N3', desc: '中级' },
   { id: 'N2', name: 'N2', desc: '中高级' },
   { id: 'N1', name: 'N1', desc: '高级' },
