@@ -3,7 +3,7 @@
     <div v-for="(opt, i) in question.options" :key="i" class="option-item"
       :class="optClass(i)" @click="select(i)">
       <span class="option-num">{{ i + 1 }}</span>
-      <span class="option-text">{{ optText(opt) }}</span>
+      <span class="option-text" v-html="optText(opt)"></span>
       <span v-if="optPitch(opt, i)" class="opt-pitch">{{ optPitch(opt, i) }}</span>
       <span v-if="answered && i === question.correctIndex" class="mark">✓</span>
       <span v-if="answered && selected === i && i !== question.correctIndex" class="mark">✗</span>
@@ -13,6 +13,7 @@
 
 <script setup>
 import { pitchToCircle } from '../../data/words'
+import { useFurigana } from '../../composables/useFurigana'
 
 const props = defineProps({
   question: { type: Object, required: true },
@@ -20,9 +21,18 @@ const props = defineProps({
   answered: { type: Boolean, default: false },
 })
 const emit = defineEmits(['select'])
+const furigana = useFurigana()
+
+function hasRealKanji(s) {
+  return !!s && /[\u4e00-\u9fff]/.test(s)
+}
 
 function optText(opt) {
   if (typeof opt === 'string') return opt
+  // 开启振假名且词有汉字时，显示汉字振假名（ruby HTML）
+  if (furigana.isEnabled.value && opt.kanjiFurigana && hasRealKanji(opt.kanji)) {
+    return opt.kanjiFurigana
+  }
   return opt.kanji || opt.kana || ''
 }
 
@@ -123,6 +133,18 @@ function select(i) {
 .option-item.correct .option-num { background: #7ed58a; color: #fff; }
 .option-item.wrong .option-num { background: #f79b9b; color: #fff; }
 .option-text { flex: 1; }
+.option-text :deep(ruby) {
+  ruby-position: over;
+}
+.option-text :deep(rt) {
+  font-size: 0.55em;
+  color: #e884a0;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.option-text :deep(rp) {
+  display: none;
+}
 .opt-pitch {
   font-size: 13px;
   color: #e884a0;
