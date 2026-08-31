@@ -9,6 +9,7 @@ function loadState() {
   } catch (e) {}
   return {
     learned: {},      // wordId -> { learnedAt, wrongCount, reviewCount, lastReviewAt, types: {} }
+    familiar: {},     // wordId -> true（熟词，不再进入学习/复习）
     notes: {},        // wordId -> 笔记文本
     settings: { dailyGoal: 20 },
   }
@@ -16,10 +17,11 @@ function loadState() {
 
 const state = reactive(loadState())
 
-// 兼容旧数据：为已学单词补全 types 字段
+// 兼容旧数据：为已学单词补全 types 字段；补齐 familiar
 for (const id of Object.keys(state.learned)) {
   if (!state.learned[id].types) state.learned[id].types = {}
 }
+if (!state.familiar) state.familiar = {}
 
 watch(state, (val) => {
   try {
@@ -136,8 +138,27 @@ export function useWordStore() {
   // 全部重置（仅清空背词记录，不影响题库答题记录）
   function resetAll() {
     state.learned = {}
+    state.familiar = {}
     state.notes = {}
   }
+
+  // ===== 熟词 =====
+  // 标记为熟词：不再进入新学与复习；同时记为已学
+  function markFamiliar(wordId) {
+    state.familiar[wordId] = true
+    if (!state.learned[wordId]) markLearned(wordId)
+  }
+
+  function isFamiliar(wordId) {
+    return !!state.familiar[wordId]
+  }
+
+  // 取消熟词标记
+  function unmarkFamiliar(wordId) {
+    delete state.familiar[wordId]
+  }
+
+  const familiarCount = computed(() => Object.keys(state.familiar).length)
 
   return {
     state,
@@ -159,5 +180,9 @@ export function useWordStore() {
     unseenCount,
     dueWords,
     resetAll,
+    markFamiliar,
+    isFamiliar,
+    unmarkFamiliar,
+    familiarCount,
   }
 }

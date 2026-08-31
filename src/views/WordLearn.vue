@@ -31,6 +31,10 @@
         <span class="stat-label">未学</span>
       </div>
       <div class="stat-item">
+        <span class="stat-num">{{ familiarCount }}</span>
+        <span class="stat-label">熟词</span>
+      </div>
+      <div class="stat-item">
         <span class="stat-num">{{ masteredCount }}</span>
         <span class="stat-label">已背完</span>
       </div>
@@ -107,8 +111,9 @@ if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
 const pool = computed(() => wordsByLevel(level.value))
 
 const learnedCount = computed(() => pool.value.filter(w => store.isLearned(w.id)).length)
-const masteredCount = computed(() => pool.value.filter(w => store.isLearned(w.id) && store.isMastered(w.id, availableTypes(w))).length)
-const dueCount = computed(() => pool.value.filter(w => store.isLearned(w.id) && !store.isMastered(w.id, availableTypes(w))).length)
+const masteredCount = computed(() => pool.value.filter(w => store.isLearned(w.id) && store.isMastered(w.id, availableTypes(w)) && !store.isFamiliar(w.id)).length)
+const dueCount = computed(() => pool.value.filter(w => store.isLearned(w.id) && !store.isMastered(w.id, availableTypes(w)) && !store.isFamiliar(w.id)).length)
+const familiarCount = computed(() => pool.value.filter(w => store.isFamiliar(w.id)).length)
 const noteCount = computed(() => pool.value.filter(w => store.hasNote(w.id)).length)
 const noteWords = computed(() => pool.value.filter(w => store.hasNote(w.id)))
 

@@ -18,6 +18,7 @@
         <WordCard :word="learnWords[learnIndex]" />
         <div class="learn-note-btn">
           <button class="btn btn-ghost btn-sm" @click="openNote(learnWords[learnIndex])">📝 添加笔记</button>
+          <button class="btn btn-ghost btn-sm" @click="markLearnFamiliar">⭐ 标记为熟词</button>
           <button class="btn btn-ghost btn-sm" @click="showList = true">📋 查看本组单词</button>
         </div>
       </div>
@@ -78,6 +79,9 @@
         </button>
 
         <div class="quiz-card-wrap">
+          <div class="quiz-familiar-row">
+            <button class="btn-familiar" @click="markQuizFamiliar" title="标记为熟词，删除该词剩余题目">⭐ 标记为熟词</button>
+          </div>
           <WordQuiz :key="quizIndex" ref="wordQuizRef" :type="quizQuestions[quizIndex].type" :question="quizQuestions[quizIndex]"
             @answer="handleQuizAnswer" @note="openQuizNote" />
           <div v-if="quizAnswered" class="quiz-nav">
@@ -147,8 +151,8 @@ const editingWord = ref(null)
 const lastCorrect = ref(false)
 let autoTimer = null
 
-// 初始化：随机抽取未学单词
-const learnedIds = computed(() => new Set(pool.value.filter(w => store.isLearned(w.id)).map(w => w.id)))
+// 初始化：随机抽取未学单词（排除熟词）
+const learnedIds = computed(() => new Set(pool.value.filter(w => store.isLearned(w.id) || store.isFamiliar(w.id)).map(w => w.id)))
 function initLearn() {
   const unseen = getNewWords(pool.value, learnedIds.value, 10)
   if (unseen.length === 0) {
@@ -182,6 +186,24 @@ function learnNext() {
 
 function toggleExpand(i) {
   expandedIndex.value = expandedIndex.value === i ? -1 : i
+}
+
+// 学习阶段：标记当前词为熟词，从本组移除
+function markLearnFamiliar() {
+  const w = learnWords.value[learnIndex.value]
+  if (!w) return
+  store.markFamiliar(w.id)
+  learnWords.value.splice(learnIndex.value, 1)
+  if (learnWords.value.length === 0) {
+    // 本组已全部标记为熟词，直接提示完成
+    alert('本组单词已全部标记为熟词！')
+    router.push('/words')
+    return
+  }
+  if (learnIndex.value >= learnWords.value.length) {
+    learnIndex.value = learnWords.value.length - 1
+  }
+  if (expandedIndex.value >= learnWords.value.length) expandedIndex.value = -1
 }
 
 function startLearnQuiz() {
@@ -250,6 +272,23 @@ function resetQuizState() {
   // 到新题时自动关闭振假名（未提交时锁定）
   furigana.disable()
   furigana.setLocked(true)
+}
+
+// 测验阶段：标记当前词为熟词，删除该词所有剩余题目
+function markQuizFamiliar() {
+  const q = quizQuestions.value[quizIndex.value]
+  if (!q) return
+  store.markFamiliar(q.wordId)
+  clearTimeout(autoTimer)
+  quizQuestions.value = quizQuestions.value.filter(x => x.wordId !== q.wordId)
+  if (quizQuestions.value.length === 0) {
+    quizFinished.value = true
+    return
+  }
+  if (quizIndex.value >= quizQuestions.value.length) {
+    quizIndex.value = quizQuestions.value.length - 1
+  }
+  resetQuizState()
 }
 
 function retryQuiz() {
@@ -420,6 +459,26 @@ onUnmounted(() => {
   white-space: pre-wrap;
 }
 .quiz-card-wrap { min-height: 300px; }
+.quiz-familiar-row {
+  text-align: right;
+  margin-bottom: 8px;
+}
+.btn-familiar {
+  background: #fff;
+  border: 2px solid #ffd3e0;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 13px;
+  color: #c2556f;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-familiar:hover {
+  background: #fff3e6;
+  border-color: #f5b06a;
+  color: #b8860b;
+}
 .quiz-area {
   position: relative;
   display: flex;

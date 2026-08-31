@@ -35,6 +35,9 @@
           <button class="btn btn-blur" @click="selfEval('blur')">🤔 模糊</button>
           <button class="btn btn-forget" @click="selfEval('forget')">😵 不记得</button>
         </div>
+        <div class="familiar-row">
+          <button class="btn-familiar" @click="markFamiliar" title="标记为熟词，不再进入学习与复习">⭐ 标记为熟词</button>
+        </div>
       </div>
 
       <!-- 阶段2：翻开详情 -->
@@ -59,6 +62,9 @@
         <div class="reveal-actions">
           <button class="btn btn-correct" @click="confirmEval(true)">😄 没问题</button>
           <button class="btn btn-wrong" @click="confirmEval(false)">😵 记错了</button>
+        </div>
+        <div class="familiar-row">
+          <button class="btn-familiar" @click="markFamiliar" title="标记为熟词，不再进入学习与复习">⭐ 标记为熟词</button>
         </div>
       </div>
 
@@ -110,8 +116,8 @@ onMounted(() => {
 })
 
 function buildQueue() {
-  // 已学但未背完 或 生疏需要复习
-  const due = pool.value.filter(w => store.isLearned(w.id) && !store.isMastered(w.id, availableTypes(w)))
+  // 已学但未背完 或 生疏需要复习（排除熟词）
+  const due = pool.value.filter(w => store.isLearned(w.id) && !store.isMastered(w.id, availableTypes(w)) && !store.isFamiliar(w.id))
   if (!due.length) {
     // 生疏兜底
     queue.value = []
@@ -146,6 +152,20 @@ function confirmEval(ok) {
     store.recordAnswer(w.id, false)
     queue.value.push(queue.value.shift())
   }
+  if (queue.value.length === 0) {
+    reviewStage.value = 'done'
+  } else {
+    reviewStage.value = 'eval'
+  }
+}
+
+// 标记为熟词：从复习队列移除，不再进入学习与复习
+function markFamiliar() {
+  const w = currentWord.value
+  if (!w) return
+  store.markFamiliar(w.id)
+  queue.value.shift()
+  doneCount.value++
   if (queue.value.length === 0) {
     reviewStage.value = 'done'
   } else {
@@ -247,6 +267,26 @@ function restartReview() {
 .btn-remember { background: #eefbf0; color: #2d8a3e; border: 2px solid #7ed58a; border-radius: 14px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
 .btn-blur { background: #fff8e6; color: #b8860b; border: 2px solid #e8c76a; border-radius: 14px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
 .btn-forget { background: #fff0f0; color: #c0392b; border: 2px solid #f79b9b; border-radius: 14px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
+.familiar-row {
+  text-align: center;
+  margin-top: 18px;
+}
+.btn-familiar {
+  background: #fff;
+  border: 2px solid #ffd3e0;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: #c2556f;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-familiar:hover {
+  background: #fff3e6;
+  border-color: #f5b06a;
+  color: #b8860b;
+}
 .btn-correct { background: #eefbf0; color: #2d8a3e; border: 2px solid #7ed58a; border-radius: 14px; padding: 12px 24px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
 .btn-wrong { background: #fff0f0; color: #c0392b; border: 2px solid #f79b9b; border-radius: 14px; padding: 12px 24px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
 .review-reveal {
