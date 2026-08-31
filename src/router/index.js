@@ -6,11 +6,13 @@ import Favorites from '../views/Favorites.vue'
 import Result from '../views/Result.vue'
 import Stats from '../views/Stats.vue'
 import UnitSelect from '../views/UnitSelect.vue'
+import WordLearn from '../views/WordLearn.vue'import WordStudy from '../views/WordStudy.vue'import WordReview from '../views/WordReview.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
   { path: '/quiz/:mode', name: 'quiz', component: Quiz, props: true },
   { path: '/units', name: 'units', component: UnitSelect },
+  { path: '/words', name: 'words', component: WordLearn },  { path: '/words/learn', name: 'words-learn', component: WordStudy },  { path: '/words/review', name: 'words-review', component: WordReview },
   { path: '/wrong', name: 'wrong', component: WrongBook },
   { path: '/favorites', name: 'favorites', component: Favorites },
   { path: '/result', name: 'result', component: Result },

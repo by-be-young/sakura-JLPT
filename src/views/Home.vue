@@ -6,6 +6,16 @@
       <button class="btn btn-secondary btn-sm" @click="$router.push('/stats')">📊 查看学习统计</button>
     </div>
 
+    <!-- 背词板块 -->
+    <div class="section-title">背词</div>
+    <div class="mode-grid">
+      <div class="mode-card" @click="$router.push('/words')">
+        <div class="emoji">🌸</div>
+        <h3>背词</h3>
+        <p>红宝书词汇 · 新学/复习/笔记 · 多种题型 · 音调标注</p>
+      </div>
+    </div>
+
     <!-- 练习模式 -->
     <div class="section-title">练习模式</div>
     <div class="mode-grid">
