@@ -66,7 +66,7 @@
           <div class="gp-line" :class="{ 'gp-line--ex-dash': !b.isExLast && !b._cnHtml }" v-html="b._jpHtml"></div>
           <div v-if="b._cnHtml" class="gp-line gp-tr" :class="{ 'gp-line--ex-dash': !b.isExLast }" v-html="b._cnHtml"></div>
         </template>
-        <div v-else-if="b.t === 'line'" class="gp-line" v-html="blockHtml(b)"></div>
+        <div v-else-if="b.t === 'line'" class="gp-line" v-html="isContLine(g.blocks, i) ? contHtml(b) : blockHtml(b)"></div>
                 </template>
                 </div>
               </template>
@@ -108,7 +108,7 @@
           <div class="gp-line" :class="{ 'gp-line--ex-dash': !b.isExLast && !b._cnHtml }" v-html="b._jpHtml"></div>
           <div v-if="b._cnHtml" class="gp-line gp-tr" :class="{ 'gp-line--ex-dash': !b.isExLast }" v-html="b._cnHtml"></div>
         </template>
-        <div v-else-if="b.t === 'line'" class="gp-line" v-html="blockHtml(b)"></div>
+        <div v-else-if="b.t === 'line'" class="gp-line" v-html="isContLine(g.blocks, i) ? contHtml(b) : blockHtml(b)"></div>
               </template>
               </div>
             </template>
@@ -214,6 +214,103 @@ function richHtml(raw) {
   html = html.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, (m, c, off) => off === 0 ? m : '<br>' + c)
   html = html.replace(/【([^】]+)】/g, '<span class="gp-tag">【$1】</span>')
   return html
+}
+
+// 判断第 i 个块是否为「接续」标签下的内容行（内部无需振假名，斜杠选项竖排+大括号）
+function isContLine(blocks, i) {
+  const b = blocks && blocks[i]
+  if (!b || b.t !== 'line') return false
+  for (let j = i - 1; j >= 0; j--) {
+    const t = blocks[j].t
+    if (t === 'label') return (blocks[j].label || '').includes('接续')
+    if (t === 'sub' || t === 'table') return false
+  }
+  return false
+}
+
+// ===== 接续行渲染：不使用振假名；斜杠选项竖排，用纵跨多行的超大花括号包裹 =====
+const CONT_CLASS_WORDS = ['动词', '名词', '形容词', '词干', '形式', '句子']
+
+function contLcp(parts) {
+  let i = 0
+  const p0 = parts[0] || ''
+  while (i < p0.length && parts.every(p => p[i] === p0[i])) i++
+  return p0.slice(0, i)
+}
+
+// 解析接续文本（在 fmt 转义后调用）：{ prefix, opts, suffix, group2 }
+function parseContinuation(text) {
+  const parts = text.split('/')
+  if (parts.length === 1) return null
+  const hasClass = x => CONT_CLASS_WORDS.some(w => x.includes(w))
+  // 特例：结构特殊，手工指定
+  const special = {
+    '～が/は+他动词「て形」+ある': { prefix: '～', opts: ['が', 'は'], suffix: '+他动词「て形」+ある', group2: null },
+    'ちっとも+い形容词词干+く/动词「ない形」+ない': { prefix: 'ちっとも+', opts: ['い形容词词干+く', '动词「ない形」'], suffix: '+ない', group2: null },
+    'もし+动词「て形」/い形容词「て形」/な形容词词干+で/名词+で+も': { prefix: 'もし+', opts: ['动词「て形」', 'い形容词「て形」', 'な形容词词干+で', '名词+で'], suffix: '+も', group2: null },
+    'III类动词：(~)する→ (~)させてください；来る→来させてください/させないでください': null
+  }
+  if (text in special) return special[text]
+
+  // 1) 尾部后缀组：最后一个 / 前最近的 +，形如 +A/B 且 A/B 非词类标记
+  const lastSlash = text.lastIndexOf('/')
+  const lp = text.lastIndexOf('+', lastSlash - 1)
+  if (lp >= 0) {
+    const inner = text.slice(lp + 1)
+    if (!inner.includes('+') && inner.includes('/')) {
+      const g2opts = inner.split('/')
+      if (!g2opts.some(hasClass)) {
+        const main = text.slice(0, lp)
+        const mparts = main.split('/')
+        const prefix = contLcp(mparts)
+        const opts = mparts.length > 1 ? mparts.map(x => x.slice(prefix.length)) : []
+        return { prefix, opts, suffix: '', group2: { prefix: '+', opts: g2opts } }
+      }
+    }
+  }
+
+  // 2) 前缀+选项组（兜底）：首段含 + 且末段无 +
+  const first = parts[0], last = parts[parts.length - 1]
+  if (first.includes('+') && !last.includes('+') && !contLcp(parts)) {
+    const fi = first.lastIndexOf('+')
+    return { prefix: first.slice(0, fi + 1), opts: [first.slice(fi + 1), ...parts.slice(1)], suffix: '', group2: null }
+  }
+
+  // 3) 普通型：公共前缀 + 选项 + 尾部公共后缀
+  const prefix = contLcp(parts)
+  const rest = parts.map(p => p.slice(prefix.length))
+  let suffix = ''
+  const rl = rest[rest.length - 1]
+  const ri = rl.lastIndexOf('+')
+  if (ri >= 0) suffix = rl.slice(ri)
+  const opts = rest.map(r => suffix && r.endsWith(suffix) ? r.slice(0, -suffix.length) : r)
+  return { prefix, opts, suffix, group2: null }
+}
+
+function contBrace(dir) {
+  const d = dir === 'l'
+    ? 'M10 2 L3 2 L3 98 L10 98'
+    : 'M2 2 L9 2 L9 98 L2 98'
+  return '<span class="cont-brace-wrap"><svg class="cont-brace" viewBox="0 0 12 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+}
+
+function contOptsHtml(opts) {
+  return '<span class="cont-opts">' + opts.map(o => '<span class="opt">' + o + '</span>').join('') + '</span>'
+}
+
+function contHtml(b) {
+  const text = b.text || ''
+  const p = parseContinuation(fmt(text))
+  if (!p) return richHtml(fmt(text))
+  let h = ''
+  if (p.prefix) h += '<span class="cont-prefix">' + p.prefix + '</span>'
+  if (p.opts.length) h += contBrace('l') + contOptsHtml(p.opts) + contBrace('r')
+  if (p.group2) {
+    h += '<span class="cont-plus">' + p.group2.prefix + '</span>'
+    h += contBrace('l') + contOptsHtml(p.group2.opts) + contBrace('r')
+  }
+  if (p.suffix) h += '<span class="cont-suffix">' + p.suffix + '</span>'
+  return '<span class="cont">' + h + '</span>'
 }
 
 // 输出某一块的 HTML：振假名开启且有 furi 数据时直接渲染 ruby，否则走普通格式化
@@ -733,7 +830,16 @@ watch(currentPointId, () => {
 /* 例句之间用粉色虚线隔开（最后一条不显示） */
 .gp-line--ex-dash { border-bottom: 1.5px dashed #f2a6bf; padding-bottom: 6px; margin-bottom: 2px; }
 /* 【xx年真题】等标记置灰（v-html 注入，需 :deep） */
+/* 【xx年真题】等标记置灰（v-html 注入，需 :deep） */
 :deep(.gp-tag) { color: #a0a0a6; }
+/* 接续：斜杠选项竖排 + 纵跨多行的超大花括号（v-html 注入，需 :deep） */
+:deep(.cont) { display: inline-flex; align-items: center; vertical-align: middle; }
+:deep(.cont-prefix), :deep(.cont-suffix), :deep(.cont-plus) { display: inline-flex; align-items: center; }
+:deep(.cont-opts) { display: inline-flex; flex-direction: column; }
+:deep(.cont-opts .opt) { display: block; white-space: nowrap; line-height: 1.5; padding: 0 1px; }
+:deep(.cont-brace-wrap) { position: relative; display: inline-flex; align-self: stretch; }
+:deep(.cont-brace) { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; width: 12px; color: #d06a86; }
+
 /* 例句中的中文译文：独占一行 + 略不同颜色 */
 .gp-tr { color: #9a6240; }
 .gp-line:lang(ja), .gp-text:lang(ja), .gp-title:lang(ja) { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', serif; }
