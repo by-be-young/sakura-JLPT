@@ -77,6 +77,11 @@ function buildFillBlank(target, pool) {
         before: ex.jp.slice(0, idx),
         after: ex.jp.slice(idx + targetStr.length),
         zh: ex.zh || '',
+        // 振假名：挖空版（目标词处为下划线）
+        furiganaBlank: ex.blankFurigana || '',
+        // 完整版振假名（答错后展示完整句时用）
+        furiganaFull: ex.jpFurigana || '',
+        targetStr,
       }
     }
   }
@@ -107,6 +112,7 @@ export function generateQuestion(target, pool, type) {
       return {
         type,
         prompt: target.kanji,
+        promptWord: target,
         options,
         correctIndex,
         answerText: target.kana,

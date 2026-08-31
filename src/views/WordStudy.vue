@@ -71,15 +71,27 @@
         <span>{{ quizIndex + 1 }} / {{ quizQuestions.length }}</span>
         <div class="progress-bar-wrap"><div class="progress-bar-inner" :style="{ width: (quizIndex + 1) / quizQuestions.length * 100 + '%' }"></div></div>
       </div>
-      <div class="quiz-card-wrap">
-        <WordQuiz :key="quizIndex" :type="quizQuestions[quizIndex].type" :question="quizQuestions[quizIndex]"
-          @answer="handleQuizAnswer" @note="openQuizNote" />
-      </div>
-      <div v-if="quizAnswered" class="quiz-nav">
-        <button v-if="!lastCorrect" class="btn btn-primary" @click="quizNext">
-          {{ quizIndex < quizQuestions.length - 1 ? '下一题 →' : '查看结果' }}
+      <div class="quiz-area">
+        <!-- 左箭头（上一题） -->
+        <button class="side-arrow side-arrow-left" :disabled="quizIndex === 0" @click="prevQuizQuestion" title="上一题 (A)">
+          <span class="arrow-icon">‹</span>
         </button>
-        <span v-else class="auto-next-hint">回答正确，即将自动跳转…</span>
+
+        <div class="quiz-card-wrap">
+          <WordQuiz :key="quizIndex" ref="wordQuizRef" :type="quizQuestions[quizIndex].type" :question="quizQuestions[quizIndex]"
+            @answer="handleQuizAnswer" @note="openQuizNote" />
+          <div v-if="quizAnswered" class="quiz-nav">
+            <button v-if="!lastCorrect" class="btn btn-primary" @click="quizNext">
+              {{ quizIndex < quizQuestions.length - 1 ? '下一题 →' : '查看结果' }}
+            </button>
+            <span v-else class="auto-next-hint">回答正确，即将自动跳转…</span>
+          </div>
+        </div>
+
+        <!-- 右箭头（下一题） -->
+        <button class="side-arrow side-arrow-right" :disabled="quizIndex >= quizQuestions.length - 1" @click="quizNext" title="下一题 (D)">
+          <span class="arrow-icon">›</span>
+        </button>
       </div>
       <div v-if="quizFinished" class="quiz-result">
         <div class="result-score">答对 {{ quizCorrect }} / {{ quizQuestions.length }}</div>
@@ -97,10 +109,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { wordsByLevel, levels, pitchToCircle } from '../data/words'
 import { useWordStore } from '../store/wordStore'
+import { useFurigana } from '../composables/useFurigana'
 import { buildQuizRound, getNewWords, availableTypes } from '../composables/wordQuiz'
 import WordCard from '../components/word/WordCard.vue'
 import WordQuiz from '../components/word/WordQuiz.vue'
@@ -109,6 +122,7 @@ import WordNoteModal from '../components/word/WordNoteModal.vue'
 const route = useRoute()
 const router = useRouter()
 const store = useWordStore()
+const furigana = useFurigana()
 
 const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N4N5')
 const levelName = computed(() => (levels.find(l => l.id === level.value) || {}).name || level.value)
@@ -126,6 +140,7 @@ const quizIndex = ref(0)
 const quizAnswered = ref(false)
 const quizCorrect = ref(0)
 const quizFinished = ref(false)
+const wordQuizRef = ref(null)
 
 const editingWord = ref(null)
 const lastCorrect = ref(false)
@@ -162,10 +177,9 @@ function toggleExpand(i) {
 function startLearnQuiz() {
   quizQuestions.value = buildQuizRound(learnWords.value, pool.value, (id) => store.doneTypes(id))
   quizIndex.value = 0
-  quizAnswered.value = false
   quizCorrect.value = 0
   quizFinished.value = false
-  lastCorrect.value = false
+  resetQuizState()
   phase.value = 'quiz'
   showList.value = false
 }
@@ -187,14 +201,19 @@ function handleQuizAnswer(correct) {
     store.recordAnswer(q.wordId, correct)
     if (correct) store.markTypeDone(q.wordId, q.type)
   }
-  // 答对：1秒后自动跳转下一题
   if (correct) {
+    // 答对：解锁振假名（可手动开），1秒后自动跳转下一题
+    furigana.setLocked(false)
     clearTimeout(autoTimer)
     autoTimer = setTimeout(() => {
       if (quizAnswered.value && !quizFinished.value) {
         quizNext()
       }
     }, 1000)
+  } else {
+    // 答错：自动开启振假名，锁定（已提交可看）
+    furigana.setLocked(false)
+    furigana.enable()
   }
 }
 
@@ -202,10 +221,25 @@ function quizNext() {
   clearTimeout(autoTimer)
   if (quizIndex.value < quizQuestions.value.length - 1) {
     quizIndex.value++
-    quizAnswered.value = false
+    resetQuizState()
   } else {
     quizFinished.value = true
   }
+}
+
+function prevQuizQuestion() {
+  if (quizIndex.value > 0) {
+    quizIndex.value--
+    resetQuizState()
+  }
+}
+
+function resetQuizState() {
+  quizAnswered.value = false
+  lastCorrect.value = false
+  // 到新题时自动关闭振假名（未提交时锁定）
+  furigana.disable()
+  furigana.setLocked(true)
 }
 
 function retryQuiz() {
@@ -214,10 +248,9 @@ function retryQuiz() {
   const words2 = wordIds.map(id => pool.value.find(w => w.id === id)).filter(Boolean)
   quizQuestions.value = buildQuizRound(words2, pool.value, (id) => store.doneTypes(id))
   quizIndex.value = 0
-  quizAnswered.value = false
   quizCorrect.value = 0
   quizFinished.value = false
-  lastCorrect.value = false
+  resetQuizState()
 }
 
 function openNote(w) {
@@ -231,7 +264,28 @@ function openQuizNote() {
   if (w) editingWord.value = w
 }
 
-onUnmounted(() => clearTimeout(autoTimer))
+// 快捷键：L 振假名、A 上一题、D 下一题、1-4 选选项
+function handleKeydown(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+  if (phase.value !== 'quiz' || quizFinished.value) return
+  if (e.key === 'l' || e.key === 'L') furigana.toggle()
+  else if (e.key === 'a' || e.key === 'A') prevQuizQuestion()
+  else if (e.key === 'd' || e.key === 'D') quizNext()
+  else if (['1', '2', '3', '4'].includes(e.key)) {
+    if (!quizAnswered.value && wordQuizRef.value) {
+      wordQuizRef.value.selectByKey(Number(e.key))
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+onUnmounted(() => {
+  clearTimeout(autoTimer)
+  window.removeEventListener('keydown', handleKeydown)
+  furigana.setLocked(false)
+})
 </script>
 
 <style scoped>
@@ -356,6 +410,47 @@ onUnmounted(() => clearTimeout(autoTimer))
   white-space: pre-wrap;
 }
 .quiz-card-wrap { min-height: 300px; }
+.quiz-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quiz-card-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.side-arrow {
+  width: 44px;
+  height: 80px;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid #ffd3e0;
+  color: #e884a0;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  font-family: inherit;
+}
+.side-arrow:hover:not(:disabled) {
+  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
+  border-color: #ff7da0;
+  color: #fff;
+  transform: scale(1.05);
+}
+.side-arrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+.arrow-icon {
+  line-height: 1;
+  font-weight: 700;
+}
 .quiz-mode-tag {
   background: #ffe9f0;
   color: #c2556f;
@@ -388,4 +483,11 @@ onUnmounted(() => clearTimeout(autoTimer))
 .result-score { font-size: 18px; color: #7a4b55; margin-bottom: 6px; }
 .result-rate { font-size: 44px; font-weight: 700; color: #c2556f; margin-bottom: 16px; }
 .result-actions { display: flex; gap: 12px; justify-content: center; }
+@media (max-width: 640px) {
+  .side-arrow {
+    width: 36px;
+    height: 60px;
+    font-size: 22px;
+  }
+}
 </style>
