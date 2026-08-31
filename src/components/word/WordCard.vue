@@ -3,7 +3,7 @@
     <!-- 正面：汉字 + 音调 -->
     <div class="card-face card-front" @click="flip">
       <div class="word-main">
-        <span class="word-kanji">{{ word.kanji || word.kana }}</span>
+        <span class="word-kanji" v-html="kanjiHtml"></span>
         <span v-if="word.pitch && word.pitch.length" class="pitch-tag">{{ pitchStr }}</span>
       </div>
       <div v-if="!word.kanji" class="card-hint">点击查看</div>
@@ -19,7 +19,7 @@
       <div class="word-meaning">{{ word.meaning }}</div>
       <div v-if="word.examples && word.examples.length" class="word-examples">
         <div v-for="(ex, i) in word.examples" :key="i" class="ex-item">
-          <div class="ex-jp">{{ ex.jp }}</div>
+          <div class="ex-jp" v-html="exJpHtml(ex)"></div>
           <div class="ex-zh">{{ ex.zh }}</div>
         </div>
       </div>
@@ -48,17 +48,29 @@
 import { computed, ref } from 'vue'
 import { pitchToCircle, wordRelationsOf } from '../../data/words'
 import { useWordStore } from '../../store/wordStore'
+import { useFurigana } from '../../composables/useFurigana'
 
 const props = defineProps({
   word: { type: Object, required: true },
 })
 const emit = defineEmits(['note'])
 const store = useWordStore()
+const furigana = useFurigana()
 
 const flipped = ref(false)
 const pitchStr = computed(() => props.word.pitch.map(pitchToCircle).join(''))
 const hasNote = computed(() => store.hasNote(props.word.id))
 const relations = computed(() => wordRelationsOf(props.word.id))
+
+// 振假名：开启时渲染汉字头顶假名（ruby）
+const kanjiHtml = computed(() => {
+  if (furigana.isEnabled.value && props.word.kanjiFurigana) return props.word.kanjiFurigana
+  return props.word.kanji || props.word.kana
+})
+function exJpHtml(ex) {
+  if (furigana.isEnabled.value && ex.jpFurigana) return ex.jpFurigana
+  return ex.jp
+}
 
 function flip() {
   flipped.value = !flipped.value
@@ -111,6 +123,13 @@ defineExpose({ flip, flipped })
   font-weight: 700;
   color: #c2556f;
   letter-spacing: 0.05em;
+}
+.word-kanji :deep(ruby), .ex-jp :deep(ruby) {
+  ruby-position: over;
+}
+.word-kanji :deep(rt), .ex-jp :deep(rt) {
+  font-size: 0.5em;
+  color: #e884a0;
 }
 .word-kana {
   font-size: 40px;

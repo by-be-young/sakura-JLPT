@@ -26,7 +26,7 @@
       <!-- 阶段1：自评 -->
       <div v-if="reviewStage === 'eval'" class="review-card">
         <div class="word-main center">
-          <span class="word-kanji">{{ currentWord.kanji || currentWord.kana }}</span>
+          <span class="word-kanji" v-html="kanjiHtml"></span>
           <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">{{ pitchStr }}</span>
         </div>
         <div class="eval-hint">你想起来了吗？</div>
@@ -43,7 +43,7 @@
       <!-- 阶段2：翻开详情 -->
       <div v-else-if="reviewStage === 'reveal'" class="review-reveal">
         <div class="reveal-word">
-          <span class="word-kanji">{{ currentWord.kanji || currentWord.kana }}</span>
+          <span class="word-kanji" v-html="kanjiHtml"></span>
           <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">{{ pitchStr }}</span>
           <div class="reveal-kana">{{ currentWord.kana }}<span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">{{ pitchStr }}</span></div>
         </div>
@@ -51,7 +51,7 @@
         <div class="word-meaning">{{ currentWord.meaning }}</div>
         <div v-if="currentWord.examples && currentWord.examples.length" class="word-examples">
           <div v-for="(ex, i) in currentWord.examples" :key="i" class="ex-item">
-            <div class="ex-jp">{{ ex.jp }}</div>
+            <div class="ex-jp" v-html="exJpHtml(ex)"></div>
             <div class="ex-zh">{{ ex.zh }}</div>
           </div>
         </div>
@@ -105,10 +105,12 @@ import { useRoute } from 'vue-router'
 import { wordsByLevel, levels, pitchToCircle, wordRelationsOf } from '../data/words'
 import { useWordStore } from '../store/wordStore'
 import { availableTypes } from '../composables/wordQuiz'
+import { useFurigana } from '../composables/useFurigana'
 import WordNoteModal from '../components/word/WordNoteModal.vue'
 
 const route = useRoute()
 const store = useWordStore()
+const furigana = useFurigana()
 
 const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N5')
 if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
@@ -125,6 +127,18 @@ const currentWord = computed(() => queue.value[0] || null)
 const pitchStr = computed(() => (currentWord.value && currentWord.value.pitch) ? currentWord.value.pitch.map(pitchToCircle).join('') : '')
 const noteText = computed(() => currentWord.value ? store.getNote(currentWord.value.id) : '')
 const relations = computed(() => currentWord.value ? wordRelationsOf(currentWord.value.id) : { syn: [], ant: [] })
+
+// 振假名：开启时渲染汉字头顶假名（ruby）
+const kanjiHtml = computed(() => {
+  const w = currentWord.value
+  if (!w) return ''
+  if (furigana.isEnabled.value && w.kanjiFurigana) return w.kanjiFurigana
+  return w.kanji || w.kana
+})
+function exJpHtml(ex) {
+  if (furigana.isEnabled.value && ex.jpFurigana) return ex.jpFurigana
+  return ex.jp
+}
 
 onMounted(() => {
   buildQueue()
@@ -288,6 +302,13 @@ function restartReview() {
   font-weight: 700;
   color: #c2556f;
   letter-spacing: 0.05em;
+}
+.word-kanji :deep(ruby), .ex-jp :deep(ruby) {
+  ruby-position: over;
+}
+.word-kanji :deep(rt), .ex-jp :deep(rt) {
+  font-size: 0.5em;
+  color: #e884a0;
 }
 .pitch-tag {
   font-size: 18px;
