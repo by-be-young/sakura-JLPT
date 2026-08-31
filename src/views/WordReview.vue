@@ -55,6 +55,20 @@
             <div class="ex-zh">{{ ex.zh }}</div>
           </div>
         </div>
+        <div v-if="relations.syn.length || relations.ant.length" class="word-relations">
+          <div v-if="relations.syn.length" class="rel-group">
+            <span class="rel-label">近义词</span>
+            <span class="rel-items">
+              <span v-for="(s, i) in relations.syn" :key="i" class="rel-item">{{ s.t }}<span v-if="s.y" class="rel-kana">{{ s.y }}</span></span>
+            </span>
+          </div>
+          <div v-if="relations.ant.length" class="rel-group">
+            <span class="rel-label">反义词</span>
+            <span class="rel-items">
+              <span v-for="(a, i) in relations.ant" :key="i" class="rel-item">{{ a.t }}<span v-if="a.y" class="rel-kana">{{ a.y }}</span></span>
+            </span>
+          </div>
+        </div>
         <div class="reveal-notes">
           <div v-if="noteText" class="reveal-note-text">{{ noteText }}</div>
           <button class="btn btn-ghost btn-sm" :title="noteText ? '编辑笔记 (N)' : '添加笔记 (N)'" @click="openNote">{{ noteText ? '📝 编辑笔记' : '📝 添加笔记' }}</button>
@@ -88,7 +102,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { wordsByLevel, levels, pitchToCircle } from '../data/words'
+import { wordsByLevel, levels, pitchToCircle, wordRelationsOf } from '../data/words'
 import { useWordStore } from '../store/wordStore'
 import { availableTypes } from '../composables/wordQuiz'
 import WordNoteModal from '../components/word/WordNoteModal.vue'
@@ -110,6 +124,7 @@ const editingWord = ref(null)
 const currentWord = computed(() => queue.value[0] || null)
 const pitchStr = computed(() => (currentWord.value && currentWord.value.pitch) ? currentWord.value.pitch.map(pitchToCircle).join('') : '')
 const noteText = computed(() => currentWord.value ? store.getNote(currentWord.value.id) : '')
+const relations = computed(() => currentWord.value ? wordRelationsOf(currentWord.value.id) : { syn: [], ant: [] })
 
 onMounted(() => {
   buildQueue()
@@ -343,6 +358,48 @@ function restartReview() {
   border-radius: 12px;
   padding: 12px 14px;
   box-sizing: border-box;
+}
+.word-relations {
+  width: 100%;
+  margin-top: 10px;
+  background: #f3f0ff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  text-align: left;
+}
+.rel-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.rel-group:last-child { margin-bottom: 0; }
+.rel-label {
+  font-size: 12px;
+  color: #7a5c9e;
+  background: #e7ddf7;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.rel-items {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rel-item {
+  font-size: 15px;
+  color: #5d3f8a;
+  font-weight: 600;
+}
+.rel-kana {
+  font-size: 12px;
+  color: #9a7ec2;
+  margin-left: 4px;
+  font-weight: 400;
 }
 .ex-item { margin-bottom: 8px; }
 .ex-item:last-child { margin-bottom: 0; }
