@@ -65,7 +65,7 @@
 
     <!-- 笔记按钮 -->
     <div class="quiz-note-row">
-      <button class="btn-note" @click="$emit('note')">📝 添加笔记</button>
+      <button class="btn-note" title="添加笔记 (N)" @click="$emit('note')">📝 添加笔记</button>
     </div>
 
     <div v-if="answered && feedback" class="feedback" :class="feedback.correct ? 'fb-correct' : 'fb-wrong'">

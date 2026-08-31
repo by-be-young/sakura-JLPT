@@ -31,12 +31,12 @@
         </div>
         <div class="eval-hint">你想起来了吗？</div>
         <div class="eval-actions">
-          <button class="btn btn-remember" @click="selfEval('remember')">😄 记得</button>
-          <button class="btn btn-blur" @click="selfEval('blur')">🤔 模糊</button>
-          <button class="btn btn-forget" @click="selfEval('forget')">😵 不记得</button>
+          <button class="btn btn-remember" title="记得 (1)" @click="selfEval('remember')">😄 记得 (1)</button>
+          <button class="btn btn-blur" title="模糊 (2)" @click="selfEval('blur')">🤔 模糊 (2)</button>
+          <button class="btn btn-forget" title="不记得 (3)" @click="selfEval('forget')">😵 不记得 (3)</button>
         </div>
         <div class="familiar-row">
-          <button class="btn-familiar" @click="markFamiliar" title="标记为熟词，不再进入学习与复习">⭐ 标记为熟词</button>
+          <button class="btn-familiar" title="标记为熟词，不再进入学习与复习 (F)" @click="markFamiliar">⭐ 标记为熟词</button>
         </div>
       </div>
 
@@ -57,14 +57,14 @@
         </div>
         <div class="reveal-notes">
           <div v-if="noteText" class="reveal-note-text">{{ noteText }}</div>
-          <button class="btn btn-ghost btn-sm" @click="openNote">{{ noteText ? '📝 编辑笔记' : '📝 添加笔记' }}</button>
+          <button class="btn btn-ghost btn-sm" :title="noteText ? '编辑笔记 (N)' : '添加笔记 (N)'" @click="openNote">{{ noteText ? '📝 编辑笔记' : '📝 添加笔记' }}</button>
         </div>
         <div class="reveal-actions">
-          <button class="btn btn-correct" @click="confirmEval(true)">😄 没问题</button>
-          <button class="btn btn-wrong" @click="confirmEval(false)">😵 记错了</button>
+          <button class="btn btn-correct" title="没问题 (1)" @click="confirmEval(true)">😄 没问题 (1)</button>
+          <button class="btn btn-wrong" title="记错了 (2)" @click="confirmEval(false)">😵 记错了 (2)</button>
         </div>
         <div class="familiar-row">
-          <button class="btn-familiar" @click="markFamiliar" title="标记为熟词，不再进入学习与复习">⭐ 标记为熟词</button>
+          <button class="btn-familiar" title="标记为熟词，不再进入学习与复习 (F)" @click="markFamiliar">⭐ 标记为熟词</button>
         </div>
       </div>
 
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { wordsByLevel, levels, pitchToCircle } from '../data/words'
 import { useWordStore } from '../store/wordStore'
@@ -113,7 +113,30 @@ const noteText = computed(() => currentWord.value ? store.getNote(currentWord.va
 
 onMounted(() => {
   buildQueue()
+  window.addEventListener('keydown', handleKeydown)
 })
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+// 快捷键：1 记得/没问题、2 模糊/记错了、3 不记得、F 熟词、N 笔记
+function handleKeydown(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+  if (reviewStage.value === 'done' || !queue.value.length) return
+  const k = e.key
+  if (reviewStage.value === 'eval') {
+    if (k === '1') selfEval('remember')
+    else if (k === '2') selfEval('blur')
+    else if (k === '3') selfEval('forget')
+    else if (k === 'f' || k === 'F') markFamiliar()
+    else if (k === 'n' || k === 'N') openNote()
+  } else if (reviewStage.value === 'reveal') {
+    if (k === '1') confirmEval(true)
+    else if (k === '2') confirmEval(false)
+    else if (k === 'f' || k === 'F') markFamiliar()
+    else if (k === 'n' || k === 'N') openNote()
+  }
+}
 
 function buildQueue() {
   // 已学但未背完 或 生疏需要复习（排除熟词）

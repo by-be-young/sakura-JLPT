@@ -15,19 +15,19 @@
         <div class="progress-bar-wrap"><div class="progress-bar-inner" :style="{ width: (learnIndex + 1) / learnWords.length * 100 + '%' }"></div></div>
       </div>
       <div class="learn-card-area">
-        <WordCard :word="learnWords[learnIndex]" />
+        <WordCard ref="wordCardRef" :word="learnWords[learnIndex]" />
         <div class="learn-note-btn">
-          <button class="btn btn-ghost btn-sm" @click="openNote(learnWords[learnIndex])">📝 添加笔记</button>
-          <button class="btn btn-ghost btn-sm" @click="markLearnFamiliar">⭐ 标记为熟词</button>
-          <button class="btn btn-ghost btn-sm" @click="showList = true">📋 查看本组单词</button>
+          <button class="btn btn-ghost btn-sm" @click="openNote(learnWords[learnIndex])" title="添加笔记 (N)">📝 添加笔记</button>
+          <button class="btn btn-ghost btn-sm" @click="markLearnFamiliar" title="标记为熟词，从本组移除 (F)">⭐ 标记为熟词</button>
+          <button class="btn btn-ghost btn-sm" @click="showList = true" title="查看本组单词">📋 查看本组单词</button>
         </div>
       </div>
       <div class="learn-actions">
-        <button v-if="learnIndex > 0" class="btn btn-ghost" @click="learnIndex--">← 上一个</button>
+        <button v-if="learnIndex > 0" class="btn btn-ghost" @click="learnIndex--" title="上一个 (A)">← 上一个</button>
         <span class="learn-spacer"></span>
-        <button class="btn btn-ghost" @click="skipToQuiz">跳过学习，直接测验 →</button>
-        <button class="btn btn-primary" @click="learnNext">
-          {{ learnIndex < learnWords.length - 1 ? '下一个 →' : '完成学习 ✓' }}
+        <button class="btn btn-ghost" @click="skipToQuiz" title="跳过学习，直接测验 (S)">跳过学习，直接测验 →</button>
+        <button class="btn btn-primary" @click="learnNext" :title="learnIndex < learnWords.length - 1 ? '下一个 (D)' : '完成学习'">
+          {{ learnIndex < learnWords.length - 1 ? '下一个 → (D)' : '完成学习 ✓' }}
         </button>
       </div>
       <div v-if="learnIndex === learnWords.length - 1" class="learn-done">
@@ -80,7 +80,7 @@
 
         <div class="quiz-card-wrap">
           <div class="quiz-familiar-row">
-            <button class="btn-familiar" @click="markQuizFamiliar" title="标记为熟词，删除该词剩余题目">⭐ 标记为熟词</button>
+            <button class="btn-familiar" @click="markQuizFamiliar" title="标记为熟词，删除该词剩余题目 (F)">⭐ 标记为熟词</button>
           </div>
           <WordQuiz :key="quizIndex" ref="wordQuizRef" :type="quizQuestions[quizIndex].type" :question="quizQuestions[quizIndex]"
             @answer="handleQuizAnswer" @note="openQuizNote" />
@@ -146,6 +146,7 @@ const quizAnswered = ref(false)
 const quizCorrect = ref(0)
 const quizFinished = ref(false)
 const wordQuizRef = ref(null)
+const wordCardRef = ref(null)
 
 const editingWord = ref(null)
 const lastCorrect = ref(false)
@@ -313,16 +314,39 @@ function openQuizNote() {
   if (w) editingWord.value = w
 }
 
-// 快捷键：L 振假名、A 上一题、D 下一题、1-4 选选项
+// 快捷键：L 振假名、A/D 上一题/下一题、1-4 选选项、F 熟词、N 笔记；学习阶段 Enter/空格 翻面、S 跳过
 function handleKeydown(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-  if (phase.value !== 'quiz' || quizFinished.value) return
-  if (e.key === 'l' || e.key === 'L') furigana.toggle()
-  else if (e.key === 'a' || e.key === 'A') prevQuizQuestion()
-  else if (e.key === 'd' || e.key === 'D') quizNext()
-  else if (['1', '2', '3', '4'].includes(e.key)) {
+  if (quizFinished.value) return
+  const k = e.key
+  // 学习阶段
+  if (phase.value === 'learn') {
+    if (k === 'Enter' || k === ' ') {
+      e.preventDefault()
+      if (wordCardRef.value) wordCardRef.value.flip()
+    } else if (k === 'a' || k === 'A' || k === 'ArrowLeft') {
+      if (learnIndex.value > 0) learnIndex.value--
+    } else if (k === 'd' || k === 'D' || k === 'ArrowRight') {
+      learnNext()
+    } else if (k === 'f' || k === 'F') {
+      markLearnFamiliar()
+    } else if (k === 'n' || k === 'N') {
+      openNote(learnWords.value[learnIndex.value])
+    } else if (k === 's' || k === 'S') {
+      skipToQuiz()
+    }
+    return
+  }
+  // 测验阶段
+  if (phase.value !== 'quiz') return
+  if (k === 'l' || k === 'L') furigana.toggle()
+  else if (k === 'a' || k === 'A' || k === 'ArrowLeft') prevQuizQuestion()
+  else if (k === 'd' || k === 'D' || k === 'ArrowRight') quizNext()
+  else if (k === 'f' || k === 'F') markQuizFamiliar()
+  else if (k === 'n' || k === 'N') openQuizNote()
+  else if (['1', '2', '3', '4'].includes(k)) {
     if (!quizAnswered.value && wordQuizRef.value) {
-      wordQuizRef.value.selectByKey(Number(e.key))
+      wordQuizRef.value.selectByKey(Number(k))
     }
   }
 }

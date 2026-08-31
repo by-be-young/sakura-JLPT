@@ -48,6 +48,9 @@ const hasNote = computed(() => store.hasNote(props.word.id))
 function flip() {
   flipped.value = !flipped.value
 }
+
+// 供父组件快捷键调用
+defineExpose({ flip, flipped })
 </script>
 
 <style scoped>
