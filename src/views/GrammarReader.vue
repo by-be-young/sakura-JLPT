@@ -48,6 +48,18 @@
                   <span v-if="b.text" class="gp-text" v-html="blockHtml(b)"></span>
                 </div>
                 <div v-else-if="b.t === 'sub'" class="gp-sub" v-html="blockHtml(b)"></div>
+                <div v-else-if="b.t === 'table'" class="gp-table">
+                  <table>
+                    <thead v-if="b.headers && b.headers.length">
+                      <tr><th v-for="(h, hi) in b.headers" :key="hi">{{ h }}</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(r, ri) in b.rows" :key="ri">
+                        <td v-for="(c, ci) in r" :key="ci">{{ c }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
                 <div v-else class="gp-line" v-html="blockHtml(b)"></div>
               </template>
             </div>
@@ -70,6 +82,18 @@
                 <span v-if="b.text" class="gp-text" v-html="blockHtml(b)"></span>
               </div>
               <div v-else-if="b.t === 'sub'" class="gp-sub" v-html="blockHtml(b)"></div>
+              <div v-else-if="b.t === 'table'" class="gp-table">
+                <table>
+                  <thead v-if="b.headers && b.headers.length">
+                    <tr><th v-for="(h, hi) in b.headers" :key="hi">{{ h }}</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(r, ri) in b.rows" :key="ri">
+                      <td v-for="(c, ci) in r" :key="ci">{{ c }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
               <div v-else class="gp-line" v-html="blockHtml(b)"></div>
             </template>
           </div>
@@ -540,6 +564,30 @@ watch(tocOpen, (v) => {
   padding-left: 4px;
 }
 .gp-line:lang(ja), .gp-text:lang(ja), .gp-title:lang(ja) { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', serif; }
+.gp-table { overflow-x: auto; margin: 2px 0 6px; }
+.gp-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.6;
+  background: #fff;
+  border: 1px solid #f3d3dd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.gp-table th, .gp-table td {
+  border: 1px solid #f3d3dd;
+  padding: 5px 9px;
+  text-align: center;
+  white-space: nowrap;
+}
+.gp-table th {
+  background: #fff0f5;
+  color: #a04a63;
+  font-weight: 700;
+}
+.gp-table td { color: #4a3a44; }
+.gp-table tbody tr:nth-child(even) { background: #fff7fa; }
 
 /* 分页阅读：单页 */
 .page-wrap {
