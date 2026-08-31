@@ -75,9 +75,10 @@
           @answer="handleQuizAnswer" @note="openQuizNote" />
       </div>
       <div v-if="quizAnswered" class="quiz-nav">
-        <button class="btn btn-primary" @click="quizNext">
+        <button v-if="!lastCorrect" class="btn btn-primary" @click="quizNext">
           {{ quizIndex < quizQuestions.length - 1 ? '下一题 →' : '查看结果' }}
         </button>
+        <span v-else class="auto-next-hint">回答正确，即将自动跳转…</span>
       </div>
       <div v-if="quizFinished" class="quiz-result">
         <div class="result-score">答对 {{ quizCorrect }} / {{ quizQuestions.length }}</div>
@@ -95,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { wordsByLevel, levels, pitchToCircle } from '../data/words'
 import { useWordStore } from '../store/wordStore'
@@ -126,6 +127,8 @@ const quizCorrect = ref(0)
 const quizFinished = ref(false)
 
 const editingWord = ref(null)
+const lastCorrect = ref(false)
+let autoTimer = null
 
 // 初始化：随机抽取未学单词
 const learnedIds = computed(() => new Set(pool.value.filter(w => store.isLearned(w.id)).map(w => w.id)))
@@ -161,21 +164,33 @@ function startLearnQuiz() {
   quizAnswered.value = false
   quizCorrect.value = 0
   quizFinished.value = false
+  lastCorrect.value = false
   phase.value = 'quiz'
   showList.value = false
 }
 
 function handleQuizAnswer(correct) {
   quizAnswered.value = true
+  lastCorrect.value = correct
   if (correct) quizCorrect.value++
   const q = quizQuestions.value[quizIndex.value]
   if (q) {
     store.recordAnswer(q.wordId, correct)
     if (correct) store.markTypeDone(q.wordId, q.type)
   }
+  // 答对：1秒后自动跳转下一题
+  if (correct) {
+    clearTimeout(autoTimer)
+    autoTimer = setTimeout(() => {
+      if (quizAnswered.value && !quizFinished.value) {
+        quizNext()
+      }
+    }, 1000)
+  }
 }
 
 function quizNext() {
+  clearTimeout(autoTimer)
   if (quizIndex.value < quizQuestions.value.length - 1) {
     quizIndex.value++
     quizAnswered.value = false
@@ -185,6 +200,7 @@ function quizNext() {
 }
 
 function retryQuiz() {
+  clearTimeout(autoTimer)
   const wordIds = [...new Set(quizQuestions.value.map(q => q.wordId))]
   const words2 = wordIds.map(id => pool.value.find(w => w.id === id)).filter(Boolean)
   quizQuestions.value = buildQuizRound(words2, pool.value, (id) => store.doneTypes(id))
@@ -192,6 +208,7 @@ function retryQuiz() {
   quizAnswered.value = false
   quizCorrect.value = 0
   quizFinished.value = false
+  lastCorrect.value = false
 }
 
 function openNote(w) {
@@ -204,6 +221,8 @@ function openQuizNote() {
   const w = pool.value.find(x => x.id === q.wordId)
   if (w) editingWord.value = w
 }
+
+onUnmounted(() => clearTimeout(autoTimer))
 </script>
 
 <style scoped>
@@ -337,6 +356,19 @@ function openQuizNote() {
   font-weight: 600;
 }
 .quiz-nav { margin-top: 16px; text-align: center; }
+.auto-next-hint {
+  display: inline-block;
+  font-size: 14px;
+  color: #2d8a3e;
+  background: #eefbf0;
+  border-radius: 20px;
+  padding: 8px 20px;
+  animation: pulseHint 1s ease-in-out infinite;
+}
+@keyframes pulseHint {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 .quiz-result {
   text-align: center;
   margin-top: 20px;

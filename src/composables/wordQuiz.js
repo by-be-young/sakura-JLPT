@@ -172,6 +172,11 @@ export function buildQuizRound(words, pool, getDoneTypes) {
       }
     }
   }
+  // 打乱题目顺序
+  for (let i = questions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[questions[i], questions[j]] = [questions[j], questions[i]]
+  }
   return questions
 }
 
