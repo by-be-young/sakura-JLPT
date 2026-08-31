@@ -341,6 +341,7 @@ function syncProgress() {
   const p = points.value[currentIndex.value]
   if (p) {
     currentPointId.value = p.id
+    store.markLearned(p.id)
     store.setLastPoint(level.value.id, p.id)
   }
 }
@@ -351,6 +352,7 @@ function jumpTo(pid) {
   if (idx < 0) return
   currentIndex.value = idx
   currentPointId.value = pid
+  store.markLearned(pid)
   store.setLastPoint(level.value.id, pid)
   if (mode.value === 'sequential') {
     nextTick(() => {
@@ -463,6 +465,7 @@ function onScroll() {
       if (idx >= 0 && idx !== currentIndex.value) {
         currentIndex.value = idx
         currentPointId.value = pid
+        store.markLearned(pid)
         store.setLastPoint(level.value.id, pid)
       }
     }
@@ -489,6 +492,7 @@ function restore() {
   currentIndex.value = idx >= 0 ? idx : 0
   const p = points.value[currentIndex.value]
   currentPointId.value = p ? p.id : ''
+  if (p) store.markLearned(p.id)
   nextTick(() => {
     if (mode.value === 'sequential' && p) {
       const el = document.getElementById('gp-' + p.id)

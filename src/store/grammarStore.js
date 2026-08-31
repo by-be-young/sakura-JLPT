@@ -3,15 +3,17 @@ import { reactive, watch } from 'vue'
 const STORAGE_KEY = 'sakura_grammar_state_v1'
 
 function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch (e) {}
-  return {
+  const def = {
     marked: {},      // pointId -> true（在目录中对某一点做的标记）
+    learned: {},     // pointId -> true（已阅读/学习过的点）
     lastPoint: {},   // levelId -> pointId（各章最近读到的位置）
     mode: {},        // levelId -> 'sequential' | 'paged'
   }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return { ...def, ...JSON.parse(raw) } // 合并默认值，兼容旧版本数据
+  } catch (e) {}
+  return def
 }
 
 const state = reactive(loadState())
@@ -41,6 +43,17 @@ export function useGrammarStore() {
     return points.filter(p => state.marked[p.id]).length
   }
 
+  // ===== 学习进度 =====
+  // 记录某一点已被阅读/学习过
+  function markLearned(pid) {
+    if (pid) state.learned[pid] = true
+  }
+
+  // 统计某章已学点数（传入该章 points 数组）
+  function learnedCountOf(points) {
+    return points.filter(p => state.learned[p.id]).length
+  }
+
   // ===== 阅读进度 =====
   function setLastPoint(levelId, pid) {
     if (pid) state.lastPoint[levelId] = pid
@@ -61,6 +74,7 @@ export function useGrammarStore() {
 
   function resetAll() {
     state.marked = {}
+    state.learned = {}
     state.lastPoint = {}
     state.mode = {}
   }
@@ -70,6 +84,8 @@ export function useGrammarStore() {
     isMarked,
     toggleMark,
     markedCountOf,
+    markLearned,
+    learnedCountOf,
     setLastPoint,
     getLastPoint,
     getMode,

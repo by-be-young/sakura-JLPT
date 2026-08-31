@@ -2,7 +2,7 @@
   <div class="container study-page">
     <div class="study-header">
       <button class="btn btn-ghost btn-sm" @click="$router.push('/')">← 返回</button>
-      <h2 class="page-title">🌸 学习 · 蓝宝书文法</h2>
+      <h2 class="page-title">🌸 文法 · 蓝宝书</h2>
       <div class="header-spacer"></div>
     </div>
 
@@ -18,13 +18,15 @@
         <div class="chapter-name">{{ lv.title }}</div>
         <div class="chapter-meta">
           <span v-if="lv.unitCount" class="meta-item">📚 {{ lv.unitCount }} 个单元</span>
+          <span class="meta-item">{{ lv.pointCount }} 点</span>
+          <span v-if="lv.learnedCount" class="meta-item learned">📖 已学 {{ lv.learnedCount }}</span>
           <span v-if="lv.markedCount" class="meta-item marked">★ 已标记 {{ lv.markedCount }}</span>
         </div>
         <div class="chapter-progress">
           <div class="progress-track">
-            <div class="progress-fill" :style="{ width: lv.markedPercent + '%' }"></div>
+            <div class="progress-fill" :style="{ width: lv.learnedPercent + '%' }"></div>
           </div>
-          <span class="progress-text">{{ lv.markedPercent }}%</span>
+          <span class="progress-text">{{ lv.learnedPercent }}%</span>
         </div>
       </div>
     </div>
@@ -57,13 +59,16 @@ const levelCards = computed(() => {
   return grammarLevels.map(lv => {
     const points = lv.units.flatMap(u => u.points)
     const markedCount = store.markedCountOf(points)
+    const learnedCount = store.learnedCountOf(points)
     return {
       id: lv.id,
       title: lv.name.replace(' 文法详解（整理版）', '').replace('文法详解（整理版）', ''),
       unitCount: lv.units.length,
       pointCount: points.length,
       markedCount,
+      learnedCount,
       markedPercent: points.length ? Math.round(markedCount / points.length * 100) : 0,
+      learnedPercent: points.length ? Math.round(learnedCount / points.length * 100) : 0,
     }
   })
 })
@@ -145,6 +150,7 @@ function confirmReset() {
 .chapter-name { font-size: 17px; font-weight: 700; color: #7a4b55; margin-bottom: 8px; }
 .chapter-meta { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .meta-item { font-size: 12px; color: #b98a94; }
+.meta-item.learned { color: #5b9d7a; }
 .meta-item.marked { color: #e08a00; }
 .chapter-progress { display: flex; align-items: center; gap: 10px; }
 .progress-track {
