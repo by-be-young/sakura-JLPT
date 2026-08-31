@@ -181,7 +181,7 @@ function select(i) {
   font-weight: 600;
   line-height: 1.8;
 }
-.blank-line {
+.prompt-sentence :deep(.blank-line) {
   display: inline-block;
   min-width: 72px;
   border-bottom: 3px solid #e884a0;
