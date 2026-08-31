@@ -42,7 +42,9 @@
               <button class="mark-btn" :class="{ active: isMarked(p.id) }" @click="toggleMark(p.id)" title="在目录中标记/取消此点">★</button>
             </div>
             <div class="gp-body">
-              <template v-for="(b, i) in p.blocks" :key="i">
+              <template v-for="(g, gi) in usageGroups(p.blocks)" :key="gi">
+                <div class="gp-usage" :class="{ 'gp-usage--boxed': g.box }">
+                <template v-for="(b, i) in g.blocks" :key="i">
                 <div v-if="b.t === 'label'" class="gp-row">
                   <span class="gp-label">{{ b.label }}</span>
                   <span v-if="b.text" class="gp-text" v-html="blockHtml(b)"></span>
@@ -60,7 +62,13 @@
                     </tbody>
                   </table>
                 </div>
-                <div v-else class="gp-line" v-html="blockHtml(b)"></div>
+                <template v-else-if="b.t === 'line' && b.isEx">
+          <div class="gp-line" :class="{ 'gp-line--ex-dash': !b.isExLast && !b._cnHtml }" v-html="b._jpHtml"></div>
+          <div v-if="b._cnHtml" class="gp-line gp-tr" :class="{ 'gp-line--ex-dash': !b.isExLast }" v-html="b._cnHtml"></div>
+        </template>
+        <div v-else-if="b.t === 'line'" class="gp-line" v-html="blockHtml(b)"></div>
+                </template>
+                </div>
               </template>
             </div>
           </section>
@@ -76,7 +84,9 @@
             <button class="mark-btn" :class="{ active: isMarked(currentPoint.id) }" @click="toggleMark(currentPoint.id)" title="在目录中标记/取消此点">★</button>
           </div>
           <div class="gp-body">
-            <template v-for="(b, i) in currentPoint.blocks" :key="i">
+            <template v-for="(g, gi) in usageGroups(currentPoint.blocks)" :key="gi">
+              <div class="gp-usage" :class="{ 'gp-usage--boxed': g.box }">
+              <template v-for="(b, i) in g.blocks" :key="i">
               <div v-if="b.t === 'label'" class="gp-row">
                 <span class="gp-label">{{ b.label }}</span>
                 <span v-if="b.text" class="gp-text" v-html="blockHtml(b)"></span>
@@ -94,7 +104,13 @@
                   </tbody>
                 </table>
               </div>
-              <div v-else class="gp-line" v-html="blockHtml(b)"></div>
+              <template v-else-if="b.t === 'line' && b.isEx">
+          <div class="gp-line" :class="{ 'gp-line--ex-dash': !b.isExLast && !b._cnHtml }" v-html="b._jpHtml"></div>
+          <div v-if="b._cnHtml" class="gp-line gp-tr" :class="{ 'gp-line--ex-dash': !b.isExLast }" v-html="b._cnHtml"></div>
+        </template>
+        <div v-else-if="b.t === 'line'" class="gp-line" v-html="blockHtml(b)"></div>
+              </template>
+              </div>
             </template>
           </div>
         </div>
@@ -103,7 +119,7 @@
     </div>
 
     <!-- 侧边目录 -->
-    <div v-if="tocOpen" class="toc-backdrop" @click="tocOpen = false"></div>
+    <div v-if="tocOpen" class="toc-backdrop" @click="tocOpen = false" @wheel="onTocBackdropWheel"></div>
     <aside v-if="tocOpen" class="toc">
       <div class="toc-header">
         <span class="toc-title">目录 · {{ level?.name.replace(' 文法详解（整理版）', '') }}</span>
@@ -176,10 +192,132 @@ function fmt(s) {
   return h
 }
 
+const KANA_RE = /[\u3040-\u30ff]/
+
+// 例句中日文 / 中文译文的分隔：取第一个“/”之后无假名的位置作为日/中边界
+function splitTrans(text) {
+  let idx = text.indexOf('/')
+  while (idx >= 0) {
+    const after = text.slice(idx + 1)
+    if (!KANA_RE.test(after)) return { jp: text.slice(0, idx), cn: after }
+    idx = text.indexOf('/', idx + 1)
+  }
+  return { jp: text, cn: '' }
+}
+
+// 输出一段文本的 HTML（不包含翻译拆分）：
+// 1) 圈号分点换行（①…②… -> 每点一行）
+// 2) 【xx年真题】等标记置灰
+function richHtml(raw) {
+  if (!raw) return ''
+  let html = raw
+  html = html.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, (m, c, off) => off === 0 ? m : '<br>' + c)
+  html = html.replace(/【([^】]+)】/g, '<span class="gp-tag">【$1】</span>')
+  return html
+}
+
 // 输出某一块的 HTML：振假名开启且有 furi 数据时直接渲染 ruby，否则走普通格式化
 function blockHtml(b) {
-  if (furigana.isEnabled.value && b.furi) return b.furi
-  return fmt(b.text)
+  const raw = furigana.isEnabled.value && b.furi ? b.furi : fmt(b.text)
+  return richHtml(raw)
+}
+
+// 在 furi（ruby HTML）中定位第 occurrence 个“文本 /”：跳过 </rp>、</ruby> 等闭合标签内的 /
+function findTextSlash(html, occurrence) {
+  let count = 0
+  for (let i = 0; i < html.length; i++) {
+    if (html[i] === '/' && html[i - 1] !== '<') {
+      count++
+      if (count === occurrence) return i
+    }
+  }
+  return -1
+}
+
+// 渲染例句的“日文 / 译文”两部分 HTML（仅例文行）：译文用独立 div 呈现，避免在 v-html 中拼接 br/span
+function exParts(b) {
+  const useFuri = furigana.isEnabled.value && b.furi
+  const base = b.text || ''
+  const { jp, cn } = splitTrans(base)
+  if (!cn) return { jpHtml: blockHtml(b), cnHtml: '' }
+  let jpHtml, cnHtml
+  if (useFuri) {
+    // 在 furi 版本上定位与原文相同的边界“/”（kuroshiro 不改变文本“/”的数量与顺序）
+    const jpCount = (jp.match(/\//g) || []).length
+    const pos = findTextSlash(b.furi, jpCount + 1)
+    if (pos < 0) return { jpHtml: blockHtml(b), cnHtml: '' }
+    jpHtml = richHtml(b.furi.slice(0, pos))
+    cnHtml = richHtml(b.furi.slice(pos + 1))
+  } else {
+    jpHtml = richHtml(fmt(jp))
+    cnHtml = richHtml(fmt(cn))
+  }
+  return { jpHtml, cnHtml }
+}
+
+// 按用法分组：带圈号的标签（说明①、例文②…）按圈号分组，(N) 子标题归属其后的组；
+// 一个点内有 ≥2 组时，每组用大粉框包裹，实现不同用法之间的隔离；同时做组内例句拆分装饰。
+function usageGroups(blocks) {
+  const groups = []
+  let cur = null
+  let curKey = null
+  let pendingSub = null
+  for (const b of blocks) {
+    if (b.t === 'sub') {
+      pendingSub = b
+      continue
+    }
+    let key
+    if (b.t === 'label') {
+      const m = /[①-⑩]/.exec(b.label || '')
+      key = m ? m[0] : 'main'
+    } else {
+      key = curKey
+    }
+    if (!cur || key !== curKey) {
+      cur = { key, blocks: [] }
+      groups.push(cur)
+      curKey = key
+      if (pendingSub) { cur.blocks.push(pendingSub); pendingSub = null }
+    }
+    cur.blocks.push(b)
+  }
+  if (pendingSub) {
+    if (cur) cur.blocks.push(pendingSub)
+    else groups.push({ key: 'sub', blocks: [pendingSub] })
+  }
+  const boxed = groups.length >= 2
+  for (const g of groups) {
+    g.box = boxed && (g.key !== 'main' || (g.blocks[0] && g.blocks[0].t === 'sub'))
+    let inExample = false
+    let run = 0
+    const res = []
+    for (const b of g.blocks) {
+      const m = { ...b }
+      if (b.t === 'label') {
+        inExample = String(b.label || '').startsWith('例文')
+        run = 0
+      } else if (b.t === 'line') {
+        if (inExample) {
+          m.isEx = true
+          run++
+          const parts = exParts(b)
+          m._jpHtml = parts.jpHtml
+          m._cnHtml = parts.cnHtml
+        }
+      } else {
+        run = 0
+      }
+      res.push(m)
+    }
+    for (let i = res.length - 1; i >= 0; i--) {
+      if (res[i].isEx && (i === res.length - 1 || !res[i + 1].isEx)) {
+        res[i].isExLast = true
+      }
+    }
+    g.blocks = res
+  }
+  return groups
 }
 
 function isMarked(pid) { return store.isMarked(pid) }
@@ -201,7 +339,10 @@ function prevPage() {
 
 function syncProgress() {
   const p = points.value[currentIndex.value]
-  if (p) store.setLastPoint(level.value.id, p.id)
+  if (p) {
+    currentPointId.value = p.id
+    store.setLastPoint(level.value.id, p.id)
+  }
 }
 
 // ===== 跳转到某一点 =====
@@ -293,6 +434,13 @@ function onPointerUp(e) {
   else if (x < w * 0.38) prevPage()
 }
 
+// ===== 目录背景滚轮透传：顺序阅读时开目录也能滚动正文 =====
+function onTocBackdropWheel(e) {
+  if (mode.value === 'sequential' && !e.ctrlKey) {
+    window.scrollBy(0, e.deltaY)
+  }
+}
+
 // ===== 顺序阅读：滚动定位当前点 =====
 let scTicking = false
 function onScroll() {
@@ -302,8 +450,8 @@ function onScroll() {
     scTicking = false
     const secs = contentEl.value ? contentEl.value.querySelectorAll('[data-pid]') : []
     let cur = 0
-    const top = contentEl.value ? contentEl.value.getBoundingClientRect().top : 0
-    const threshold = top + 160
+    // 正文为整页滚动：以视口顶部向下 160px 作为“当前阅读位置”参考线
+    const threshold = 160
     for (let i = 0; i < secs.length; i++) {
       const r = secs[i].getBoundingClientRect()
       if (r.top <= threshold) cur = i
@@ -353,17 +501,24 @@ watch(levelId, () => { restore() })
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('scroll', onScroll, { passive: true })
   restore()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('scroll', onScroll)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('pointerup', onPointerUp)
 })
 
 watch(tocOpen, (v) => {
   if (v) nextTick(scrollTocToCurrent)
+})
+
+// 目录打开状态下，翻页 / 滚动导致当前点变化时，让目录跟随滚动到当前项
+watch(currentPointId, () => {
+  if (tocOpen.value) nextTick(scrollTocToCurrent)
 })
 </script>
 
@@ -540,16 +695,24 @@ watch(tocOpen, (v) => {
   flex-shrink: 0;
   background: #ffe9f0;
   color: #c2556f;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   padding: 2px 10px;
   border-radius: 10px;
   line-height: 1.7;
 }
-.gp-text { font-size: 14.5px; color: #5c3b47; line-height: 1.8; }
+/* 用法分组：同一用法（说明①+例文①…）框进同一个大粉框，隔离不同用法 */
+.gp-usage { display: flex; flex-direction: column; gap: 6px; }
+.gp-usage--boxed {
+  border: 2px solid #f79ab4;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #fffafd;
+}
+.gp-text { font-size: 16px; color: #5c3b47; line-height: 1.8; }
 .gp-sub {
   margin-top: 4px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #b36a5e;
   background: #fff3f6;
@@ -558,17 +721,23 @@ watch(tocOpen, (v) => {
   border-radius: 0 8px 8px 0;
 }
 .gp-line {
-  font-size: 14.5px;
+  font-size: 16px;
   color: #4a3a44;
   line-height: 1.9;
   padding-left: 4px;
 }
+/* 例句之间用粉色虚线隔开（最后一条不显示） */
+.gp-line--ex-dash { border-bottom: 1.5px dashed #f2a6bf; padding-bottom: 6px; margin-bottom: 2px; }
+/* 【xx年真题】等标记置灰（v-html 注入，需 :deep） */
+:deep(.gp-tag) { color: #a0a0a6; }
+/* 例句中的中文译文：独占一行 + 略不同颜色 */
+.gp-tr { color: #9a6240; }
 .gp-line:lang(ja), .gp-text:lang(ja), .gp-title:lang(ja) { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', serif; }
 .gp-table { overflow-x: auto; margin: 2px 0 6px; }
 .gp-table table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 14.5px;
   line-height: 1.6;
   background: #fff;
   border: 1px solid #f3d3dd;

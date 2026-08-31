@@ -59,11 +59,13 @@ const payload = raw.split('export const grammarLevels = ')[1].trim().replace(/;\
 const levels = JSON.parse(payload)
 
 let total = 0, withRuby = 0
+const TARGETS = new Set(['N1', 'N2', 'N3', 'N4', 'N5'])
 for (const lv of levels) {
-  if (lv.id !== 'N5') continue
+  if (!TARGETS.has(lv.id)) continue
   for (const u of lv.units) {
     for (const p of u.points) {
       let cur = null // 当前标签基名（不含圈号数字）
+      const pointHasLabel = p.blocks.some(b => b.t === 'label')
       for (const b of p.blocks) {
         if (b.t === 'label') {
           cur = baseLabel(b.label)
@@ -72,7 +74,9 @@ for (const lv of levels) {
         }
         if (b.t === 'table' || b.t === 'sub') { delete b.furi; continue }
         const t = (b.text || '').replace(/^△/, '')
-        if (!t || !hasKana(t) || (cur && (SKIP.has(cur) || cur.includes('变形规则')))) {
+        // 无标签上下文时，仅「整点无标签」的纯日文点（如 N5 寒暄语）默认注音，其余跳过
+        const noContext = cur === null && pointHasLabel
+        if (!t || !hasKana(t) || noContext || (cur && (SKIP.has(cur) || cur.includes('变形规则')))) {
           delete b.furi
           continue
         }
@@ -90,9 +94,9 @@ for (const lv of levels) {
   }
 }
 
-const out = "// 自动生成：由 scripts/gen_grammar_n5.py 从《蓝宝书文法详解.docx》解析 N5，N4~N1 由旧脚本生成，请勿手改。\n"
+const out = "// 自动生成：N5/N4 由 scripts/gen_grammar_n5.py 与 gen_grammar_n4.py 从《蓝宝书文法详解.docx》《蓝宝书n4.docx》解析，N3~N1 由旧脚本生成，请勿手改。\n"
   + "// 结构：levels[] -> units[] -> points[] -> blocks[]（furi 为开启振假名时的 ruby 版本）\n"
   + "export const grammarLevels = " + JSON.stringify(levels, null, 1) + ";\n"
 fs.writeFileSync(FILE, out, 'utf-8')
-console.log(`N5 有假名且需注音的行: ${total}，注音后含 ruby 的: ${withRuby}`)
+console.log(`N1~N5 有假名且需注音的行: ${total}，注音后含 ruby 的: ${withRuby}`)
 console.log('文件大小', fs.statSync(FILE).size, 'bytes')
