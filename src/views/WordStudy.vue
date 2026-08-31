@@ -24,6 +24,7 @@
       <div class="learn-actions">
         <button v-if="learnIndex > 0" class="btn btn-ghost" @click="learnIndex--">← 上一个</button>
         <span class="learn-spacer"></span>
+        <button class="btn btn-ghost" @click="skipToQuiz">跳过学习，直接测验 →</button>
         <button class="btn btn-primary" @click="learnNext">
           {{ learnIndex < learnWords.length - 1 ? '下一个 →' : '完成学习 ✓' }}
         </button>
@@ -167,6 +168,14 @@ function startLearnQuiz() {
   lastCorrect.value = false
   phase.value = 'quiz'
   showList.value = false
+}
+
+// 跳过学习：本组所有词标记为已学，直接进入测验
+function skipToQuiz() {
+  for (const w of learnWords.value) {
+    store.markLearned(w.id)
+  }
+  startLearnQuiz()
 }
 
 function handleQuizAnswer(correct) {
