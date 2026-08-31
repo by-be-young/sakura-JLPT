@@ -1,10 +1,14 @@
 // 背词题型生成逻辑
-// 支持5种题型：
+// 支持7种题型：
 // 1. kana2kanji  看假名选汉字（需有汉字）
 // 2. kanji2kana  看汉字选假名（需有汉字）
 // 3. word2meaning 看单词选释义
 // 4. meaning2word 看释义选单词
 // 5. fillblank    例句挖空选单词（需例句包含目标词）
+// 6. synonym      看单词选近义词（需配置近义词）
+// 7. antonym      看单词选反义词（需配置反义词）
+
+import { wordRelationsOf } from '../data/words'
 
 // 判断单词是否真的含汉字（排除kanji字段为纯假名的情况）
 function hasRealKanji(word) {
@@ -23,7 +27,45 @@ export function availableTypes(word) {
   if (word.examples && word.examples.some(e => e.jp && (word.kanji ? e.jp.includes(word.kanji) : e.jp.includes(word.kana)))) {
     types.push('fillblank')
   }
+  const rel = wordRelationsOf(word.id)
+  if (rel.syn.length) types.push('synonym')
+  if (rel.ant.length) types.push('antonym')
   return types
+}
+
+// 收集词库中所有近反义词条目（用于近反义词题的干扰项池）
+function buildRelationPool(pool, excludeId) {
+  const poolEntries = []
+  const seen = new Set()
+  for (const w of pool) {
+    if (w.id === excludeId) continue
+    const rel = wordRelationsOf(w.id)
+    for (const item of [...rel.syn, ...rel.ant]) {
+      const key = item.t
+      if (!seen.has(key)) {
+        seen.add(key)
+        poolEntries.push(item)
+      }
+    }
+  }
+  return poolEntries
+}
+
+// 近反义词题：正确项 = 目标词的近/反义条目；干扰项从其他词的近反义条目池随机抽
+function buildRelationQuestion(target, pool, kind) {
+  const rel = wordRelationsOf(target.id)
+  const answers = kind === 'syn' ? rel.syn : rel.ant
+  if (!answers.length) return null
+  const correct = answers[Math.floor(Math.random() * answers.length)]
+  const relPool = buildRelationPool(pool, target.id)
+  const { options, correctIndex } = buildOptions(relPool, correct, r => r.t)
+  return {
+    type: kind === 'syn' ? 'synonym' : 'antonym',
+    prompt: target,
+    options, // 每条为 { t: 表记, y: 读音 }
+    correctIndex,
+    answerText: correct.y ? `${correct.t}（${correct.y}）` : correct.t,
+  }
 }
 
 // 从词库中取"目标词附近的单词"作为干扰项候选池
@@ -157,6 +199,12 @@ export function generateQuestion(target, pool, type) {
         correctIndex,
         answerText: target.kanji || target.kana,
       }
+    }
+    case 'synonym': {
+      return buildRelationQuestion(target, pool, 'syn')
+    }
+    case 'antonym': {
+      return buildRelationQuestion(target, pool, 'ant')
     }
     default:
       return null

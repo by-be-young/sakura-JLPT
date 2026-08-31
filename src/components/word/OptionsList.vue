@@ -29,6 +29,10 @@ function hasRealKanji(s) {
 
 function optText(opt) {
   if (typeof opt === 'string') return opt
+  // 近反义词条目 { t: 表记, y: 读音 }
+  if (opt.t !== undefined) {
+    return opt.y ? `${opt.t} <small class="rel-read">${opt.y}</small>` : opt.t
+  }
   // 开启振假名且词有汉字时，显示汉字振假名（ruby HTML）
   if (furigana.isEnabled.value && opt.kanjiFurigana && hasRealKanji(opt.kanji)) {
     return opt.kanjiFurigana
@@ -133,6 +137,12 @@ function select(i) {
 .option-item.correct .option-num { background: #7ed58a; color: #fff; }
 .option-item.wrong .option-num { background: #f79b9b; color: #fff; }
 .option-text { flex: 1; }
+.option-text :deep(.rel-read) {
+  font-size: 0.72em;
+  color: #e884a0;
+  margin-left: 5px;
+  font-weight: 500;
+}
 .option-text :deep(ruby) {
   ruby-position: over;
 }
