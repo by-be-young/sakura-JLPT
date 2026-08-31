@@ -15,7 +15,7 @@
         <div class="progress-bar-wrap"><div class="progress-bar-inner" :style="{ width: (learnIndex + 1) / learnWords.length * 100 + '%' }"></div></div>
       </div>
       <div class="learn-card-area">
-        <WordCard ref="wordCardRef" :word="learnWords[learnIndex]" />
+        <WordCard ref="wordCardRef" :key="learnWords[learnIndex].id" :word="learnWords[learnIndex]" />
         <div class="learn-note-btn">
           <button class="btn btn-ghost btn-sm" @click="openNote(learnWords[learnIndex])" title="添加笔记 (N)">📝 添加笔记</button>
           <button class="btn btn-ghost btn-sm" @click="markLearnFamiliar" title="标记为熟词，从本组移除 (F)">⭐ 标记为熟词</button>
