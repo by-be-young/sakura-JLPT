@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Quiz from '../views/Quiz.vue'
-import Favorites from '../views/Favorites.vue'
 import Result from '../views/Result.vue'
 import My from '../views/My.vue'
 import UnitSelect from '../views/UnitSelect.vue'
@@ -23,7 +22,7 @@ const routes = [
   { path: '/my', name: 'my', component: My },
   { path: '/stats', redirect: '/my' },
   { path: '/wrong', redirect: { name: 'my', query: { tab: 'wrong' } } },
-  { path: '/favorites', name: 'favorites', component: Favorites },
+  { path: '/favorites', redirect: { name: 'my', query: { tab: 'favorites' } } },
   { path: '/result', name: 'result', component: Result },
 ]
 

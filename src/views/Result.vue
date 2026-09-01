@@ -35,12 +35,14 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { questions } from '../data/questions'
+import { levelQuestionsAll, levelMockQuestions } from '../data/questions'
 import { useStore } from '../store/useStore'
+import { useLevel } from '../store/levelStore'
 
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
+const { level } = useLevel()
 
 const fromMode = computed(() => route.query.from || '')
 const mockId = computed(() => Number(route.query.mock) || 0)
@@ -51,17 +53,17 @@ const modeLabel = computed(() => {
   return map[fromMode.value] || '练习'
 })
 
-// 本次会话的题目范围
+// 本次会话的题目范围（按当前级别）
 const sessionQuestions = computed(() => {
   if (fromMode.value === 'mock') {
-    return questions.filter(q => q.mock === mockId.value)
+    return levelMockQuestions(level.value, mockId.value)
   }
-  return questions
+  return levelQuestionsAll(level.value)
 })
 
 const total = computed(() => sessionQuestions.value.length)
 const correct = computed(() => sessionQuestions.value.filter(q => {
-  const a = store.getAnswer(q.id)
+  const a = store.getAnswer(q.key)
   return a && a.correct
 }).length)
 const wrong = computed(() => total.value - correct.value)

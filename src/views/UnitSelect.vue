@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="list-header">
-      <h2>📚 单元练习</h2>
+      <h2>📚 {{ level }} 单元练习</h2>
       <button class="btn btn-ghost btn-sm" @click="$router.push('/')">← 返回首页</button>
     </div>
 
@@ -48,23 +48,27 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { questions } from '../data/questions'
+import { levelQuestions } from '../data/questions'
 import { useStore } from '../store/useStore'
+import { useLevel } from '../store/levelStore'
 
 const router = useRouter()
 const store = useStore()
+const { level } = useLevel()
+
+const levelQuestionsList = computed(() => levelQuestions(level.value))
 
 const unitList = computed(() => {
-  const unitIds = [...new Set(questions.filter(q => q.unit !== undefined).map(q => q.unit))]
+  const unitIds = [...new Set(levelQuestionsList.value.filter(q => q.unit !== undefined).map(q => q.unit))]
     .sort((a, b) => a - b)
   return unitIds.map(id => {
-    const qs = questions.filter(q => q.unit === id).sort((a, b) => a.id - b.id)
-    const answered = qs.filter(q => store.getAnswer(q.id)).length
+    const qs = levelQuestionsList.value.filter(q => q.unit === id).sort((a, b) => a.id - b.id)
+    const answered = qs.filter(q => store.getAnswer(q.key)).length
     const correct = qs.filter(q => {
-      const a = store.getAnswer(q.id)
+      const a = store.getAnswer(q.key)
       return a && a.correct
     }).length
-    const wrong = qs.filter(q => store.state.wrong.includes(q.id)).length
+    const wrong = qs.filter(q => store.state.wrong.includes(q.key)).length
     return {
       id,
       count: qs.length,
@@ -78,7 +82,7 @@ const unitList = computed(() => {
   })
 })
 
-const unassignedCount = computed(() => questions.filter(q => q.unit === undefined).length)
+const unassignedCount = computed(() => levelQuestionsList.value.filter(q => q.unit === undefined).length)
 
 function startUnit(id) {
   router.push({ name: 'quiz', params: { mode: 'unit' }, query: { unit: id } })

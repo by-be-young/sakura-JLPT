@@ -14,10 +14,10 @@
       <button class="btn btn-primary btn-sm" @click="jumpTo">跳转</button>
     </div>
     <div class="picker-grid">
-      <div v-for="q in questions" :key="q.id"
+      <div v-for="q in questions" :key="q.key"
         class="picker-cell"
-        :class="cellClass(q.id)"
-        :title="cellTitle(q.id)"
+        :class="cellClass(q.key)"
+        :title="cellTitle(q.key)"
         @click="$emit('select', q.id)">
         {{ q.id }}
       </div>
@@ -40,16 +40,16 @@ const jumpNum = ref(null)
 const minId = computed(() => Math.min(...props.questions.map(q => q.id)))
 const maxId = computed(() => Math.max(...props.questions.map(q => q.id)))
 
-function cellClass(id) {
-  const a = store.getAnswer(id)
+function cellClass(key) {
+  const a = store.getAnswer(key)
   if (!a) return 'unseen'
   return a.correct ? 'correct' : 'wrong'
 }
 
-function cellTitle(id) {
-  const a = store.getAnswer(id)
-  if (!a) return `第${id}题 · 未做`
-  return `第${id}题 · ${a.correct ? '答对' : '答错'}`
+function cellTitle(key) {
+  const a = store.getAnswer(key)
+  if (!a) return `第${key.split(':')[1]}题 · 未做`
+  return `第${key.split(':')[1]}题 · ${a.correct ? '答对' : '答错'}`
 }
 
 function jumpTo() {

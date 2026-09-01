@@ -115,8 +115,9 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { wordsByLevel, levels, pitchToCircle } from '../data/words'
+import { wordsByLevel, pitchToCircle } from '../data/words'
 import { useWordStore } from '../store/wordStore'
+import { useLevel } from '../store/levelStore'
 import { useFurigana } from '../composables/useFurigana'
 import { buildQuizRound, getNewWords, availableTypes } from '../composables/wordQuiz'
 import WordCard from '../components/word/WordCard.vue'
@@ -127,10 +128,15 @@ const route = useRoute()
 const router = useRouter()
 const store = useWordStore()
 const furigana = useFurigana()
+const { level: globalLevel, APP_LEVELS } = useLevel()
 
-const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N5')
-if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
-const levelName = computed(() => (levels.find(l => l.id === level.value) || {}).name || level.value)
+// 有效等级：优先取全局同步等级（深链带 ?level= 时兼容旧入口）
+const level = computed(() => {
+  const q = route.query.level
+  if (q && APP_LEVELS.some(l => l.id === q)) return q
+  return globalLevel.value
+})
+const levelName = computed(() => (APP_LEVELS.find(l => l.id === level.value) || {}).name || level.value)
 const pool = computed(() => wordsByLevel(level.value))
 
 const phase = ref('learn') // 'learn' | 'quiz'
@@ -168,10 +174,8 @@ function initLearn() {
   expandedIndex.value = -1
 }
 initLearn()
-// 等级变化时重建（组件复用场景）
-watch(() => route.query.level, () => {
-  if (route.query.level) level.value = route.query.level
-  if (level.value === 'N4N5') level.value = 'N5'
+// 等级变化时重建（全局同步或深链切换）
+watch(level, () => {
   learnIndex.value = 0
   quizIndex.value = 0
   quizFinished.value = false

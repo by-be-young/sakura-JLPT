@@ -9,9 +9,9 @@
 
     <!-- 等级选择 -->
     <div class="level-tabs">
-      <button v-for="lv in levels" :key="lv.id" class="level-tab"
+      <button v-for="lv in APP_LEVELS" :key="lv.id" class="level-tab"
         :class="{ active: level === lv.id }"
-        @click="selectLevel(lv.id)">
+        @click="setLevel(lv.id)">
         {{ lv.name }}
       </button>
     </div>
@@ -98,16 +98,16 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { wordsByLevel, levels } from '../data/words'
+import { wordsByLevel } from '../data/words'
 import { useWordStore } from '../store/wordStore'
+import { useLevel } from '../store/levelStore'
 import { availableTypes } from '../composables/wordQuiz'
 import WordNoteModal from '../components/word/WordNoteModal.vue'
 
 const router = useRouter()
 const store = useWordStore()
+const { level, setLevel, APP_LEVELS } = useLevel()
 
-const level = ref(localStorage.getItem('sakura_word_level') || 'N5')
-if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
 const pool = computed(() => wordsByLevel(level.value))
 
 const learnedCount = computed(() => pool.value.filter(w => store.isLearned(w.id)).length)
@@ -120,19 +120,12 @@ const noteWords = computed(() => pool.value.filter(w => store.hasNote(w.id)))
 const showNotes = ref(false)
 const editingWord = ref(null)
 
-function selectLevel(lv) {
-  level.value = lv
-  localStorage.setItem('sakura_word_level', lv)
-}
-
 function goLearn() {
-  localStorage.setItem('sakura_word_level', level.value)
   router.push({ path: '/words/learn', query: { level: level.value } })
 }
 
 function goReview() {
   if (dueCount.value === 0) return
-  localStorage.setItem('sakura_word_level', level.value)
   router.push({ path: '/words/review', query: { level: level.value } })
 }
 

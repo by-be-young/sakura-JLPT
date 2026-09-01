@@ -44,16 +44,16 @@
         </button>
 
         <Transition :name="slideDir" mode="out-in">
-        <div class="card quiz-card" :key="currentIndex">
+        <div class="card quiz-card" :key="currentQuestion.key">
           <div class="quiz-meta" style="margin-bottom:12px;">
-            <span class="qid-tag">No.{{ currentQuestion.id }}</span>
+            <span class="qid-tag">{{ level }} No.{{ currentQuestion.id }}</span>
             <span v-if="mode === 'mock'" class="mock-tag">第{{ mockId }}回模拟</span>
             <span v-else-if="mode === 'unit'" class="mock-tag" style="background:#fef0e6;color:#c47a3a;">第{{ unitId }}单元</span>
             <span v-else class="mock-tag" style="background:#e8f4fd;color:#3a7ca5;">{{ modeLabel }}</span>
             <span v-if="currentQuestion.type" class="type-tag" :class="'type-' + currentQuestion.type">{{ currentQuestion.type }}</span>
-            <span v-if="store.getAnswer(currentQuestion.id)" class="status-tag"
-              :class="store.getAnswer(currentQuestion.id).correct ? 'status-correct' : 'status-wrong'">
-              {{ store.getAnswer(currentQuestion.id).correct ? '已答对' : '曾答错' }}
+            <span v-if="store.getAnswer(currentQuestion.key)" class="status-tag"
+              :class="store.getAnswer(currentQuestion.key).correct ? 'status-correct' : 'status-wrong'">
+              {{ store.getAnswer(currentQuestion.key).correct ? '已答对' : '曾答错' }}
             </span>
             <button class="fav-btn" :class="{ active: isFav }" @click="toggleFav">
               {{ isFav ? '❤️' : '🤍' }}
@@ -86,8 +86,9 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { questions } from '../data/questions'
+import { levelQuestions, levelMockQuestions } from '../data/questions'
 import { useStore } from '../store/useStore'
+import { useLevel } from '../store/levelStore'
 import { useFurigana } from '../composables/useFurigana'
 import QuestionCard from '../components/QuestionCard.vue'
 import QuestionPicker from '../components/QuestionPicker.vue'
@@ -95,6 +96,7 @@ import QuestionPicker from '../components/QuestionPicker.vue'
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
+const { level } = useLevel()
 const furigana = useFurigana()
 
 const mode = computed(() => route.params.mode)
@@ -134,21 +136,24 @@ function shuffleQuestion(q) {
   }
 }
 
+// 当前级别下、按模式过滤的题（用于题号表 / 列表构建）
+const allLevelQuestions = computed(() => levelQuestions(level.value))
+
 const sequentialAll = computed(() => {
   if (mode.value === 'unit') {
-    return questions.filter(q => q.unit === unitId.value).sort((a, b) => a.id - b.id)
+    return allLevelQuestions.value.filter(q => q.unit === unitId.value).sort((a, b) => a.id - b.id)
   }
-  return questions.filter(q => !q.mock).sort((a, b) => a.id - b.id)
+  return allLevelQuestions.value.slice().sort((a, b) => a.id - b.id)
 })
 
 const currentQuestion = computed(() => {
   const q = questionList.value[currentIndex.value]
   if (!q) return {}
-  if (!shuffleCache.has(q.id)) shuffleCache.set(q.id, shuffleQuestion(q))
-  return shuffleCache.get(q.id)
+  if (!shuffleCache.has(q.key)) shuffleCache.set(q.key, shuffleQuestion(q))
+  return shuffleCache.get(q.key)
 })
 const progressPercent = computed(() => Math.round((currentIndex.value + 1) / questionList.value.length * 100))
-const isFav = computed(() => store.isFavorite(currentQuestion.value.id))
+const isFav = computed(() => store.isFavorite(currentQuestion.value.key))
 
 // 未提交时锁定振假名
 watch(showResult, (val) => {
@@ -184,7 +189,7 @@ function buildList() {
   shuffleCache.clear()
   let list = []
   if (mode.value === 'sequential') {
-    list = questions.filter(q => !q.mock).sort((a, b) => a.id - b.id)
+    list = allLevelQuestions.value.slice().sort((a, b) => a.id - b.id)
     const start = Number(route.query.start)
     if (start) {
       const idx = list.findIndex(q => q.id >= start)
@@ -193,18 +198,18 @@ function buildList() {
   } else if (mode.value === 'random') {
     list = buildRandomList()
   } else if (mode.value === 'mock') {
-    list = questions.filter(q => q.mock === mockId.value).sort((a, b) => a.id - b.id)
+    list = levelMockQuestions(level.value, mockId.value).sort((a, b) => a.id - b.id)
   } else if (mode.value === 'unit') {
-    list = questions.filter(q => q.unit === unitId.value).sort((a, b) => a.id - b.id)
+    list = allLevelQuestions.value.filter(q => q.unit === unitId.value).sort((a, b) => a.id - b.id)
   } else if (mode.value === 'wrong') {
-    list = questions.filter(q => store.state.wrong.includes(q.id))
+    list = allLevelQuestions.value.filter(q => store.state.wrong.includes(q.key))
   } else if (mode.value === 'favorites') {
-    list = questions.filter(q => store.state.favorites.includes(q.id))
+    list = allLevelQuestions.value.filter(q => store.state.favorites.includes(q.key))
   }
   questionList.value = list
   currentIndex.value = 0
   if (mode.value === 'sequential' && !route.query.start) {
-    const firstUnanswered = list.findIndex(q => !store.getAnswer(q.id))
+    const firstUnanswered = list.findIndex(q => !store.getAnswer(q.key))
     if (firstUnanswered > 0) currentIndex.value = firstUnanswered
   }
   resetState()
@@ -212,12 +217,12 @@ function buildList() {
 }
 
 function buildRandomList() {
-  const all = questions.filter(q => !q.mock)
+  const all = allLevelQuestions.value
   if (fullyRandom.value) {
-    return all.sort(() => Math.random() - 0.5)
+    return all.slice().sort(() => Math.random() - 0.5)
   }
-  const unseen = all.filter(q => !store.getAnswer(q.id))
-  const seen = all.filter(q => store.getAnswer(q.id))
+  const unseen = all.filter(q => !store.getAnswer(q.key))
+  const seen = all.filter(q => store.getAnswer(q.key))
   unseen.sort(() => Math.random() - 0.5)
   seen.sort(() => Math.random() - 0.5)
   if (unseen.length >= all.length * 0.5) {
@@ -244,7 +249,7 @@ function jumpToQuestion(id) {
 }
 
 onMounted(buildList)
-watch(() => [mode.value, mockId.value, unitId.value], buildList)
+watch(() => [mode.value, mockId.value, unitId.value, level.value], buildList)
 
 // 点击选项即自动提交
 function handleSelect(num) {
@@ -257,7 +262,7 @@ function submitAnswer() {
   if (!selected.value) return
   const correct = selected.value === currentQuestion.value.answer
   const origSelected = currentQuestion.value._optionOrder[selected.value - 1] + 1
-  store.recordAnswer(currentQuestion.value.id, origSelected, correct)
+  store.recordAnswer(currentQuestion.value.key, origSelected, correct)
   sessionResults.value.push({ qid: currentQuestion.value.id, selected: selected.value, correct })
 
   if (correct) {
@@ -301,7 +306,7 @@ function resetState() {
   // 到新题时自动关闭振假名
   furigana.disable()
   const q = currentQuestion.value
-  const prev = store.getAnswer(q.id)
+  const prev = store.getAnswer(q.key)
   if (prev) {
     selected.value = q._optionOrder ? q._optionOrder.indexOf(prev.selected - 1) + 1 : prev.selected
     showResult.value = true
@@ -312,13 +317,13 @@ function resetState() {
 }
 
 function toggleFav() {
-  store.toggleFavorite(currentQuestion.value.id)
+  store.toggleFavorite(currentQuestion.value.key)
 }
 
 function finishQuiz() {
   if (mode.value === 'mock') {
     const correct = sessionResults.value.filter(r => r.correct).length
-    store.saveMockResult(mockId.value, {
+    store.saveMockResult(level.value + ':' + mockId.value, {
       correct,
       total: questionList.value.length,
       score: Math.round(correct / questionList.value.length * 100),

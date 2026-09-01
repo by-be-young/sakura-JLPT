@@ -102,8 +102,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { wordsByLevel, levels, pitchToCircle, wordRelationsOf } from '../data/words'
+import { wordsByLevel, pitchToCircle, wordRelationsOf } from '../data/words'
 import { useWordStore } from '../store/wordStore'
+import { useLevel } from '../store/levelStore'
 import { availableTypes } from '../composables/wordQuiz'
 import { useFurigana } from '../composables/useFurigana'
 import WordNoteModal from '../components/word/WordNoteModal.vue'
@@ -111,10 +112,15 @@ import WordNoteModal from '../components/word/WordNoteModal.vue'
 const route = useRoute()
 const store = useWordStore()
 const furigana = useFurigana()
+const { level: globalLevel, APP_LEVELS } = useLevel()
 
-const level = ref(route.query.level || localStorage.getItem('sakura_word_level') || 'N5')
-if (level.value === 'N4N5') level.value = 'N5' // 兼容旧存值
-const levelName = computed(() => (levels.find(l => l.id === level.value) || {}).name || level.value)
+// 有效等级：优先取全局同步等级（深链带 ?level= 时兼容旧入口）
+const level = computed(() => {
+  const q = route.query.level
+  if (q && APP_LEVELS.some(l => l.id === q)) return q
+  return globalLevel.value
+})
+const levelName = computed(() => (APP_LEVELS.find(l => l.id === level.value) || {}).name || level.value)
 const pool = computed(() => wordsByLevel(level.value))
 
 const queue = ref([])        // 待复习队列（词对象）

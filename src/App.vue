@@ -19,9 +19,8 @@
             <router-link to="/words" class="nav-link" :class="{ active: $route.path.startsWith('/words') }">背词</router-link>
             <router-link to="/study" class="nav-link" :class="{ active: $route.path.startsWith('/study') }">文法</router-link>
             <router-link to="/my" class="nav-link" :class="{ active: ['/my', '/stats', '/wrong'].includes($route.path) }">
-              我的<span v-if="store.state.wrong.length" class="badge">{{ store.state.wrong.length }}</span>
+              我的<span v-if="wrongCount" class="badge">{{ wrongCount }}</span>
             </router-link>
-            <router-link to="/favorites" class="nav-link" :class="{ active: $route.path === '/favorites' }">收藏</router-link>
           </div>
           <button class="furigana-toggle" :class="{ active: furigana.isEnabled.value, locked: furigana.isLocked.value }" @click="furigana.toggle()" :title="furigana.isLocked.value ? '提交答案后可开启振假名' : (furigana.isEnabled.value ? '关闭振假名 (L)' : '开启振假名（汉字上方标注平假名）(L)')">
             <span class="furi-icon">あ</span>
@@ -36,12 +35,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from './store/useStore'
+import { useLevel } from './store/levelStore'
 import { useFurigana } from './composables/useFurigana'
 
 const store = useStore()
+const { level } = useLevel()
 const furigana = useFurigana()
+const wrongCount = computed(() => store.wrongCountOf(level.value))
 
 // 生成樱花花瓣
 const petals = ref([])

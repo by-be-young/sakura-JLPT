@@ -6,29 +6,41 @@
       <div class="header-spacer"></div>
     </div>
 
-    <p class="study-sub">《超值白金版·蓝宝书大全集 新日本语能力考试 N1-N5 文法详解》整理版，按 N5~N1 分为五章。选择一章开始阅读，可在目录中对某个文法点做标记。</p>
+    <!-- 等级选择（与全局同步） -->
+    <div class="level-tabs">
+      <button v-for="lv in APP_LEVELS" :key="lv.id" class="level-tab"
+        :class="{ active: level === lv.id }" @click="setLevel(lv.id)">
+        {{ lv.name }}
+      </button>
+    </div>
 
-    <!-- 五章卡片 -->
-    <div class="chapter-grid">
-      <div v-for="lv in levelCards" :key="lv.id" class="chapter-card" :class="lv.id.toLowerCase()" @click="openLevel(lv.id)">
+    <p class="study-sub">《超值白金版·蓝宝书大全集 新日本语能力考试 N1-N5 文法详解》整理版。当前显示 {{ currentTitle }} 章节，选择章节开始阅读，可在目录中对某个文法点做标记。</p>
+
+    <!-- 当前等级章节 -->
+    <div v-if="chapter" class="chapter-grid">
+      <div class="chapter-card" :class="chapter.id.toLowerCase()" @click="openLevel(chapter.id)">
         <div class="chapter-top">
-          <span class="chapter-badge">{{ lv.id }}</span>
-          <span class="chapter-count">{{ lv.pointCount }} 点</span>
+          <span class="chapter-badge">{{ chapter.id }}</span>
+          <span class="chapter-count">{{ chapter.pointCount }} 点</span>
         </div>
-        <div class="chapter-name">{{ lv.title }}</div>
+        <div class="chapter-name">{{ chapter.title }}</div>
         <div class="chapter-meta">
-          <span v-if="lv.unitCount" class="meta-item">📚 {{ lv.unitCount }} 个单元</span>
-          <span class="meta-item">{{ lv.pointCount }} 点</span>
-          <span v-if="lv.learnedCount" class="meta-item learned">📖 已学 {{ lv.learnedCount }}</span>
-          <span v-if="lv.markedCount" class="meta-item marked">★ 已标记 {{ lv.markedCount }}</span>
+          <span v-if="chapter.unitCount" class="meta-item">📚 {{ chapter.unitCount }} 个单元</span>
+          <span class="meta-item">{{ chapter.pointCount }} 点</span>
+          <span v-if="chapter.learnedCount" class="meta-item learned">📖 已学 {{ chapter.learnedCount }}</span>
+          <span v-if="chapter.markedCount" class="meta-item marked">★ 已标记 {{ chapter.markedCount }}</span>
         </div>
         <div class="chapter-progress">
           <div class="progress-track">
-            <div class="progress-fill" :style="{ width: lv.learnedPercent + '%' }"></div>
+            <div class="progress-fill" :style="{ width: chapter.learnedPercent + '%' }"></div>
           </div>
-          <span class="progress-text">{{ lv.learnedPercent }}%</span>
+          <span class="progress-text">{{ chapter.learnedPercent }}%</span>
         </div>
       </div>
+    </div>
+    <div v-else class="empty-state">
+      <div class="emoji">📘</div>
+      <p>当前等级暂无文法内容</p>
     </div>
 
     <div class="study-tips">
@@ -51,26 +63,30 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { grammarLevels } from '../data/grammar'
 import { useGrammarStore } from '../store/grammarStore'
+import { useLevel } from '../store/levelStore'
+import { levelTitle } from '../data/questions'
 
 const router = useRouter()
 const store = useGrammarStore()
+const { level, setLevel, APP_LEVELS } = useLevel()
+const currentTitle = computed(() => levelTitle(level.value))
 
-const levelCards = computed(() => {
-  return grammarLevels.map(lv => {
-    const points = lv.units.flatMap(u => u.points)
-    const markedCount = store.markedCountOf(points)
-    const learnedCount = store.learnedCountOf(points)
-    return {
-      id: lv.id,
-      title: lv.name.replace(' 文法详解（整理版）', '').replace('文法详解（整理版）', ''),
-      unitCount: lv.units.length,
-      pointCount: points.length,
-      markedCount,
-      learnedCount,
-      markedPercent: points.length ? Math.round(markedCount / points.length * 100) : 0,
-      learnedPercent: points.length ? Math.round(learnedCount / points.length * 100) : 0,
-    }
-  })
+const chapter = computed(() => {
+  const lv = grammarLevels.find(l => l.id === level.value)
+  if (!lv) return null
+  const points = lv.units.flatMap(u => u.points)
+  const markedCount = store.markedCountOf(points)
+  const learnedCount = store.learnedCountOf(points)
+  return {
+    id: lv.id,
+    title: lv.name.replace(' 文法详解（整理版）', '').replace('文法详解（整理版）', ''),
+    unitCount: lv.units.length,
+    pointCount: points.length,
+    markedCount,
+    learnedCount,
+    markedPercent: points.length ? Math.round(markedCount / points.length * 100) : 0,
+    learnedPercent: points.length ? Math.round(learnedCount / points.length * 100) : 0,
+  }
 })
 
 function openLevel(id) {
@@ -94,6 +110,30 @@ function confirmReset() {
 }
 .page-title { margin: 0; font-size: 22px; color: #c2556f; }
 .header-spacer { flex: 1; }
+.level-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.level-tab {
+  padding: 8px 18px;
+  border-radius: 24px;
+  border: 2px solid #ffd3e0;
+  background: #fffafc;
+  color: #c2556f;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  font-size: 14px;
+}
+.level-tab.active {
+  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
+  color: #fff;
+  border-color: #ff7da0;
+  box-shadow: 0 4px 14px rgba(255, 125, 160, 0.35);
+}
 .study-sub {
   color: #b98a94;
   font-size: 13px;
@@ -102,7 +142,7 @@ function confirmReset() {
 }
 .chapter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
   margin-bottom: 24px;
 }
