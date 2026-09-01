@@ -346,6 +346,48 @@ const CONT_TERM_RE = new RegExp(CONT_TERM_KEYS.map(k => k.replace(/[.*+?^${}()|[
 function withTermTip(s) {
   return s.replace(CONT_TERM_RE, m => '<span class="cont-term">' + m + '<span class="term-tip">' + CONT_TERMS[m].replace(/\n/g, '<br>') + '</span></span>')
 }
+// 术语提示框悬浮定位：fixed 相对视口，避免超出卡片/滚动容器被裁剪
+function placeTermTip(term) {
+  const tip = term.querySelector('.term-tip')
+  if (!tip) return
+  tip.style.visibility = 'hidden'
+  tip.style.display = 'block'
+  const tw = tip.offsetWidth
+  const th = tip.offsetHeight
+  tip.style.display = ''
+  tip.style.visibility = ''
+  const tr = term.getBoundingClientRect()
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const gap = 8
+  let top = tr.bottom + gap
+  let left = tr.left + tr.width / 2 - tw / 2
+  // 下方空间不足且上方够时，向上弹出
+  if (top + th > vh - gap && tr.top - th - gap > gap) {
+    top = tr.top - th - gap
+  }
+  // 水平方向约束在视口内
+  left = Math.max(gap, Math.min(left, Math.max(gap, vw - tw - gap)))
+  tip.style.position = 'fixed'
+  tip.style.top = top + 'px'
+  tip.style.left = left + 'px'
+  tip.style.transform = 'none'
+}
+let termTipEntered = null
+function onTermTipOver(e) {
+  const term = e.target.closest('.cont-term')
+  if (term && term !== termTipEntered) {
+    termTipEntered = term
+    placeTermTip(term)
+  }
+}
+function onTermTipOut(e) {
+  const term = e.target.closest('.cont-term')
+  if (term === termTipEntered && (!e.relatedTarget || !term.contains(e.relatedTarget))) {
+    termTipEntered = null
+  }
+}
+
 
 function contOptsHtml(opts) {
   return '<span class="cont-opts">' + opts.map(o => '<span class="opt">' + o + '</span>').join('') + '</span>'
@@ -686,6 +728,8 @@ watch(levelId, () => { restore() })
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('scroll', onScroll, { passive: true })
+  document.addEventListener('mouseover', onTermTipOver, true)
+  document.addEventListener('mouseout', onTermTipOut, true)
   restore()
 })
 
@@ -694,6 +738,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('pointerup', onPointerUp)
+  document.removeEventListener('mouseover', onTermTipOver, true)
+  document.removeEventListener('mouseout', onTermTipOut, true)
 })
 
 watch(tocOpen, (v) => {
@@ -933,7 +979,7 @@ watch(currentPointId, () => {
 /* 接续专业术语悬停提示 */
 :deep(.cont-term) { position: relative; cursor: help; border-bottom: 1px dashed #d06a86; }
 :deep(.cont-term .term-tip) {
-  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   z-index: 300; display: none;
   width: 240px; padding: 8px 10px;
   background: #fffdfd; border: 1px solid #ffd3e0; border-radius: 8px;
