@@ -77,7 +77,7 @@
 
       <!-- 分页阅读：每点一页 -->
       <template v-else>
-        <div v-if="currentPoint" class="page-wrap" :class="{ marked: isMarked(currentPoint.id) }">
+        <div v-if="currentPoint" class="page-wrap book-page" :class="[{ marked: isMarked(currentPoint.id) }, flip ? 'flip-' + flip : '', flipDir]">
           <div class="page-meta">{{ currentPoint.unitTitle }}</div>
           <div class="gp-head">
             <h3 class="gp-title">{{ currentPoint.title }}</h3>
@@ -420,18 +420,33 @@ function usageGroups(blocks) {
 function isMarked(pid) { return store.isMarked(pid) }
 function toggleMark(pid) { store.toggleMark(pid) }
 
-// ===== 翻页 =====
+// ===== 翻页（分页模式带翻书特效）=====
+const flip = ref('') // '' | 'exit' | 'enter'
+const flipDir = ref('next')
+let flipping = false
 function nextPage() {
-  if (currentIndex.value < points.value.length - 1) {
+  if (flipping || currentIndex.value >= points.value.length - 1) return
+  flipping = true
+  flipDir.value = 'next'
+  flip.value = 'exit'
+  setTimeout(() => {
     currentIndex.value++
     syncProgress()
-  }
+    flip.value = 'enter'
+    setTimeout(() => { flip.value = ''; flipping = false }, 280)
+  }, 280)
 }
 function prevPage() {
-  if (currentIndex.value > 0) {
+  if (flipping || currentIndex.value <= 0) return
+  flipping = true
+  flipDir.value = 'prev'
+  flip.value = 'exit'
+  setTimeout(() => {
     currentIndex.value--
     syncProgress()
-  }
+    flip.value = 'enter'
+    setTimeout(() => { flip.value = ''; flipping = false }, 280)
+  }, 280)
 }
 
 function syncProgress() {
@@ -730,9 +745,20 @@ watch(currentPointId, () => {
 
 /* 阅读内容区 */
 .reader-content { position: relative; }
-.reader-content.paged { user-select: none; -webkit-user-select: none; cursor: default; }
+.reader-content.paged { user-select: none; -webkit-user-select: none; cursor: default; perspective: 1800px; }
 .reader-content.paged .page-wrap { cursor: grab; }
 .reader-content.paged .page-wrap:active { cursor: grabbing; }
+
+/* 分页翻书特效（3D 翻页） */
+.book-page { transform-style: preserve-3d; backface-visibility: hidden; transform-origin: left center; will-change: transform; }
+.book-page.flip-exit.next { animation: book-exit-next 0.28s ease forwards; }
+.book-page.flip-exit.prev { animation: book-exit-prev 0.28s ease forwards; }
+.book-page.flip-enter.next { animation: book-enter-next 0.28s ease; }
+.book-page.flip-enter.prev { animation: book-enter-prev 0.28s ease; }
+@keyframes book-exit-next { from { transform: rotateY(0deg); } to { transform: rotateY(-90deg); } }
+@keyframes book-exit-prev { from { transform: rotateY(0deg); } to { transform: rotateY(90deg); } }
+@keyframes book-enter-next { from { transform: rotateY(90deg); } to { transform: rotateY(0deg); } }
+@keyframes book-enter-prev { from { transform: rotateY(-90deg); } to { transform: rotateY(0deg); } }
 
 /* 顺序阅读：单元 */
 .unit-block { margin-bottom: 26px; }

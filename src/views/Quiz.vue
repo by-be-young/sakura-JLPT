@@ -43,7 +43,8 @@
           <span class="arrow-icon">‹</span>
         </button>
 
-        <div class="card quiz-card">
+        <Transition :name="slideDir" mode="out-in">
+        <div class="card quiz-card" :key="currentIndex">
           <div class="quiz-meta" style="margin-bottom:12px;">
             <span class="qid-tag">No.{{ currentQuestion.id }}</span>
             <span v-if="mode === 'mock'" class="mock-tag">第{{ mockId }}回模拟</span>
@@ -71,6 +72,7 @@
             <button class="btn btn-primary" @click="finishQuiz">查看结果 →</button>
           </div>
         </div>
+        </Transition>
 
         <!-- 右箭头 -->
         <button class="side-arrow side-arrow-right" :disabled="currentIndex >= questionList.length - 1" @click="nextQuestion" title="下一题 (D)">
@@ -112,6 +114,7 @@ const flash = ref(false)
 const sessionResults = ref([])
 const showPicker = ref(false)
 const fullyRandom = ref(false)
+const slideDir = ref('slide-next')
 let flashTimer = null
 const shuffleCache = new Map()
 
@@ -278,6 +281,7 @@ function submitAnswer() {
 
 function prevQuestion() {
   if (currentIndex.value > 0) {
+    slideDir.value = 'slide-prev'
     currentIndex.value--
     resetState()
   }
@@ -285,6 +289,7 @@ function prevQuestion() {
 
 function nextQuestion() {
   if (currentIndex.value < questionList.value.length - 1) {
+    slideDir.value = 'slide-next'
     currentIndex.value++
     resetState()
   }
@@ -334,6 +339,15 @@ function goBack() {
   align-items: center;
   gap: 8px;
 }
+/* 左右过页特效：下一题向右滑出/右侧滑入，上一题反向 */
+.slide-next-enter-active, .slide-next-leave-active,
+.slide-prev-enter-active, .slide-prev-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.slide-next-enter-from { transform: translateX(48px); opacity: 0; }
+.slide-next-leave-to { transform: translateX(-48px); opacity: 0; }
+.slide-prev-enter-from { transform: translateX(-48px); opacity: 0; }
+.slide-prev-leave-to { transform: translateX(48px); opacity: 0; }
 .quiz-card {
   flex: 1;
   min-width: 0;
