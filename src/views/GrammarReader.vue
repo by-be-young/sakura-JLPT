@@ -75,43 +75,50 @@
         </div>
       </template>
 
-      <!-- 分页阅读：每点一页 -->
+      <!-- 分页阅读：每点一页（双层：over 当前页 + under 预载目标页，实现翻书） -->
       <template v-else>
-        <div v-if="currentPoint" class="page-wrap book-page" :class="[{ marked: isMarked(currentPoint.id) }, flip ? 'flip-' + flip : '', flipDir]">
-          <div class="page-meta">{{ currentPoint.unitTitle }}</div>
-          <div class="gp-head">
-            <h3 class="gp-title">{{ currentPoint.title }}</h3>
-            <button class="mark-btn" :class="{ active: isMarked(currentPoint.id) }" @click="toggleMark(currentPoint.id)" title="在目录中标记/取消此点">★</button>
-          </div>
-          <div class="gp-body">
-            <template v-for="(g, gi) in usageGroups(currentPoint.blocks)" :key="gi">
-              <div class="gp-usage" :class="{ 'gp-usage--boxed': g.box }">
-              <template v-for="(b, i) in g.blocks" :key="i">
-              <div v-if="b.t === 'label'" class="gp-row">
-                <span class="gp-label">{{ b.label }}</span>
-                <span v-if="b.text" class="gp-text" v-html="blockHtml(b)"></span>
-              </div>
-              <div v-else-if="b.t === 'sub'" class="gp-sub" v-html="blockHtml(b)"></div>
-              <div v-else-if="b.t === 'table'" class="gp-table">
-                <table>
-                  <thead v-if="b.headers && b.headers.length">
-                    <tr><th v-for="(h, hi) in b.headers" :key="hi">{{ h }}</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(r, ri) in b.rows" :key="ri">
-                      <td v-for="(c, ci) in r" :key="ci">{{ c }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <template v-else-if="b.t === 'line' && b.isEx">
+        <div class="book">
+          <div
+            v-for="leaf in bookLeaves"
+            :key="leaf.key"
+            class="page-wrap book-leaf"
+            :class="[leaf.cls, { marked: isMarked(leaf.point.id) }]"
+          >
+            <div class="page-meta">{{ leaf.point.unitTitle }}</div>
+            <div class="gp-head">
+              <h3 class="gp-title">{{ leaf.point.title }}</h3>
+              <button class="mark-btn" :class="{ active: isMarked(leaf.point.id) }" @click="toggleMark(leaf.point.id)" title="在目录中标记/取消此点">★</button>
+            </div>
+            <div class="gp-body">
+              <template v-for="(g, gi) in usageGroups(leaf.point.blocks)" :key="gi">
+                <div class="gp-usage" :class="{ 'gp-usage--boxed': g.box }">
+                <template v-for="(b, i) in g.blocks" :key="i">
+                <div v-if="b.t === 'label'" class="gp-row">
+                  <span class="gp-label">{{ b.label }}</span>
+                  <span v-if="b.text" class="gp-text" v-html="blockHtml(b)"></span>
+                </div>
+                <div v-else-if="b.t === 'sub'" class="gp-sub" v-html="blockHtml(b)"></div>
+                <div v-else-if="b.t === 'table'" class="gp-table">
+                  <table>
+                    <thead v-if="b.headers && b.headers.length">
+                      <tr><th v-for="(h, hi) in b.headers" :key="hi">{{ h }}</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(r, ri) in b.rows" :key="ri">
+                        <td v-for="(c, ci) in r" :key="ci">{{ c }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <template v-else-if="b.t === 'line' && b.isEx">
           <div class="gp-line" :class="{ 'gp-line--ex-dash': !b.isExLast && !b._cnHtml }" v-html="b._jpHtml"></div>
           <div v-if="b._cnHtml" class="gp-line gp-tr" :class="{ 'gp-line--ex-dash': !b.isExLast }" v-html="b._cnHtml"></div>
         </template>
         <div v-else-if="b.t === 'line'" class="gp-line" v-html="isContLine(g.blocks, i) ? contHtml(b) : blockHtml(b)"></div>
+                </template>
+                </div>
               </template>
-              </div>
-            </template>
+            </div>
           </div>
         </div>
       </template>
@@ -419,33 +426,52 @@ function usageGroups(blocks) {
 function isMarked(pid) { return store.isMarked(pid) }
 function toggleMark(pid) { store.toggleMark(pid) }
 
-// ===== 翻页（分页模式带翻书特效）=====
-const flip = ref('') // '' | 'exit' | 'enter'
-const flipDir = ref('next')
+// ===== 翻页（分页翻书：下一页翻起露出预载页，上一页翻下覆盖当前页）=====
+const flip = ref('') // '' | 'next' | 'prev'（动画方向，非空表示翻页动画中）
+const animTarget = ref(null) // 动画期间预载的目标页（下一/上一页）
 let flipping = false
+const bookLeaves = computed(() => {
+  const cp = currentPoint.value
+  if (!cp) return []
+  const leaves = []
+  if (flip.value === 'next' && animTarget.value) {
+    // 下一页：下层预载下一页（静态），上层当前页翻起
+    leaves.push({ key: 'u-' + animTarget.value.id, point: animTarget.value, cls: 'under-leaf' })
+    leaves.push({ key: 'o-' + cp.id, point: cp, cls: 'over-leaf over-away' })
+  } else if (flip.value === 'prev' && animTarget.value) {
+    // 上一页：当前页不动，下层上一页翻下覆盖
+    leaves.push({ key: 'u-' + animTarget.value.id, point: animTarget.value, cls: 'under-leaf under-down' })
+    leaves.push({ key: 'o-' + cp.id, point: cp, cls: 'over-leaf' })
+  } else {
+    leaves.push({ key: 'o-' + cp.id, point: cp, cls: 'over-leaf' })
+  }
+  return leaves
+})
 function nextPage() {
   if (flipping || currentIndex.value >= points.value.length - 1) return
   flipping = true
-  flipDir.value = 'next'
-  flip.value = 'exit'
+  animTarget.value = points.value[currentIndex.value + 1]
+  flip.value = 'next'
   setTimeout(() => {
     currentIndex.value++
     syncProgress()
-    flip.value = 'enter'
-    setTimeout(() => { flip.value = ''; flipping = false }, 280)
-  }, 280)
+    flip.value = ''
+    animTarget.value = null
+    flipping = false
+  }, 300)
 }
 function prevPage() {
   if (flipping || currentIndex.value <= 0) return
   flipping = true
-  flipDir.value = 'prev'
-  flip.value = 'exit'
+  animTarget.value = points.value[currentIndex.value - 1]
+  flip.value = 'prev'
   setTimeout(() => {
     currentIndex.value--
     syncProgress()
-    flip.value = 'enter'
-    setTimeout(() => { flip.value = ''; flipping = false }, 280)
-  }, 280)
+    flip.value = ''
+    animTarget.value = null
+    flipping = false
+  }, 300)
 }
 
 function syncProgress() {
@@ -459,6 +485,7 @@ function syncProgress() {
 
 // ===== 跳转到某一点 =====
 function jumpTo(pid) {
+  if (flipping) return
   const idx = allIds.value.indexOf(pid)
   if (idx < 0) return
   currentIndex.value = idx
@@ -477,6 +504,9 @@ function jumpTo(pid) {
 // ===== 模式切换 =====
 function setMode(m) {
   if (mode.value === m) return
+  flip.value = ''
+  animTarget.value = null
+  flipping = false
   mode.value = m
   store.setMode(level.value.id, m)
   if (m === 'sequential') {
@@ -746,16 +776,15 @@ watch(currentPointId, () => {
 .reader-content { position: relative; }
 .reader-content.paged { user-select: none; -webkit-user-select: none; cursor: default; perspective: 1800px; }
 
-/* 分页翻书特效（3D 翻页） */
-.book-page { transform-style: preserve-3d; backface-visibility: hidden; transform-origin: left center; will-change: transform; }
-.book-page.flip-exit.next { animation: book-exit-next 0.28s ease forwards; }
-.book-page.flip-exit.prev { animation: book-exit-prev 0.28s ease forwards; }
-.book-page.flip-enter.next { animation: book-enter-next 0.28s ease; }
-.book-page.flip-enter.prev { animation: book-enter-prev 0.28s ease; }
-@keyframes book-exit-next { from { transform: rotateY(0deg); } to { transform: rotateY(-90deg); } }
-@keyframes book-exit-prev { from { transform: rotateY(0deg); } to { transform: rotateY(90deg); } }
-@keyframes book-enter-next { from { transform: rotateY(90deg); } to { transform: rotateY(0deg); } }
-@keyframes book-enter-prev { from { transform: rotateY(-90deg); } to { transform: rotateY(0deg); } }
+/* 分页翻书特效：下一页翻起露出预载页，上一页翻下覆盖当前页 */
+.book { position: relative; perspective: 1800px; }
+.book-leaf { backface-visibility: hidden; transform-style: preserve-3d; transform-origin: left center; will-change: transform; }
+.over-leaf { position: relative; z-index: 2; }
+.under-leaf { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }
+.over-leaf.over-away { animation: over-away 0.3s ease forwards; }
+@keyframes over-away { from { transform: rotateY(0deg); } to { transform: rotateY(-90deg); } }
+.under-leaf.under-down { animation: under-down 0.3s ease; }
+@keyframes under-down { from { transform: rotateY(-90deg); } to { transform: rotateY(0deg); } }
 
 /* 顺序阅读：单元 */
 .unit-block { margin-bottom: 26px; }
