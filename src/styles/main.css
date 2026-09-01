@@ -22,6 +22,11 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* 全局隐藏滚动条（保留滚动功能，仅隐藏视觉） */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
+html { scrollbar-width: none; -ms-overflow-style: none; }
+
 html, body {
   font-family: 'Noto Serif SC', 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', 'Songti SC', 'STSong', 'SimSun', 'Microsoft YaHei', serif;
   background: var(--cream);

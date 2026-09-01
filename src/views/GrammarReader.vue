@@ -774,7 +774,7 @@ watch(currentPointId, () => {
 
 /* 阅读内容区 */
 .reader-content { position: relative; }
-.reader-content.paged { user-select: none; -webkit-user-select: none; cursor: default; perspective: 1800px; }
+.reader-content.paged { cursor: default; perspective: 1800px; }
 
 /* 分页翻书特效：下一页翻起露出预载页，上一页翻下覆盖当前页 */
 .book { position: relative; perspective: 1800px; }
