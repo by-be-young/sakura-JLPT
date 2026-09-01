@@ -96,6 +96,19 @@ for lv in data:
                 for s, e in reversed(spans):
                     fs = pos[s]
                     fe = pos[e - 1] + 1
+                    # fs 前紧邻 <ruby> 时前移，把 <ruby> 一并包进高亮
+                    if fs >= 6 and f[fs - 6:fs] == '<ruby>':
+                        fs -= 6
+                    # fe 后跳过注音结构（rp/rt）与 </ruby>，保证高亮闭合在 ruby 之外
+                    while True:
+                        if f[fe:fe + 7] == '</ruby>':
+                            fe += 7
+                            continue
+                        mm = re.match(r'<rp>\(</rp>|<rp>\)</rp>|<rt>[^<]*</rt>', f[fe:])
+                        if mm:
+                            fe += mm.end()
+                            continue
+                        break
                     f = f[:fs] + '〖' + f[fs:fe] + '〗' + f[fe:]
                 b['furi'] = f
                 fixed += 1
