@@ -305,6 +305,48 @@ function contBrace(dir) {
   return '<span class="cont-brace-wrap"><svg class="cont-brace" viewBox="0 0 12 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
 }
 
+// 接续字段专业术语释义表（悬停提示）
+const CONT_TERMS = {
+  '动词辞书形': '动词的词典基本形（原形）。五段动词以「う」段假名结尾（書く・話す），一段动词以「る」结尾（食べる・見る），另有「来る・する」。例：食べる、行く、来る。',
+  '动词普通形': '动词的简体（非礼貌）形式，含现在形（辞书形／ない形）与过去形（た形）。例：食べる・食べない・食べた。',
+  '动词意志形': '表示意志、提议。五段动词词尾「う」段→「お」段＋う（行く→行こう）；一段动词去「る」＋よう（食べる→食べよう）；来る→来よう，する→しよう。',
+  '动词意向形': '同「动词意志形」（～よう），表示主观意志、打算。',
+  '动词可能形': '表示「能……／会……」。五段动词「う」段→「え」段＋る（話す→話せる）；一段动词去「る」＋られる（食べる→食べられる）；来る→来られる，する→できる。',
+  '动词命令形': '表示命令。五段动词词尾「う」段→「え」段（書く→書け）；一段动词去「る」＋ろ（食べる→食べろ）；来る→来い，する→しろ／せよ。',
+  '动词使役形': '表示「让（某人）做……」。I类动词「ない形」＋せる（書かせる）；II类动词「ない形」＋させる（食べさせる）；来る→来させる，する→させる。',
+  '动词「て形」': '动词的接续连用形。五段动词发生音便（書く→書いて、読む→読んで、買う→買って、話す→話して）；一段动词去「る」＋て（食べる→食べて）；来る→来て，する→して。',
+  '动词「た形」': '动词的过去形，与「て形」同形（て→た）。書く→書いた，食べる→食べた，来る→来た，する→した。',
+  '动词「ない形」': '动词的否定形。五段动词词尾「う」段→「あ」段＋ない（書く→書かない）；一段动词去「る」＋ない（食べる→食べない）；来る→来ない，する→しない。',
+  '动词「ます形」': '动词的礼貌形（连用形）。五段动词词尾「う」段→「い」段＋ます（書く→書きます）；一段动词去「る」＋ます（食べる→食べます）；来る→来ます，する→します。',
+  '动词「ば形」': '动词的假定形，表示条件「如果……」。五段动词词尾「う」段→「え」段＋ば（書く→書けば）；一段动词去「る」＋れば（食べる→食べれば）；来る→来れば，する→すれば。',
+  '动词「ている形」': '动词「て形」＋いる，表示动作正在进行或状态的持续。例：食べている、書いている。',
+  '动词「まい」': '接动词辞书形后，表示否定推量或否定意志（相当于「ないだろう／まいとする」）。する→するまい／すまい。',
+  '动词词干': '动词去掉活用词尾后的部分，如「食べ」「書」。',
+  '动词否定形': '动词的「ない形」，表示否定。',
+  'い形容词辞书形': '一类形容词（い形容词）的基本形，以「い」结尾。例：高い、新しい、暑い。',
+  'い形容词普通形': '一类形容词的简体形。现在形＝词干＋い（高い）；过去形＝词干＋かった（高かった）；否定＝词干＋くない（高くない）。',
+  'い形容词「て形」': '一类形容词的接续形，词干＋くて（高くて），用于连接下文。',
+  'い形容词「かった形」': '一类形容词的过去形，词干＋かった（高かった）。',
+  'い形容词词干': '一类形容词去掉词尾「い」后的部分（高→高い），可接「く」「かった」等。',
+  'な形容词词干': '二类形容词（形容动词）的基本部分（静か→静か）。接「な」修饰名词（静かな），接「に」作副词（静かに）。',
+  'な形容词普通形': '二类形容词的简体形。现在形＝词干＋だ（静かだ）；过去形＝词干＋だった（静かだった）；否定＝词干＋ではない。',
+  '名词': '表示人或事物名称的词。日语名词后接助词「の・に・を・で」等构成句子成分。',
+  '名词修饰形': '各类词修饰名词时的连体形：名词＋の、动词辞书形／た形、い形容词＋い、な形容词＋な。',
+  '句子的简体形': '句子的简体（非礼貌）形式，用「だ・である・动词普通形」等构成。',
+  '数量词': '表示数量、程度的词，如「一人・二本・三つ・一回」。',
+  '疑问词': '表示疑问的词，如「誰・何・どこ・いつ・なぜ」。',
+  '各词类「た形」': '各类词（动词・い形容词・な形容词・名词）的过去形：动词た形、い形容词かった、な形容词だった、名词だった。',
+  'I类动词': '五段活用动词，词尾为「う」段假名（書く・読む・話す・買う）。',
+  'II类动词': '一段活用动词，词尾为「る」（食べる・見る・起きる），去「る」接续。',
+  'III类动词': 'カ变动词「来る」＋サ变动词「する」，「する」前的名词部分称为「サ変動詞語幹」。',
+  'サ変動詞語幹': 'サ变动词「する」前面的名词部分，如「勉強（する）・散歩（する）・旅行（する）」。',
+}
+const CONT_TERM_KEYS = Object.keys(CONT_TERMS).sort((a, b) => b.length - a.length)
+const CONT_TERM_RE = new RegExp(CONT_TERM_KEYS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g')
+function withTermTip(s) {
+  return s.replace(CONT_TERM_RE, m => '<span class="cont-term">' + m + '<span class="term-tip">' + CONT_TERMS[m] + '</span></span>')
+}
+
 function contOptsHtml(opts) {
   return '<span class="cont-opts">' + opts.map(o => '<span class="opt">' + o + '</span>').join('') + '</span>'
 }
@@ -312,15 +354,15 @@ function contOptsHtml(opts) {
 function contHtml(b) {
   const text = b.text || ''
   const p = parseContinuation(fmt(text))
-  if (!p) return richHtml(fmt(text))
+  if (!p) return richHtml(withTermTip(fmt(text)))
   let h = ''
-  if (p.prefix) h += '<span class="cont-prefix">' + p.prefix + '</span>'
-  if (p.opts.length) h += contBrace('l') + contOptsHtml(p.opts) + contBrace('r')
+  if (p.prefix) h += '<span class="cont-prefix">' + withTermTip(p.prefix) + '</span>'
+  if (p.opts.length) h += contBrace('l') + contOptsHtml(p.opts.map(withTermTip)) + contBrace('r')
   if (p.group2) {
-    h += '<span class="cont-plus">' + p.group2.prefix + '</span>'
-    h += contBrace('l') + contOptsHtml(p.group2.opts) + contBrace('r')
+    h += '<span class="cont-plus">' + withTermTip(p.group2.prefix) + '</span>'
+    h += contBrace('l') + contOptsHtml(p.group2.opts.map(withTermTip)) + contBrace('r')
   }
-  if (p.suffix) h += '<span class="cont-suffix">' + p.suffix + '</span>'
+  if (p.suffix) h += '<span class="cont-suffix">' + withTermTip(p.suffix) + '</span>'
   return '<span class="cont">' + h + '</span>'
 }
 
@@ -888,6 +930,17 @@ watch(currentPointId, () => {
 :deep(.cont-opts .opt) { display: block; white-space: nowrap; line-height: 1.5; padding: 0 1px; }
 :deep(.cont-brace-wrap) { position: relative; display: inline-flex; align-self: stretch; width: 16px; flex: 0 0 auto; }
 :deep(.cont-brace) { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; width: 100%; color: #d06a86; }
+/* 接续专业术语悬停提示 */
+.cont-term { position: relative; cursor: help; border-bottom: 1px dashed #d06a86; }
+.cont-term .term-tip {
+  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  z-index: 300; display: none;
+  width: 240px; padding: 8px 10px;
+  background: #fffdfd; border: 1px solid #ffd3e0; border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(244, 92, 142, 0.18);
+  font-size: 12px; line-height: 1.6; color: #5a4a54; text-align: left; white-space: normal; font-weight: 400;
+}
+.cont-term:hover .term-tip { display: block; }
 
 /* 例句中的中文译文：独占一行 + 略不同颜色 */
 .gp-tr { color: #9a6240; }
