@@ -509,20 +509,12 @@ function onPointerMove(e) {
 }
 function onPointerUp(e) {
   if (!drag) return
-  const dx = e.clientX - drag.x
-  const dy = e.clientY - drag.y
   const wasMove = drag.moved
   drag = null
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('pointerup', onPointerUp)
-  if (wasMove) {
-    // 向左拖 -> 下一页；向右拖 -> 上一页
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-      if (dx < 0) nextPage()
-      else prevPage()
-    }
-    return
-  }
+  // 拖动不翻页（仅点击生效）
+  if (wasMove) return
   // 点击：右侧翻下一页，左侧翻上一页
   const el = contentEl.value
   if (!el) return
