@@ -2,7 +2,7 @@
   <div class="container">
     <div class="list-header">
       <h2>📚 {{ level }} 单元练习</h2>
-      <button class="btn btn-ghost btn-sm" @click="$router.push('/')">← 返回首页</button>
+      <button class="btn btn-ghost btn-sm" @click="$router.push({ path: '/learn', query: { mode: 'bank' } })">← 返回</button>
     </div>
 
     <p class="page-desc">按教材单元逐题练习，即时查看解析，不限时，适合针对性巩固。</p>

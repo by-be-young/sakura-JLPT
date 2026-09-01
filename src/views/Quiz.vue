@@ -3,7 +3,7 @@
     <div v-if="questionList.length === 0" class="empty-state">
       <div class="emoji">🌸</div>
       <p>没有可练习的题目</p>
-      <button class="btn btn-primary" style="margin-top:16px;" @click="$router.push('/')">返回首页</button>
+      <button class="btn btn-primary" style="margin-top:16px;" @click="goBack">返回学习</button>
     </div>
 
     <template v-else>
@@ -333,7 +333,11 @@ function finishQuiz() {
 }
 
 function goBack() {
-  router.push('/')
+  if (mode.value === 'mock') {
+    router.push({ path: '/learn', query: { mode: 'mock' } })
+  } else {
+    router.push({ path: '/learn', query: { mode: 'bank' } })
+  }
 }
 </script>
 

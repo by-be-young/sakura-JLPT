@@ -16,6 +16,7 @@
         <div class="nav-right">
           <div class="nav-links">
             <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">首页</router-link>
+            <router-link to="/learn" class="nav-link" :class="{ active: $route.path.startsWith('/learn') }">学习</router-link>
             <router-link to="/words" class="nav-link" :class="{ active: $route.path.startsWith('/words') }">背词</router-link>
             <router-link to="/study" class="nav-link" :class="{ active: $route.path.startsWith('/study') }">文法</router-link>
             <router-link to="/my" class="nav-link" :class="{ active: ['/my', '/stats', '/wrong'].includes($route.path) }">

@@ -26,7 +26,7 @@
       <div style="text-align:center; margin-top:24px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-primary" @click="retry">再练一次</button>
         <button class="btn btn-secondary" @click="reviewWrong" v-if="wrong > 0">复习错题</button>
-        <button class="btn btn-ghost" @click="$router.push('/')">返回首页</button>
+        <button class="btn btn-ghost" @click="goBack">返回学习</button>
       </div>
     </div>
   </div>
@@ -80,5 +80,13 @@ function retry() {
 
 function reviewWrong() {
   router.push({ name: 'quiz', params: { mode: 'wrong' } })
+}
+
+function goBack() {
+  if (fromMode.value === 'mock') {
+    router.push({ path: '/learn', query: { mode: 'mock' } })
+  } else {
+    router.push({ path: '/learn', query: { mode: 'bank' } })
+  }
 }
 </script>

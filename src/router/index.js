@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import Learn from '../views/Learn.vue'
 import Quiz from '../views/Quiz.vue'
 import Result from '../views/Result.vue'
 import My from '../views/My.vue'
@@ -12,6 +13,7 @@ import GrammarReader from '../views/GrammarReader.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
+  { path: '/learn', name: 'learn', component: Learn },
   { path: '/quiz/:mode', name: 'quiz', component: Quiz, props: true },
   { path: '/units', name: 'units', component: UnitSelect },
   { path: '/words', name: 'words', component: WordLearn },
