@@ -10,11 +10,13 @@ N3 题库 MD → src/data/questions-n3.js 转换器
 - 单元划分：1-18 单元各 36 题（001-648）；第 19 单元 649-679；第 20 单元 680-710
 - 文字题：自动识别句中目标汉字并加 <u></u> 下划线（基于 pykakasi 读音匹配）
 - 含填空（　　）的句子不做下划线
-- 振假名(sentenceFurigana/explanationFurigana)：本占位数据暂不生成，交答题逻辑自动回退到原句
+- 振假名(sentenceFurigana/explanationFurigana)：写文件后自动调用 scripts/furigana_n3.mjs 用 kuroshiro 生成（与 N2 一致）
 """
 import re
 import sys
 import json
+import os
+import subprocess
 import pykakasi
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -220,3 +222,14 @@ if __name__ == '__main__':
     with open(out_path, 'w', encoding='utf-8', newline='\n') as f:
         f.write(js)
     print('已写入：%s' % out_path)
+    # 生成振假名（与 N2 一致的 ruby 标注）
+    here = os.path.dirname(os.path.abspath(__file__))
+    script = os.path.join(here, 'furigana_n3.mjs')
+    if os.path.exists(script):
+        print('调用 furigana_n3.mjs 生成振假名 …')
+        r = subprocess.run(['node', script, out_path], capture_output=True, text=True, encoding='utf-8')
+        sys.stdout.write(r.stdout)
+        if r.returncode != 0:
+            sys.stderr.write('振假名生成失败（不影响题目数据）：%s\n' % r.stderr[-300:])
+    else:
+        print('警告：未找到 scripts/furigana_n3.mjs，跳过振假名生成')
