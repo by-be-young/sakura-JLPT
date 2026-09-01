@@ -254,6 +254,7 @@ function parseContinuation(text) {
     '～が/は+他动词「て形」+ある': { prefix: '～', opts: ['が', 'は'], suffix: '+他动词「て形」+ある', group2: null },
     'ちっとも+い形容词词干+く/动词「ない形」+ない': { prefix: 'ちっとも+', opts: ['い形容词词干+く', '动词「ない形」'], suffix: '+ない', group2: null },
     'もし+动词「て形」/い形容词「て形」/な形容词词干+で/名词+で+も': { prefix: 'もし+', opts: ['动词「て形」', 'い形容词「て形」', 'な形容词词干+で', '名词+で'], suffix: '+も', group2: null },
+    '动词辞书形/动词「ない形」+ない+つもりだ': { prefix: '', opts: ['动词辞书形', '动词「ない形」+ない'], suffix: '+つもりだ', group2: null },
     'III类动词：(~)する→ (~)させてください；来る→来させてください/させないでください': null
   }
   if (text in special) return special[text]
