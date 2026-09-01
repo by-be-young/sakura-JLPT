@@ -1,13 +1,7 @@
 <template>
   <div class="container">
     <!-- 难度选择 -->
-    <div class="level-switch">
-      <button v-for="lv in APP_LEVELS" :key="lv.id" class="level-btn"
-        :class="{ active: level === lv.id }" @click="setLevel(lv.id)">
-        {{ lv.name }}
-      </button>
-      <span class="level-hint">当前：{{ currentTitle }}</span>
-    </div>
+    <LevelSelector show-hint class="level-sel" />
 
     <div class="hero">
       <h1>🌸 樱花日语</h1>
@@ -85,10 +79,11 @@ import { useRouter } from 'vue-router'
 import { levelConfig, levelTitle, hasQuizData, mockInfo } from '../data/questions'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
+import LevelSelector from '../components/LevelSelector.vue'
 
 const router = useRouter()
 const store = useStore()
-const { level, setLevel, APP_LEVELS } = useLevel()
+const { level } = useLevel()
 
 const currentTitle = computed(() => levelTitle(level.value))
 const hasQuiz = computed(() => hasQuizData(level.value))
@@ -125,42 +120,8 @@ function confirmReset() {
 </script>
 
 <style scoped>
-.level-switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.level-sel {
   margin-bottom: 18px;
-  background: #fff;
-  border-radius: 24px;
-  padding: 6px;
-  box-shadow: var(--shadow);
-  border: 2px solid var(--sakura-50);
-  width: fit-content;
-}
-.level-btn {
-  border: none;
-  background: transparent;
-  color: var(--ink-light);
-  font-size: 15px;
-  font-weight: 700;
-  padding: 8px 22px;
-  border-radius: 18px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.level-btn.active {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(233, 120, 150, 0.3);
-}
-.level-btn:hover:not(.active) {
-  background: var(--sakura-50);
-  color: var(--sakura-700);
-}
-.level-hint {
-  font-size: 13px;
-  color: var(--ink-light);
-  padding-right: 10px;
 }
 .placeholder-card {
   background: #fffafc;

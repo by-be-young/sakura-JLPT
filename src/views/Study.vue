@@ -7,12 +7,7 @@
     </div>
 
     <!-- 等级选择（与全局同步） -->
-    <div class="level-tabs">
-      <button v-for="lv in APP_LEVELS" :key="lv.id" class="level-tab"
-        :class="{ active: level === lv.id }" @click="setLevel(lv.id)">
-        {{ lv.name }}
-      </button>
-    </div>
+    <LevelSelector class="level-sel" />
 
     <p class="study-sub">《超值白金版·蓝宝书大全集 新日本语能力考试 N1-N5 文法详解》整理版。当前显示 {{ currentTitle }} 章节，选择章节开始阅读，可在目录中对某个文法点做标记。</p>
 
@@ -65,10 +60,11 @@ import { grammarLevels } from '../data/grammar'
 import { useGrammarStore } from '../store/grammarStore'
 import { useLevel } from '../store/levelStore'
 import { levelTitle } from '../data/questions'
+import LevelSelector from '../components/LevelSelector.vue'
 
 const router = useRouter()
 const store = useGrammarStore()
-const { level, setLevel, APP_LEVELS } = useLevel()
+const { level } = useLevel()
 const currentTitle = computed(() => levelTitle(level.value))
 
 const chapter = computed(() => {
@@ -110,29 +106,8 @@ function confirmReset() {
 }
 .page-title { margin: 0; font-size: 22px; color: #c2556f; }
 .header-spacer { flex: 1; }
-.level-tabs {
-  display: flex;
-  gap: 8px;
+.level-sel {
   margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.level-tab {
-  padding: 8px 18px;
-  border-radius: 24px;
-  border: 2px solid #ffd3e0;
-  background: #fffafc;
-  color: #c2556f;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  font-size: 14px;
-}
-.level-tab.active {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  color: #fff;
-  border-color: #ff7da0;
-  box-shadow: 0 4px 14px rgba(255, 125, 160, 0.35);
 }
 .study-sub {
   color: #b98a94;

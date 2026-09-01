@@ -3,10 +3,7 @@
     <div class="my-header">
       <h2>🌸 我的</h2>
       <!-- 难度切换（全局同步） -->
-      <div class="level-mini-switch">
-        <button v-for="lv in APP_LEVELS" :key="lv.id" class="level-mini-btn"
-          :class="{ active: level === lv.id }" @click="setLevel(lv.id)">{{ lv.name }}</button>
-      </div>
+      <LevelSelector />
       <div class="tabs">
         <button class="tab" :class="{ active: tab === 'stats' }" @click="switchTab('stats')">📊 统计</button>
         <button class="tab" :class="{ active: tab === 'wrong' }" @click="switchTab('wrong')">
@@ -179,11 +176,12 @@ import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
 import { useGrammarStore } from '../store/grammarStore'
 import { useFurigana } from '../composables/useFurigana'
+import LevelSelector from '../components/LevelSelector.vue'
 
 const router = useRouter()
 const route = useRoute()
 const store = useStore()
-const { level, setLevel, APP_LEVELS } = useLevel()
+const { level } = useLevel()
 const grammarStore = useGrammarStore()
 const furigana = useFurigana()
 
@@ -313,29 +311,6 @@ function removeFav(key) {
   margin-bottom: 18px;
 }
 .my-header h2 { margin: 0; font-size: 22px; }
-.level-mini-switch {
-  display: flex;
-  gap: 6px;
-  background: #fff;
-  border: 2px solid var(--sakura-50);
-  border-radius: 18px;
-  padding: 3px;
-}
-.level-mini-btn {
-  border: none;
-  background: transparent;
-  color: var(--ink-light);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 5px 14px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.18s;
-}
-.level-mini-btn.active {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  color: #fff;
-}
 .tabs { display: flex; gap: 10px; margin-left: auto; }
 .tab {
   border: 1px solid var(--sakura-100, #ffd3e0);

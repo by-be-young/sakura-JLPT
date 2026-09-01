@@ -8,13 +8,7 @@
     </div>
 
     <!-- 等级选择 -->
-    <div class="level-tabs">
-      <button v-for="lv in APP_LEVELS" :key="lv.id" class="level-tab"
-        :class="{ active: level === lv.id }"
-        @click="setLevel(lv.id)">
-        {{ lv.name }}
-      </button>
-    </div>
+    <LevelSelector class="level-sel" />
 
     <!-- 等级统计条 -->
     <div class="level-stats" v-if="pool.length">
@@ -103,10 +97,11 @@ import { useWordStore } from '../store/wordStore'
 import { useLevel } from '../store/levelStore'
 import { availableTypes } from '../composables/wordQuiz'
 import WordNoteModal from '../components/word/WordNoteModal.vue'
+import LevelSelector from '../components/LevelSelector.vue'
 
 const router = useRouter()
 const store = useWordStore()
-const { level, setLevel, APP_LEVELS } = useLevel()
+const { level } = useLevel()
 
 const pool = computed(() => wordsByLevel(level.value))
 
@@ -151,29 +146,8 @@ function confirmResetWords() {
 }
 .page-title { margin: 0; font-size: 22px; color: #c2556f; }
 .header-spacer { flex: 1; }
-.level-tabs {
-  display: flex;
-  gap: 8px;
+.level-sel {
   margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.level-tab {
-  padding: 8px 18px;
-  border-radius: 24px;
-  border: 2px solid #ffd3e0;
-  background: #fffafc;
-  color: #c2556f;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  font-size: 14px;
-}
-.level-tab.active {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  color: #fff;
-  border-color: #ff7da0;
-  box-shadow: 0 4px 14px rgba(255, 125, 160, 0.35);
 }
 .level-stats {
   display: flex;
