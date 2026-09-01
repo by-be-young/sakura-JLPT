@@ -219,6 +219,7 @@ function richHtml(raw) {
   let html = raw
   html = html.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, (m, c, off) => off === 0 ? m : '<br>' + c)
   html = html.replace(/【([^】]+)】/g, '<span class="gp-tag">【$1】</span>')
+  html = html.replace(/〖([^〗]+)〗/g, '<span class="gp-hl">$1</span>')
   return html
 }
 
@@ -1001,6 +1002,8 @@ watch(currentPointId, () => {
 
 /* 例句中的中文译文：独占一行 + 略不同颜色 */
 .gp-tr { color: #9a6240; }
+/* 例句中体现该语法点的核心词汇：高亮 */
+:deep(.gp-hl) { color: #d0457a; font-weight: 700; }
 .gp-line:lang(ja), .gp-text:lang(ja), .gp-title:lang(ja) { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', serif; }
 .gp-table { overflow-x: auto; margin: 2px 0 6px; }
 .gp-table table {
