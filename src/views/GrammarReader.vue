@@ -777,8 +777,8 @@ watch(currentPointId, () => {
 .reader-content.paged { cursor: default; perspective: 1800px; }
 
 /* 分页翻书特效：下一页翻起露出预载页，上一页翻下覆盖当前页 */
-.book { position: relative; perspective: 1800px; }
-.book-leaf { backface-visibility: hidden; transform-style: preserve-3d; transform-origin: left center; will-change: transform; }
+.book { position: relative; perspective: 1800px; height: calc(100vh - 205px); min-height: 340px; }
+.book-leaf { backface-visibility: hidden; transform-style: preserve-3d; transform-origin: left center; will-change: transform; height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .over-leaf { position: relative; z-index: 2; }
 .under-leaf { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }
 .over-leaf.over-away { animation: over-away 0.3s ease forwards; }
@@ -1024,5 +1024,6 @@ watch(currentPointId, () => {
   .reader-actions { flex-wrap: wrap; }
   .mode-toggle { padding: 6px 10px; font-size: 12px; }
   .page-wrap { padding: 18px 16px; }
+  .book { height: calc(100vh - 160px); }
 }
 </style>
