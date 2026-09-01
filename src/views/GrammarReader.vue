@@ -347,6 +347,16 @@ function withTermTip(s) {
   return s.replace(CONT_TERM_RE, m => '<span class="cont-term">' + m + '<span class="term-tip">' + CONT_TERMS[m].replace(/\n/g, '<br>') + '</span></span>')
 }
 // 术语提示框悬浮定位：fixed 相对视口，避免超出卡片/滚动容器被裁剪
+function getScrollParent(el) {
+  let p = el.parentElement
+  while (p) {
+    const s = window.getComputedStyle(p)
+    if (/(auto|scroll|overlay)/.test(s.overflowY) || /(auto|scroll|overlay)/.test(s.overflow)) return p
+    p = p.parentElement
+  }
+  return document.body
+}
+// 悬浮窗紧贴词条（absolute 相对词条），并用 JS 约束在滚动容器可视范围内避免被裁剪
 function placeTermTip(term) {
   const tip = term.querySelector('.term-tip')
   if (!tip) return
@@ -356,19 +366,20 @@ function placeTermTip(term) {
   const th = tip.offsetHeight
   tip.style.display = ''
   tip.style.visibility = ''
+  const sc = getScrollParent(term)
+  const sr = sc.getBoundingClientRect()
   const tr = term.getBoundingClientRect()
-  const vw = window.innerWidth
-  const vh = window.innerHeight
   const gap = 8
-  let top = tr.bottom + gap
-  let left = tr.left + tr.width / 2 - tw / 2
-  // 下方空间不足且上方够时，向上弹出
-  if (top + th > vh - gap && tr.top - th - gap > gap) {
-    top = tr.top - th - gap
-  }
-  // 水平方向约束在视口内
-  left = Math.max(gap, Math.min(left, Math.max(gap, vw - tw - gap)))
-  tip.style.position = 'fixed'
+  const below = sr.bottom - tr.bottom
+  const above = tr.top - sr.top
+  // 纵向：默认词条下方；下方空间不足且上方够时，向上弹出
+  let top = tr.height + gap
+  if (below < th + gap * 2 && above >= below) top = -(th + gap)
+  // 水平：相对词条居中，并限制在容器内
+  let left = tr.width / 2 - tw / 2
+  const tLeft = tr.left - sr.left
+  left = Math.max(gap - tLeft, Math.min(left, sr.width - tLeft - tw - gap))
+  tip.style.position = 'absolute'
   tip.style.top = top + 'px'
   tip.style.left = left + 'px'
   tip.style.transform = 'none'
@@ -979,7 +990,7 @@ watch(currentPointId, () => {
 /* 接续专业术语悬停提示 */
 :deep(.cont-term) { position: relative; cursor: help; border-bottom: 1px dashed #d06a86; }
 :deep(.cont-term .term-tip) {
-  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   z-index: 300; display: none;
   width: 240px; padding: 8px 10px;
   background: #fffdfd; border: 1px solid #ffd3e0; border-radius: 8px;
