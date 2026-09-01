@@ -931,8 +931,8 @@ watch(currentPointId, () => {
 :deep(.cont-brace-wrap) { position: relative; display: inline-flex; align-self: stretch; width: 16px; flex: 0 0 auto; }
 :deep(.cont-brace) { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; width: 100%; color: #d06a86; }
 /* 接续专业术语悬停提示 */
-.cont-term { position: relative; cursor: help; border-bottom: 1px dashed #d06a86; }
-.cont-term .term-tip {
+:deep(.cont-term) { position: relative; cursor: help; border-bottom: 1px dashed #d06a86; }
+:deep(.cont-term .term-tip) {
   position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   z-index: 300; display: none;
   width: 240px; padding: 8px 10px;
@@ -940,7 +940,7 @@ watch(currentPointId, () => {
   box-shadow: 0 6px 20px rgba(244, 92, 142, 0.18);
   font-size: 12px; line-height: 1.6; color: #5a4a54; text-align: left; white-space: normal; font-weight: 400;
 }
-.cont-term:hover .term-tip { display: block; }
+:deep(.cont-term:hover .term-tip) { display: block; }
 
 /* 例句中的中文译文：独占一行 + 略不同颜色 */
 .gp-tr { color: #9a6240; }
