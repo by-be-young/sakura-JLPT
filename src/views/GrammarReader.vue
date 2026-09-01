@@ -114,7 +114,6 @@
             </template>
           </div>
         </div>
-        <div class="page-hint">拖动或点击左右两侧翻页 · <span class="kbd">A</span> / <span class="kbd">D</span> 快捷键</div>
       </template>
     </div>
 
@@ -746,8 +745,6 @@ watch(currentPointId, () => {
 /* 阅读内容区 */
 .reader-content { position: relative; }
 .reader-content.paged { user-select: none; -webkit-user-select: none; cursor: default; perspective: 1800px; }
-.reader-content.paged .page-wrap { cursor: grab; }
-.reader-content.paged .page-wrap:active { cursor: grabbing; }
 
 /* 分页翻书特效（3D 翻页） */
 .book-page { transform-style: preserve-3d; backface-visibility: hidden; transform-origin: left center; will-change: transform; }
@@ -904,12 +901,6 @@ watch(currentPointId, () => {
   color: #b98a94;
   margin-bottom: 8px;
   letter-spacing: 0.5px;
-}
-.page-hint {
-  text-align: center;
-  color: #b98a94;
-  font-size: 12px;
-  margin-top: 14px;
 }
 
 /* 侧边目录 */
