@@ -47,23 +47,21 @@
       <div class="func-card" @click="goLearn">
         <div class="func-icon">📖</div>
         <div class="func-name">新学单词</div>
-        <div class="func-desc">学习未学的新单词</div>
       </div>
       <div class="func-card" :class="{ disabled: dueCount === 0 }" @click="goReview">
         <div class="func-icon">🔁</div>
-        <div class="func-name">复习</div>
-        <div class="func-desc">{{ dueCount ? '复习 ' + dueCount + ' 个待复习单词' : '暂无需复习的单词' }}</div>
+        <div class="func-name">复习{{ dueCount ? '（' + dueCount + '）' : '' }}</div>
       </div>
       <div class="func-card" :class="{ disabled: noteCount === 0 }" @click="showNotes = true">
         <div class="func-icon">📝</div>
-        <div class="func-name">笔记</div>
-        <div class="func-desc">{{ noteCount ? '查看 ' + noteCount + ' 条笔记' : '还没有笔记' }}</div>
+        <div class="func-name">笔记{{ noteCount ? '（' + noteCount + '）' : '' }}</div>
       </div>
     </div>
 
     <!-- 重置背词记录 -->
     <div class="reset-area">
-      <button class="btn btn-ghost btn-sm" @click="confirmResetWords">🗑 清空背词记录</button>
+      <button class="btn btn-ghost btn-sm" @click="confirmClearProgress">🗑 清空学习进度</button>
+      <button class="btn btn-ghost btn-sm" @click="confirmClearNotes">🗑 清空笔记</button>
     </div>
 
     <!-- 笔记面板 -->
@@ -128,16 +126,22 @@ function editNote(w) {
   editingWord.value = w
 }
 
-function confirmResetWords() {
-  if (confirm('确定要清空所有背词记录（学习进度、题型完成、笔记）吗？题库答题记录不受影响。')) {
-    store.resetAll()
+function confirmClearProgress() {
+  if (confirm('确定要清空所有背词学习进度（已学、熟词、题型完成）吗？笔记不受影响。')) {
+    store.clearProgress()
+  }
+}
+
+function confirmClearNotes() {
+  if (confirm('确定要清空所有单词笔记吗？学习进度不受影响。')) {
+    store.clearNotes()
     showNotes.value = false
   }
 }
 </script>
 
 <style scoped>
-.words-page { max-width: 720px; }
+.words-page { max-width: 960px; }
 .words-header {
   display: flex;
   align-items: center;
@@ -173,8 +177,11 @@ function confirmResetWords() {
   margin-bottom: 12px;
 }
 .reset-area {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 .func-card {
   background: #fffafc;
@@ -193,7 +200,6 @@ function confirmResetWords() {
 .func-card.disabled { opacity: 0.5; cursor: default; }
 .func-icon { font-size: 32px; margin-bottom: 8px; }
 .func-name { font-weight: 700; color: #7a4b55; margin-bottom: 4px; }
-.func-desc { font-size: 12px; color: #b98a94; }
 .notes-panel {
   margin-top: 20px;
   background: #fffafc;

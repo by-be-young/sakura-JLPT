@@ -5,8 +5,6 @@
       <button class="btn btn-ghost btn-sm" @click="$router.push({ path: '/learn', query: { mode: 'bank' } })">← 返回</button>
     </div>
 
-    <p class="page-desc">按教材单元逐题练习，即时查看解析，不限时，适合针对性巩固。</p>
-
     <div class="unit-grid">
       <div v-for="u in unitList" :key="u.id" class="unit-card" @click="startUnit(u.id)">
         <div class="unit-header">
@@ -90,11 +88,6 @@ function startUnit(id) {
 </script>
 
 <style scoped>
-.page-desc {
-  color: var(--ink-light);
-  font-size: 14px;
-  margin-bottom: 20px;
-}
 .unit-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

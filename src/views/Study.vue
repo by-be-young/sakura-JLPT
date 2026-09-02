@@ -9,8 +9,6 @@
     <!-- 等级选择（与全局同步） -->
     <LevelSelector class="level-sel" />
 
-    <p class="study-sub">《超值白金版·蓝宝书大全集 新日本语能力考试 N1-N5 文法详解》整理版。当前显示 {{ currentTitle }} 章节，选择章节开始阅读，可在目录中对某个文法点做标记。</p>
-
     <!-- 当前等级章节 -->
     <div v-if="chapter" class="chapter-grid">
       <div class="chapter-card" :class="chapter.id.toLowerCase()" @click="openLevel(chapter.id)">
@@ -38,17 +36,9 @@
       <p>当前等级暂无文法内容</p>
     </div>
 
-    <div class="study-tips">
-      <div class="section-title">阅读方式</div>
-      <div class="tip-list">
-        <div class="tip-item"><b>顺序阅读</b>：进入后按章节连续向下滚动，目录点击可跳转。</div>
-        <div class="tip-item"><b>分页阅读</b>：每个文法点占一页。<span class="kbd">D</span> 或鼠标向左拖动、或点击页面右侧翻下一页；<span class="kbd">A</span> 或点击页面左侧翻上一页。</div>
-        <div class="tip-item"><b>目录标记</b>：打开侧边目录，可对任意文法点点击 ★ 做标记，便于复习定位。</div>
-      </div>
-    </div>
-
     <div class="reset-area">
-      <button class="btn btn-ghost btn-sm" @click="confirmReset">🗑 清空学习记录</button>
+      <button class="btn btn-ghost btn-sm" @click="confirmClearMarks">🗑 清空标记</button>
+      <button class="btn btn-ghost btn-sm" @click="confirmClearProgress">🗑 清空学习进度</button>
     </div>
   </div>
 </template>
@@ -89,15 +79,21 @@ function openLevel(id) {
   router.push({ path: `/study/${id.toLowerCase()}` })
 }
 
-function confirmReset() {
-  if (confirm('确定要清空学习板块的所有记录（目录标记、阅读进度、阅读模式）吗？')) {
-    store.resetAll()
+function confirmClearMarks() {
+  if (confirm('确定要清空所有 ★ 文法标记吗？阅读进度不受影响。')) {
+    store.clearMarks()
+  }
+}
+
+function confirmClearProgress() {
+  if (confirm('确定要清空文法阅读进度（已读、位置、阅读模式）吗？标记不受影响。')) {
+    store.clearProgress()
   }
 }
 </script>
 
 <style scoped>
-.study-page { max-width: 860px; }
+.study-page { max-width: 960px; }
 .study-header {
   display: flex;
   align-items: center;
@@ -108,12 +104,6 @@ function confirmReset() {
 .header-spacer { flex: 1; }
 .level-sel {
   margin-bottom: 16px;
-}
-.study-sub {
-  color: #b98a94;
-  font-size: 13px;
-  line-height: 1.7;
-  margin-bottom: 20px;
 }
 .chapter-grid {
   display: grid;
@@ -183,30 +173,13 @@ function confirmReset() {
 }
 .progress-text { font-size: 12px; color: #c2556f; font-weight: 600; min-width: 38px; text-align: right; }
 
-.study-tips { margin-bottom: 20px; }
-.tip-list { display: flex; flex-direction: column; gap: 8px; }
-.tip-item {
-  background: #fffafc;
-  border: 1px solid #ffe3ec;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #7a4b55;
-  line-height: 1.6;
+.reset-area {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
 }
-.kbd {
-  display: inline-block;
-  background: #fff;
-  border: 1px solid #ffc9d9;
-  border-bottom-width: 2px;
-  border-radius: 5px;
-  padding: 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #c2556f;
-  font-family: inherit;
-}
-.reset-area { text-align: center; }
 
 @media (max-width: 480px) {
   .chapter-grid { grid-template-columns: 1fr; }

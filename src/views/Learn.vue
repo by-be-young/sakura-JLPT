@@ -15,7 +15,6 @@
       <div class="list-header">
         <h2>📚 {{ currentTitle }} · 学习</h2>
       </div>
-      <p class="page-desc">选择练习方式，开始刷题。顺序 · 随机 · 单元 · 模拟一网打尽。</p>
       <div class="mode-grid">
         <div class="mode-card" @click="choose('bank')">
           <div class="emoji">📝</div>
@@ -36,7 +35,6 @@
         <h2>📝 {{ currentTitle }} · 题库练习</h2>
         <button class="btn btn-ghost btn-sm" @click="$router.replace({ query: {} })">← 选择方式</button>
       </div>
-      <p class="page-desc">按自己的节奏刷题，即时查看解析，不限时。</p>
       <div class="mode-grid">
         <div class="mode-card" @click="router.push('/quiz/sequential')">
           <div class="emoji">📖</div>
@@ -62,7 +60,6 @@
         <h2>🧪 {{ currentTitle }} · 模拟测试</h2>
         <button class="btn btn-ghost btn-sm" @click="$router.replace({ query: {} })">← 选择方式</button>
       </div>
-      <p class="page-desc">按回次模拟考试，提交后查看得分与解析。</p>
       <div class="mock-list">
         <div v-for="m in mockList" :key="m.id" class="mock-item"
           :class="{ disabled: !m.available }" @click="m.available && startMock(m.id)">
@@ -123,11 +120,6 @@ function startMock(id) {
 <style scoped>
 .level-sel {
   margin-bottom: 18px;
-}
-.page-desc {
-  color: var(--ink-light);
-  font-size: 14px;
-  margin-bottom: 20px;
 }
 .placeholder-card {
   background: #fffafc;

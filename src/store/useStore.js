@@ -129,6 +129,32 @@ export function useStore() {
     return state.wrong.filter(id => id.startsWith(p)).length
   }
 
+  // ===== 独立清除（各记录互不影响） =====
+  function clearAnswers(level) {
+    const p = level + ':'
+    for (const k of Object.keys(state.answered)) {
+      if (k.startsWith(p)) delete state.answered[k]
+    }
+    if (state.counts[level]) state.counts[level] = { answered: 0, correct: 0 }
+  }
+
+  function clearWrong(level) {
+    const p = level + ':'
+    state.wrong = state.wrong.filter(id => !id.startsWith(p))
+  }
+
+  function clearFavorites(level) {
+    const p = level + ':'
+    state.favorites = state.favorites.filter(id => !id.startsWith(p))
+  }
+
+  function clearMockResults(level) {
+    const p = level + ':'
+    for (const k of Object.keys(state.mockResults)) {
+      if (k.startsWith(p)) delete state.mockResults[k]
+    }
+  }
+
   function resetAll() {
     state.answered = {}
     state.wrong = []
@@ -147,6 +173,10 @@ export function useStore() {
     getAnswer,
     saveMockResult,
     wrongCountOf,
+    clearAnswers,
+    clearWrong,
+    clearFavorites,
+    clearMockResults,
     resetAll,
   }
 }

@@ -79,6 +79,18 @@ export function useGrammarStore() {
     state.mode = {}
   }
 
+  // 独立清除：仅清空 ★ 标记，阅读进度保留
+  function clearMarks() {
+    state.marked = {}
+  }
+
+  // 独立清除：仅清空阅读进度（已读/位置/模式），标记保留
+  function clearProgress() {
+    state.learned = {}
+    state.lastPoint = {}
+    state.mode = {}
+  }
+
   return {
     state,
     isMarked,
@@ -91,5 +103,7 @@ export function useGrammarStore() {
     getMode,
     setMode,
     resetAll,
+    clearMarks,
+    clearProgress,
   }
 }

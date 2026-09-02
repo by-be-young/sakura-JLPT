@@ -142,6 +142,17 @@ export function useWordStore() {
     state.notes = {}
   }
 
+  // 独立清除：仅清空学习进度（已学/熟词/题型），笔记保留
+  function clearProgress() {
+    state.learned = {}
+    state.familiar = {}
+  }
+
+  // 独立清除：仅清空笔记，学习进度保留
+  function clearNotes() {
+    state.notes = {}
+  }
+
   // ===== 熟词 =====
   // 标记为熟词：不再进入新学与复习；同时记为已学
   function markFamiliar(wordId) {
@@ -180,6 +191,8 @@ export function useWordStore() {
     unseenCount,
     dueWords,
     resetAll,
+    clearProgress,
+    clearNotes,
     markFamiliar,
     isFamiliar,
     unmarkFamiliar,

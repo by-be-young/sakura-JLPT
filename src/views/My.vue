@@ -21,7 +21,7 @@
       <div v-if="!hasQuiz" class="card" style="margin-bottom:20px;">
         <div class="empty-inline">
           <div class="emoji">📚</div>
-          <p>{{ currentTitle }}题库待补充，暂无可统计的刷题数据。可以先通过「背词」「文法」学习该等级内容。</p>
+          <p>{{ currentTitle }}题库待补充，暂无刷题数据。</p>
         </div>
       </div>
 
@@ -81,7 +81,17 @@
           <button class="btn btn-secondary" @click="$router.push('/quiz/sequential')">{{ level }} 顺序练习</button>
           <button class="btn btn-secondary" @click="$router.push('/quiz/random')">{{ level }} 随机练习</button>
           <button class="btn btn-secondary" @click="switchTab('wrong')">查看错题</button>
-          <button class="btn btn-ghost btn-sm" @click="confirmReset">重置全部记录</button>
+        </div>
+
+        <!-- 数据管理：各记录独立清除 -->
+        <div class="card" style="margin-top:20px;">
+          <div class="section-title" style="margin-top:0;">数据管理 · {{ level }}</div>
+          <div class="mgmt-btns">
+            <button class="btn btn-ghost btn-sm" @click="clearAnswers">🗑 清空答题记录</button>
+            <button class="btn btn-ghost btn-sm" @click="clearWrongLevel">🗑 清空错题本</button>
+            <button class="btn btn-ghost btn-sm" @click="clearFavLevel">🗑 清空收藏</button>
+            <button class="btn btn-ghost btn-sm" @click="clearMockLevel">🗑 清空模拟成绩</button>
+          </div>
         </div>
       </template>
 
@@ -114,6 +124,7 @@
     <template v-else-if="tab === 'wrong'">
       <div v-if="wrongQuestions.length" class="wrong-toolbar">
         <button class="btn btn-primary btn-sm" @click="practiceAll">全部重练（{{ wrongQuestions.length }}）</button>
+        <button class="btn btn-ghost btn-sm" @click="clearWrongLevel">🗑 清空错题本</button>
       </div>
       <div v-if="wrongQuestions.length === 0" class="empty-state">
         <div class="emoji">🎉</div>
@@ -143,6 +154,7 @@
     <template v-else>
       <div v-if="favQuestions.length" class="wrong-toolbar">
         <button class="btn btn-primary btn-sm" @click="practiceAllFav">全部练习（{{ favQuestions.length }}）</button>
+        <button class="btn btn-ghost btn-sm" @click="clearFavLevel">🗑 清空收藏</button>
       </div>
       <div v-if="favQuestions.length === 0" class="empty-state">
         <div class="emoji">🌟</div>
@@ -250,10 +262,27 @@ function startMock(id) {
   router.push({ name: 'quiz', params: { mode: 'mock' }, query: { mock: id } })
 }
 
-function confirmReset() {
-  if (confirm('确定要清空所有学习记录（答题记录、错题、收藏、文法标记与进度）吗？')) {
-    store.resetAll()
-    grammarStore.resetAll()
+function clearAnswers() {
+  if (confirm(`确定清空 ${level.value} 的全部答题记录吗？（不影响错题、收藏、模拟成绩）`)) {
+    store.clearAnswers(level.value)
+  }
+}
+
+function clearWrongLevel() {
+  if (confirm(`确定清空 ${level.value} 的全部错题吗？`)) {
+    store.clearWrong(level.value)
+  }
+}
+
+function clearFavLevel() {
+  if (confirm(`确定清空 ${level.value} 的全部收藏吗？`)) {
+    store.clearFavorites(level.value)
+  }
+}
+
+function clearMockLevel() {
+  if (confirm(`确定清空 ${level.value} 的全部模拟测试成绩吗？`)) {
+    store.clearMockResults(level.value)
   }
 }
 
@@ -445,7 +474,8 @@ function removeFav(key) {
 .mock-empty { color: var(--ink-light); font-size: 13px; padding: 12px 0; }
 .coming-hint { font-size: 11px; color: var(--sakura-600); margin-top: 4px; font-weight: 600; }
 
-.wrong-toolbar { margin-bottom: 14px; }
+.wrong-toolbar { margin-bottom: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mgmt-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .sentence :deep(u) {
   text-decoration: none;
   border-bottom: 2px solid var(--sakura-400);

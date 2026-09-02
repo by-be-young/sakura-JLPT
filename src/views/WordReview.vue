@@ -245,7 +245,7 @@ function restartReview() {
 </script>
 
 <style scoped>
-.words-page { max-width: 720px; }
+.words-page { max-width: 960px; }
 .words-header {
   display: flex;
   align-items: center;
