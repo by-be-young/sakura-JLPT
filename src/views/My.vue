@@ -1,9 +1,11 @@
 <template>
   <div class="container">
     <div class="my-header">
-      <h2>🌸 我的</h2>
-      <!-- 难度切换（全局同步） -->
-      <LevelSelector />
+      <div class="my-head-top">
+        <h2>🌸 我的</h2>
+        <!-- 难度切换（全局同步） -->
+        <LevelSelector />
+      </div>
       <div class="tabs">
         <button class="tab" :class="{ active: tab === 'stats' }" @click="switchTab('stats')">📊 统计</button>
         <button class="tab" :class="{ active: tab === 'wrong' }" @click="switchTab('wrong')">
@@ -18,7 +20,7 @@
     <!-- ============ 统计 ============ -->
     <template v-if="tab === 'stats'">
       <!-- 无题库等级：占位 -->
-      <div v-if="!hasQuiz" class="card" style="margin-bottom:20px;">
+      <div v-if="!hasQuiz" class="card placeholder-card">
         <div class="empty-inline">
           <div class="emoji">📚</div>
           <p>{{ currentTitle }}题库待补充，暂无刷题数据。</p>
@@ -26,7 +28,7 @@
       </div>
 
       <template v-else>
-        <!-- 总览 -->
+        <!-- 数据总览 -->
         <div class="stats-row">
           <div class="stat-card">
             <div class="num">{{ totalQuestions }}</div>
@@ -37,26 +39,32 @@
             <div class="label">已答题数</div>
           </div>
           <div class="stat-card">
-            <div class="num" style="color:var(--green);">{{ correctCount }}</div>
+            <div class="num good">{{ correctCount }}</div>
             <div class="label">答对题数</div>
           </div>
           <div class="stat-card">
-            <div class="num" style="color:var(--red);">{{ wrongCountTotal }}</div>
+            <div class="num bad">{{ wrongCountTotal }}</div>
             <div class="label">错题数</div>
           </div>
         </div>
 
         <!-- 正确率 -->
-        <div class="card" style="margin-bottom:20px;">
-          <div class="section-title" style="margin-top:0;">{{ level }} 总正确率</div>
+        <div class="card accuracy-card">
+          <div class="card-head">
+            <h3 class="card-title">🎯 {{ level }} 总正确率</h3>
+            <span class="accuracy-pct">{{ accuracy }}<small>%</small></span>
+          </div>
           <div class="accuracy-bar">
             <div class="accuracy-fill" :style="{ width: accuracy + '%' }"></div>
           </div>
-          <div class="accuracy-text">{{ accuracy }}%（{{ correctCount }}/{{ answeredCount }}）</div>
+          <div class="accuracy-sub">
+            <span v-if="answeredCount">答对 {{ correctCount }} 题 · 已答 {{ answeredCount }} 题</span>
+            <span v-else>暂无答题数据，去刷题吧</span>
+          </div>
         </div>
 
         <!-- 模拟测试成绩 -->
-        <div class="section-title">{{ level }} · 模拟测试成绩</div>
+        <h3 class="section-title">{{ level }} · 模拟测试成绩</h3>
         <div class="mock-results">
           <div v-for="m in mockList" :key="m.id" class="mock-result-card" :class="{ 'mock-coming': !m.available }">
             <div class="mock-round">第{{ m.id }}回</div>
@@ -67,7 +75,7 @@
             </div>
             <div v-else-if="m.available" class="mock-empty">
               <span>未测试</span>
-              <button class="btn btn-primary btn-sm" style="margin-top:8px;" @click="startMock(m.id)">开始测试</button>
+              <button class="btn btn-primary btn-sm" @click="startMock(m.id)">开始测试</button>
             </div>
             <div v-else class="mock-empty">
               <span>待补充</span>
@@ -77,28 +85,32 @@
         </div>
 
         <!-- 快捷操作 -->
-        <div style="text-align:center; margin-top:28px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-          <button class="btn btn-secondary" @click="$router.push('/quiz/sequential')">{{ level }} 顺序练习</button>
-          <button class="btn btn-secondary" @click="$router.push('/quiz/random')">{{ level }} 随机练习</button>
-          <button class="btn btn-secondary" @click="switchTab('wrong')">查看错题</button>
+        <div class="card quick-card">
+          <h3 class="card-title">⚡ 快捷操作</h3>
+          <div class="quick-actions">
+            <button class="btn btn-secondary" @click="$router.push('/quiz/sequential')">{{ level }} 顺序练习</button>
+            <button class="btn btn-secondary" @click="$router.push('/quiz/random')">{{ level }} 随机练习</button>
+            <button class="btn btn-secondary" @click="switchTab('wrong')">查看错题</button>
+          </div>
         </div>
 
         <!-- 数据管理：各记录独立清除 -->
-        <div class="card" style="margin-top:20px;">
-          <div class="section-title" style="margin-top:0;">数据管理 · {{ level }}</div>
-          <div class="mgmt-btns">
-            <button class="btn btn-ghost btn-sm" @click="clearAnswers">🗑 清空答题记录</button>
-            <button class="btn btn-ghost btn-sm" @click="clearWrongLevel">🗑 清空错题本</button>
-            <button class="btn btn-ghost btn-sm" @click="clearFavLevel">🗑 清空收藏</button>
-            <button class="btn btn-ghost btn-sm" @click="clearMockLevel">🗑 清空模拟成绩</button>
+        <div class="card data-card">
+          <h3 class="card-title">🗑 数据管理 · {{ level }}</h3>
+          <p class="mgmt-hint">各记录独立清除，互不影响</p>
+          <div class="mgmt-grid">
+            <button class="mgmt-btn" @click="clearAnswers">🗑 清空答题记录</button>
+            <button class="mgmt-btn" @click="clearWrongLevel">🗑 清空错题本</button>
+            <button class="mgmt-btn" @click="clearFavLevel">🗑 清空收藏</button>
+            <button class="mgmt-btn" @click="clearMockLevel">🗑 清空模拟成绩</button>
           </div>
         </div>
       </template>
 
       <!-- 文法学习进度（当前等级） -->
-      <div class="card" style="margin-bottom:20px;">
-        <div class="section-title" style="margin-top:0;">文法学习 · {{ level }}</div>
-        <div v-if="grammarCard" class="grammar-row">
+      <div class="card grammar-card">
+        <h3 class="card-title">📘 文法学习 · {{ level }}</h3>
+        <div v-if="grammarCard" class="grammar-body">
           <div class="grammar-head">
             <span class="grammar-badge">{{ grammarCard.id }}</span>
             <span class="grammar-name">{{ grammarCard.title }}</span>
@@ -110,7 +122,7 @@
           <div class="grammar-meta">
             <span>已学 {{ grammarCard.learnedCount }}/{{ grammarCard.pointCount }} 点</span>
             <span v-if="grammarCard.markedCount" class="gm-marked">★ 标记 {{ grammarCard.markedCount }}</span>
-            <button class="btn btn-ghost btn-xs" style="margin-left:auto;" @click="$router.push('/study')">去学习 →</button>
+            <button class="btn btn-ghost btn-xs" @click="$router.push('/study')">去学习 →</button>
           </div>
         </div>
         <div v-else class="empty-inline">
@@ -230,7 +242,7 @@ const grammarCard = computed(() => {
   const markedCount = grammarStore.markedCountOf(points)
   return {
     id: lv.id,
-    title: lv.name.replace(' 文法详解（整理版）', '').replace('文法详解（整理版）', ''),
+    title: lv.name.replace('（整理版）', '').trim(),
     pointCount: points.length,
     learnedCount,
     markedCount,
@@ -332,15 +344,10 @@ function removeFav(key) {
 </script>
 
 <style scoped>
-.my-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
+.my-header { margin-bottom: 18px; }
+.my-head-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .my-header h2 { margin: 0; font-size: 22px; }
-.tabs { display: flex; gap: 10px; margin-left: auto; }
+.tabs { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .tab {
   border: 1px solid var(--sakura-100, #ffd3e0);
   background: #fff;
@@ -384,6 +391,25 @@ function removeFav(key) {
 .empty-inline .emoji { font-size: 34px; margin-bottom: 8px; }
 .btn-xs { font-size: 12px; padding: 3px 10px; }
 
+/* ===== 卡片通用标题 ===== */
+.card-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #7a4b55;
+}
+.card-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 15px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ff9dbd, #ff7da0);
+}
+
+/* ===== 数据总览 ===== */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -398,32 +424,96 @@ function removeFav(key) {
   box-shadow: var(--shadow);
   border: 1px solid var(--sakura-50);
 }
-.stat-card .num { font-size: 30px; font-weight: 700; color: var(--sakura-600); }
+.stat-card .num { font-size: 30px; font-weight: 700; color: var(--sakura-600); line-height: 1.1; }
+.stat-card .num.good { color: var(--green); }
+.stat-card .num.bad { color: var(--red); }
 .stat-card .label { font-size: 13px; color: var(--ink-light); margin-top: 6px; }
 
+/* ===== 正确率 ===== */
+.accuracy-card { margin-bottom: 20px; }
+.accuracy-card .card-head { display: flex; align-items: baseline; justify-content: space-between; }
+.accuracy-card .card-title { margin-bottom: 14px; }
+.accuracy-pct { font-size: 26px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
+.accuracy-pct small { font-size: 15px; color: var(--ink-light); margin-left: 2px; }
 .accuracy-bar {
-  height: 24px;
-  background: #f0ecee;
-  border-radius: 12px;
+  height: 18px;
+  background: #f6eff2;
+  border-radius: 9px;
   overflow: hidden;
-  margin: 12px 0 8px;
 }
 .accuracy-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
-  border-radius: 12px;
+  border-radius: 9px;
   transition: width 0.5s;
 }
-.accuracy-text { font-size: 14px; color: var(--ink); font-weight: 600; }
+.accuracy-sub { margin-top: 10px; font-size: 13px; color: var(--ink-light); }
 
-/* 文法进度 */
-.grammar-row { margin-bottom: 16px; }
-.grammar-row:last-child { margin-bottom: 0; }
+/* ===== 模拟测试成绩 ===== */
+.mock-results {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.mock-result-card {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid var(--sakura-50);
+}
+.mock-result-card.mock-coming { opacity: 0.6; }
+.mock-round { font-size: 15px; font-weight: 700; color: var(--sakura-700); margin-bottom: 10px; }
+.score-num { font-size: 32px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
+.score-num .unit { font-size: 14px; color: var(--ink-light); }
+.score-detail { font-size: 12px; color: var(--ink-light); margin-top: 6px; }
+.score-date { font-size: 11px; color: #bbb; margin-top: 4px; }
+.mock-empty { color: var(--ink-light); font-size: 13px; padding: 12px 0; }
+.coming-hint { font-size: 11px; color: var(--sakura-600); margin-top: 4px; font-weight: 600; }
+
+/* ===== 快捷操作 ===== */
+.quick-card { margin-bottom: 20px; }
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.quick-actions .btn { width: 100%; }
+
+/* ===== 数据管理 ===== */
+.data-card { margin-bottom: 20px; }
+.mgmt-hint { margin: -4px 0 12px; font-size: 12px; color: var(--ink-light); }
+.mgmt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.mgmt-btn {
+  border: 1px solid var(--sakura-100);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.mgmt-btn:hover {
+  background: var(--sakura-50);
+  border-color: var(--sakura-300);
+  color: var(--sakura-700);
+}
+
+/* ===== 文法进度 ===== */
+.grammar-body { margin-bottom: 4px; }
 .grammar-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .grammar-badge {
   background: linear-gradient(145deg, #ff9dbd, #ff7da0);
@@ -447,35 +537,18 @@ function removeFav(key) {
   border-radius: 5px;
   transition: width 0.4s;
 }
-.grammar-meta { display: flex; gap: 12px; margin-top: 4px; font-size: 12px; color: #b98a94; }
-.grammar-meta .gm-marked { color: #e08a00; }
-
-.mock-results {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+.grammar-meta {
+  display: flex;
+  align-items: center;
   gap: 12px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #b98a94;
 }
-.mock-result-card {
-  background: #fff;
-  border-radius: var(--radius-sm);
-  padding: 16px 12px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  border: 1px solid var(--sakura-50);
-}
-.mock-result-card.mock-coming {
-  opacity: 0.6;
-}
-.mock-round { font-size: 15px; font-weight: 700; color: var(--sakura-700); margin-bottom: 10px; }
-.score-num { font-size: 32px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
-.score-num .unit { font-size: 14px; color: var(--ink-light); }
-.score-detail { font-size: 12px; color: var(--ink-light); margin-top: 6px; }
-.score-date { font-size: 11px; color: #bbb; margin-top: 4px; }
-.mock-empty { color: var(--ink-light); font-size: 13px; padding: 12px 0; }
-.coming-hint { font-size: 11px; color: var(--sakura-600); margin-top: 4px; font-weight: 600; }
+.grammar-meta .gm-marked { color: #e08a00; }
+.grammar-meta .btn { margin-left: auto; }
 
 .wrong-toolbar { margin-bottom: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.mgmt-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .sentence :deep(u) {
   text-decoration: none;
   border-bottom: 2px solid var(--sakura-400);
@@ -504,6 +577,7 @@ function removeFav(key) {
 @media (max-width: 640px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .mock-results { grid-template-columns: repeat(3, 1fr); }
-  .tabs { margin-left: 0; }
+  .quick-actions { grid-template-columns: 1fr; }
+  .mgmt-grid { grid-template-columns: 1fr; }
 }
 </style>
