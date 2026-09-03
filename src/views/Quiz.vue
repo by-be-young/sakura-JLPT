@@ -17,15 +17,16 @@
         </div>
       </div>
 
-      <!-- 顺序/单元模式：题号选择器 -->
-      <div v-if="mode === 'sequential' || mode === 'unit'" class="picker-toggle">
+      <!-- 答题卡 / 题号表（顺序/单元/模拟 模式可用，默认收起） -->
+      <div v-if="mode === 'sequential' || mode === 'unit' || mode === 'mock'" class="picker-toggle">
         <button class="btn btn-secondary btn-sm" @click="showPicker = !showPicker">
-          {{ showPicker ? '收起题号表' : '📋 选择题号 / 跳转' }}
+          {{ showPicker ? '收起' : (mode === 'mock' ? '📋 答题卡' : '📋 选择题号 / 跳转') }}
         </button>
         <span class="picker-hint">绿=答对 红=答错 灰=未做</span>
       </div>
-      <QuestionPicker v-if="(mode === 'sequential' || mode === 'unit') && showPicker"
-        :questions="sequentialAll" @select="jumpToQuestion" />
+      <QuestionPicker v-if="showPicker && (mode === 'sequential' || mode === 'unit' || mode === 'mock')"
+        :questions="pickerQuestions" :title="pickerTitle" :current-id="currentQuestion.id"
+        @select="jumpToQuestion" />
 
       <!-- 随机模式：设置 -->
       <div v-if="mode === 'random'" class="random-settings">
@@ -34,6 +35,12 @@
           <span>完全随机（默认优先抽取未做过的题）</span>
         </label>
         <button class="btn btn-ghost btn-sm" @click="reshuffleRandom">🔄 重新洗牌</button>
+      </div>
+
+      <!-- 完形填空/读解：整篇文章展示（同组题切换时文章保持） -->
+      <div v-if="currentArticle" class="passage-box">
+        <div class="passage-title">📖 文章</div>
+        <div class="passage-content" v-html="displayArticle"></div>
       </div>
 
       <!-- 答题区（带左右箭头） -->
@@ -151,6 +158,27 @@ const currentQuestion = computed(() => {
   if (!q) return {}
   if (!shuffleCache.has(q.key)) shuffleCache.set(q.key, shuffleQuestion(q))
   return shuffleCache.get(q.key)
+})
+
+// 答题卡数据源：模拟模式用当前回题目，顺序/单元用全量
+const pickerQuestions = computed(() => {
+  if (mode.value === 'mock') return questionList.value
+  return sequentialAll.value
+})
+const pickerTitle = computed(() =>
+  mode.value === 'mock' ? `第${mockId.value}回模拟 · 答题卡` : '选择起始题号')
+
+// 完形填空/读解：整篇文章（同组题共享 article，切题时文章不切换）
+const currentArticle = computed(() => currentQuestion.value.article || '')
+const displayArticle = computed(() => {
+  const a = currentArticle.value
+  if (!a) return ''
+  // 转义 HTML 避免注入；\n 换行；挖空处用〔题号〕标记，渲染为填空位并高亮当前题
+  const escaped = a.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return escaped.replace(/\n/g, '<br>').replace(/〔(\d+)〕/g, (m, id) => {
+    const active = Number(id) === currentQuestion.value.id
+    return `<span class="passage-gap${active ? ' active' : ''}" data-q="${id}">（　　）</span>`
+  })
 })
 const progressPercent = computed(() => Math.round((currentIndex.value + 1) / questionList.value.length * 100))
 const isFav = computed(() => store.isFavorite(currentQuestion.value.key))
@@ -462,11 +490,58 @@ function goBack() {
   background: #f3e8fd;
   color: #7a5ca5;
 }
+/* 完形填空/读解文章面板 */
+.passage-box {
+  background: #fffdf9;
+  border: 2px solid var(--sakura-100, #ffe3ec);
+  border-radius: var(--radius, 16px);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 10px rgba(233, 120, 150, 0.08);
+}
+.passage-title {
+  font-weight: 700;
+  color: var(--sakura-600, #c2556f);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.passage-content {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--ink, #333);
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.passage-content :deep(ruby) { ruby-position: over; }
+.passage-content :deep(rt) {
+  font-size: 0.55em;
+  color: var(--sakura-500);
+  font-weight: 500;
+}
+.passage-content :deep(rp) { display: none; }
+.passage-gap {
+  display: inline-block;
+  min-width: 2.6em;
+  border-bottom: 2px dashed var(--sakura-300, #f7b7c9);
+  text-align: center;
+  margin: 0 2px;
+  color: transparent;
+}
+.passage-gap.active {
+  border-bottom: 2.5px solid var(--sakura-500, #ff7da0);
+  background: rgba(255, 157, 189, 0.12);
+  border-radius: 4px;
+}
 @media (max-width: 640px) {
   .side-arrow {
     width: 36px;
     height: 60px;
     font-size: 22px;
+  }
+  .passage-content {
+    font-size: 14px;
+    max-height: 240px;
   }
 }
 </style>

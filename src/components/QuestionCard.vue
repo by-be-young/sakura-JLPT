@@ -38,10 +38,19 @@ const emit = defineEmits(['select'])
 const furigana = useFurigana()
 
 const displaySentence = computed(() => {
+  let s = ''
   if (furigana.isEnabled.value && props.question.sentenceFurigana) {
-    return props.question.sentenceFurigana
+    s = props.question.sentenceFurigana
+  } else {
+    s = props.question.sentence
   }
-  return props.question.sentence
+  // 排序题（含 ★）：把 ___ 与 ★ 渲染为独立的填空横线，互不粘连
+  if (s && s.includes('★')) {
+    return s
+      .replaceAll('★', '<span class="sort-star">★</span>')
+      .replaceAll('___', '<span class="sort-blank"></span>')
+  }
+  return s
 })
 
 const displayExplanation = computed(() => {
@@ -84,6 +93,24 @@ function optionClass(idx) {
   padding-bottom: 1px;
   color: var(--sakura-700);
   font-weight: 600;
+}
+
+/* 排序题填空横线：独立框、互不粘连 */
+.question-sentence :deep(.sort-blank),
+.question-sentence :deep(.sort-star) {
+  display: inline-block;
+  min-width: 2.4em;
+  border-bottom: 2px solid var(--sakura-400);
+  padding: 0 6px;
+  margin: 0 3px;
+  vertical-align: baseline;
+  line-height: 1.4;
+}
+.question-sentence :deep(.sort-star) {
+  border-bottom-color: #ff7da0;
+  color: var(--sakura-600);
+  font-weight: 700;
+  text-align: center;
 }
 
 /* 振假名 ruby 样式 */

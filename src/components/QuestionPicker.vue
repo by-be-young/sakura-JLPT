@@ -1,8 +1,9 @@
 <template>
   <div class="picker">
     <div class="picker-header">
-      <span class="picker-title">选择起始题号（共 {{ questions.length }} 题）</span>
+      <span class="picker-title">{{ title }}（共 {{ questions.length }} 题）</span>
       <div class="legend">
+        <span class="legend-item"><span class="dot dot-current"></span>当前</span>
         <span class="legend-item"><span class="dot dot-unseen"></span>未做</span>
         <span class="legend-item"><span class="dot dot-correct"></span>答对</span>
         <span class="legend-item"><span class="dot dot-wrong"></span>答错</span>
@@ -31,6 +32,8 @@ import { useStore } from '../store/useStore'
 
 const props = defineProps({
   questions: { type: Array, required: true },
+  title: { type: String, default: '选择起始题号' },
+  currentId: { type: Number, default: 0 },
 })
 const emit = defineEmits(['select'])
 
@@ -41,15 +44,19 @@ const minId = computed(() => Math.min(...props.questions.map(q => q.id)))
 const maxId = computed(() => Math.max(...props.questions.map(q => q.id)))
 
 function cellClass(key) {
+  const qid = Number(key.split(':')[1])
+  if (props.currentId && qid === props.currentId) return 'current'
   const a = store.getAnswer(key)
   if (!a) return 'unseen'
   return a.correct ? 'correct' : 'wrong'
 }
 
 function cellTitle(key) {
+  const qid = Number(key.split(':')[1])
+  if (props.currentId && qid === props.currentId) return `第${qid}题 · 当前`
   const a = store.getAnswer(key)
-  if (!a) return `第${key.split(':')[1]}题 · 未做`
-  return `第${key.split(':')[1]}题 · ${a.correct ? '答对' : '答错'}`
+  if (!a) return `第${qid}题 · 未做`
+  return `第${qid}题 · ${a.correct ? '答对' : '答错'}`
 }
 
 function jumpTo() {
@@ -100,6 +107,7 @@ function jumpTo() {
   border-radius: 3px;
   display: inline-block;
 }
+.dot-current { background: var(--sakura-400); }
 .dot-unseen { background: #f0ecee; border: 1px solid #ddd; }
 .dot-correct { background: var(--green); }
 .dot-wrong { background: var(--red); }
@@ -139,6 +147,12 @@ function jumpTo() {
   cursor: pointer;
   transition: all 0.15s;
   border: 1px solid transparent;
+}
+.picker-cell.current {
+  background: var(--sakura-400);
+  color: #fff;
+  box-shadow: 0 0 0 2px #fff inset, 0 0 0 3px var(--sakura-400);
+  font-weight: 700;
 }
 .picker-cell.unseen {
   background: #f7f4f5;
