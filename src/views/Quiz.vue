@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{ 'article-mode': !!currentArticle }">
     <div v-if="questionList.length === 0" class="empty-state">
       <div class="emoji">🌸</div>
       <p>没有可练习的题目</p>
@@ -38,9 +38,9 @@
       </div>
 
       <!-- 完形填空/读解：整篇文章展示（同组题切换时文章保持） -->
-      <div v-if="currentArticle" class="passage-box">
+      <div v-if="currentArticle" ref="passageRef" class="passage-box" :class="{ 'has-overflow': articleOverflow }">
         <div class="passage-title">📖 文章</div>
-        <div class="passage-content" v-html="displayArticle"></div>
+        <div class="passage-content" v-html="displayArticle" @scroll="updateArticleOverflow"></div>
       </div>
 
       <!-- 答题区（带左右箭头） -->
@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { levelQuestions, levelMockQuestions } from '../data/questions'
 import { useStore } from '../store/useStore'
@@ -105,6 +105,14 @@ const router = useRouter()
 const store = useStore()
 const { level } = useLevel()
 const furigana = useFurigana()
+
+// 文章面板：判断内容是否需要内部滚动（底部还有未读内容时显示渐隐提示）
+const passageRef = ref(null)
+const articleOverflow = ref(false)
+function updateArticleOverflow() {
+  const el = passageRef.value && passageRef.value.querySelector('.passage-content')
+  articleOverflow.value = !!(el && el.scrollHeight - el.scrollTop > el.clientHeight + 2)
+}
 
 const mode = computed(() => route.params.mode)
 const mockId = computed(() => Number(route.query.mock) || 0)
@@ -188,6 +196,11 @@ watch(showResult, (val) => {
   furigana.setLocked(!val)
 }, { immediate: true })
 
+// 切题后重算文章溢出状态
+watch(() => currentQuestion.value.key, () => {
+  nextTick(updateArticleOverflow)
+})
+
 onUnmounted(() => {
   furigana.setLocked(false)
   if (flashTimer) clearTimeout(flashTimer)
@@ -198,6 +211,11 @@ const RANDOM_KEY = 'sakura_random_fully_random'
 onMounted(() => {
   fullyRandom.value = localStorage.getItem(RANDOM_KEY) === '1'
   window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('resize', updateArticleOverflow)
+  nextTick(updateArticleOverflow)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', updateArticleOverflow)
 })
 function saveRandomSetting() {
   localStorage.setItem(RANDOM_KEY, fullyRandom.value ? '1' : '0')
@@ -532,6 +550,94 @@ function goBack() {
   border-bottom: 2.5px solid var(--sakura-500, #ff7da0);
   background: rgba(255, 157, 189, 0.12);
   border-radius: 4px;
+}
+
+/* ===== 文章题（读解/完形填空）单屏适配：压缩间距 + 文章区自适应剩余高度，避免整页滚动 ===== */
+.article-mode .passage-box {
+  position: relative;
+  padding: 10px 16px 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.article-mode .passage-title {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.article-mode .passage-content {
+  font-size: 15px;
+  line-height: 1.8;
+  height: calc(100vh - 660px);
+  height: calc(100dvh - 660px);
+  min-height: 130px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+/* 文章底部渐隐提示：内容溢出可滚动时显示 */
+.article-mode .passage-box.has-overflow::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26px;
+  background: linear-gradient(to bottom, rgba(255, 253, 249, 0), #fffdf9);
+  pointer-events: none;
+  border-radius: 0 0 var(--radius, 16px) var(--radius, 16px);
+}
+/* 文章题答题卡紧凑化，保证选项区完整可见 */
+.article-mode .quiz-card {
+  padding: 16px 18px;
+}
+.article-mode .quiz-meta {
+  margin-bottom: 8px;
+}
+.article-mode :deep(.question-sentence) {
+  font-size: 16px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+.article-mode :deep(.options-list) {
+  gap: 8px;
+}
+.article-mode :deep(.option-item) {
+  padding: 10px 14px;
+  font-size: 14.5px;
+}
+.article-mode :deep(.explanation-box) {
+  margin-top: 12px;
+  padding: 12px 14px;
+}
+.article-mode :deep(.explanation-box .translation) {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.article-mode :deep(.explanation-box .detail) {
+  font-size: 15px;
+  line-height: 1.9;
+}
+.article-mode .picker-toggle {
+  margin-bottom: 8px;
+}
+@media (max-width: 640px) {
+  .article-mode .passage-content {
+    font-size: 14px;
+    height: calc(100vh - 640px);
+    height: calc(100dvh - 640px);
+    min-height: 100px;
+  }
+  .article-mode .quiz-card {
+    padding: 12px 14px;
+  }
+  .article-mode :deep(.question-sentence) {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+  .article-mode :deep(.option-item) {
+    padding: 9px 12px;
+    font-size: 14px;
+  }
 }
 @media (max-width: 640px) {
   .side-arrow {

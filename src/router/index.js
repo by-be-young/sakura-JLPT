@@ -10,6 +10,10 @@ import WordStudy from '../views/WordStudy.vue'
 import WordReview from '../views/WordReview.vue'
 import Study from '../views/Study.vue'
 import GrammarReader from '../views/GrammarReader.vue'
+import ReadingList from '../views/ReadingList.vue'
+import ReadingView from '../views/ReadingView.vue'
+import Listening from '../views/Listening.vue'
+import ListeningUnit from '../views/ListeningUnit.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -21,6 +25,10 @@ const routes = [
   { path: '/words/review', name: 'words-review', component: WordReview },
   { path: '/study', name: 'study', component: Study },
   { path: '/study/:level', name: 'study-reader', component: GrammarReader },
+  { path: '/reading', name: 'reading', component: ReadingList },
+  { path: '/reading/:id', name: 'reading-view', component: ReadingView, props: true },
+  { path: '/listening', name: 'listening', component: Listening },
+  { path: '/listening/:unit', name: 'listening-unit', component: ListeningUnit, props: true },
   { path: '/my', name: 'my', component: My },
   { path: '/stats', redirect: '/my' },
   { path: '/wrong', redirect: { name: 'my', query: { tab: 'wrong' } } },

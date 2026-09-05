@@ -3,28 +3,38 @@
     <!-- 难度选择 -->
     <LevelSelector class="level-sel" />
 
-    <!-- 无题库等级：占位 -->
-    <div v-if="!hasQuiz" class="placeholder-card">
+    <!-- 无任何内容等级：占位 -->
+    <div v-if="!hasQuiz && !readingAvailable" class="placeholder-card">
       <div class="emoji">📚</div>
       <h3>{{ currentTitle }}题库待补充</h3>
       <p>当前等级的刷题题库正在准备中，敬请期待。可以先通过「背词」和「文法」学习该等级内容。</p>
     </div>
 
-    <!-- 选择：题库练习 / 模拟测试 -->
+    <!-- 选择：题库练习 / 模拟测试 / 读解 -->
     <template v-else-if="!mode">
       <div class="list-header">
         <h2>📚 {{ currentTitle }} · 学习</h2>
       </div>
       <div class="mode-grid">
-        <div class="mode-card" @click="choose('bank')">
+        <div class="mode-card" :class="{ disabled: !hasQuiz }" @click="hasQuiz && choose('bank')">
           <div class="emoji">📝</div>
-          <h3>题库练习</h3>
+          <h3>题库练习 {{ hasQuiz ? '' : '（待补充）' }}</h3>
           <p>顺序答题 · 随机抽题 · 单元练习，逐题巩固，即时解析。</p>
         </div>
-        <div class="mode-card" @click="choose('mock')">
+        <div class="mode-card" :class="{ disabled: !hasQuiz }" @click="hasQuiz && choose('mock')">
           <div class="emoji">🧪</div>
-          <h3>模拟测试</h3>
+          <h3>模拟测试 {{ hasQuiz ? '' : '（待补充）' }}</h3>
           <p>按回次模拟考试，检验真实水平，查看得分。</p>
+        </div>
+        <div class="mode-card" :class="{ disabled: !readingAvailable }" @click="readingAvailable && router.push('/reading')">
+          <div class="emoji">📖</div>
+          <h3>读解 {{ readingAvailable ? '' : '（待补充）' }}</h3>
+          <p>文章阅读训练：读文章答问题，整篇完成后解锁全文翻译与难句分析。</p>
+        </div>
+        <div class="mode-card" @click="router.push('/listening')">
+          <div class="emoji">🎧</div>
+          <h3>听解</h3>
+          <p>绿宝书N2听解：词汇 · 题目 · 补充知识，三个板块自由练习（当前 N2）。</p>
         </div>
       </div>
     </template>
@@ -91,6 +101,8 @@ const { level } = useLevel()
 const mode = computed(() => route.query.mode)
 const currentTitle = computed(() => levelTitle(level.value))
 const hasQuiz = computed(() => hasQuizData(level.value))
+// 读解板块：收录 N1、N2（橙宝书读解）
+const readingAvailable = computed(() => level.value === 'N1' || level.value === 'N2')
 
 const mockList = computed(() => {
   const cfg = levelConfig[level.value]
@@ -135,6 +147,14 @@ function startMock(id) {
 .mock-item.disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+.mode-card.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.mode-card.disabled:hover {
+  transform: none;
+  box-shadow: var(--shadow);
 }
 .mock-item.disabled:hover {
   transform: none;
