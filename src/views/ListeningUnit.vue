@@ -20,7 +20,7 @@
     <!-- ============ 词汇板块（左右翻页卡片） ============ -->
     <section v-if="tab === 'words'">
       <div class="qr-banner">
-        <img :src="qrImg(9)" alt="音频二维码" />
+        <img :src="wordsQrPage ? qrImg(wordsQrPage) : ''" alt="音频二维码" />
         <div class="qr-text">
           <div class="qr-title">🔊 扫一扫，听音频</div>
           <div class="qr-sub">本单元词汇音频：{{ unit.words.groups[0].audio }} ~ {{ unit.words.groups[unit.words.groups.length - 1].audio }}</div>
@@ -32,8 +32,8 @@
         <transition :name="wordsAnim">
           <div class="block-card flip-card" :key="'w' + wordsIndex">
             <div class="group-head">
-              <h3>{{ curWords.group < 9 ? '語彙のまとめ' + curWords.group : '表現のまとめ' }}（{{ curWords.title }}）</h3>
-              <span class="audio-tag">🎧 {{ curWords.audio }}</span>
+              <h3>{{ /重要短语/.test(curWords.title) ? '表現のまとめ' : '語彙のまとめ' + curWords.group }}（{{ curWords.title }}）</h3>
+              <span v-if="curWords.audio" class="audio-tag">🎧 {{ curWords.audio }}</span>
             </div>
             <div class="word-table">
               <div v-for="(item, i) in curWords.list" :key="i" class="word-row">
@@ -55,7 +55,7 @@
     <!-- ============ 题目板块 ============ -->
     <section v-if="tab === 'questions'">
       <div class="qr-banner">
-        <img :src="qrImg(14)" alt="音频二维码" />
+        <img :src="questionsQrPage ? qrImg(questionsQrPage) : ''" alt="音频二维码" />
         <div class="qr-text">
           <div class="qr-title">🔊 扫一扫，听音频</div>
           <div class="qr-sub">本单元题目音频：{{ unit.questions.sections[0].audio }} ~ {{ unit.questions.sections[unit.questions.sections.length - 1].audio }}</div>
@@ -68,7 +68,7 @@
           <div class="block-card flip-card" :key="'q' + qIndex">
             <div class="group-head">
               <h3>{{ curSec.section }}. {{ curSec.title }}</h3>
-              <span class="audio-tag">🎧 {{ curSec.audio }}</span>
+              <span v-if="curSec.audio" class="audio-tag">🎧 {{ curSec.audio }}</span>
             </div>
 
         <!-- 例题（kana 题型） -->
@@ -78,16 +78,16 @@
           <span class="q-example-ans">（{{ curSec.example.kanji }}）</span>
         </div>
 
-        <!-- 选择题 -->
-        <template v-if="curSec.type === 'select'">
+        <!-- 选择题 / 判断正误 -->
+        <template v-if="curSec.type === 'select' || curSec.type === 'judge'">
         <div v-for="item in curSec.items" :key="item.n" class="q-item">
           <div class="q-no">{{ item.n }}</div>
           <div class="q-body">
-            <div class="q-text" v-html="jp(item.text, item.textFuri)"></div>
+            <div v-if="item.text" class="q-text" v-html="jp(item.text, item.textFuri)"></div>
             <div class="q-options">
               <button v-for="(opt, i) in item.options" :key="i" class="q-opt"
                 :class="optClass(item, 'ab'[i])" :disabled="!!picked(item)"
-                @click="choose(item, 'ab'[i])">
+                @click="choose(item, 'ab'[i], opt)">
                 <span class="opt-num">{{ 'ab'[i] }}</span>{{ opt }}
               </button>
             </div>
@@ -116,7 +116,7 @@
               <div v-if="shown(item)" class="q-ans-box">
                 <div class="q-ans-line ok">
                   答案：<b v-html="jp(item.answer, item.answerFuri)"></b>
-                  <span v-if="item.kanji" class="q-ans-kanji">（{{ item.kanji }}）</span>
+                  <span v-if="item.kanji" class="q-ans-kanji">（<span v-html="furiOn && item.kanjiFuri ? item.kanjiFuri : item.kanji"></span>）</span>
                 </div>
                 <div v-if="item.script" class="q-script">
                   <span class="q-script-label">🔉 听力原文</span>
@@ -143,6 +143,26 @@
                     答案：<b v-html="jp(item.answer, item.answerFuri)"></b>
                     <span v-if="item.kana" class="q-ans-kana">（{{ item.kana }}）</span>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 补句子+敬语普通形 -->
+        <template v-if="curSec.type === 'keigo'">
+          <div v-for="item in curSec.items" :key="item.n" class="q-item">
+            <div class="q-no">{{ item.n }}</div>
+            <div class="q-body">
+              <div class="q-text" v-html="jp(item.text, item.textFuri)"></div>
+              <button class="btn btn-secondary btn-sm ans-btn" @click="toggleAns(item)">
+                {{ shown(item) ? '收起答案' : '查看答案' }}
+              </button>
+              <div v-if="shown(item)" class="q-ans-box">
+                <div v-for="(a, i) in item.answers" :key="i" class="q-ans-line ok q-keigo-ans">
+                  <span class="q-ans-no">{{ ['①', '②', '③'][i] || (i + 1) }}</span>
+                  <b v-html="jp(a.answer, a.answerFuri)"></b>
+                  <span class="q-keigo-plain">（普通形：<span v-html="jp(a.plain, a.plainFuri)"></span>）</span>
                 </div>
               </div>
             </div>
@@ -181,8 +201,8 @@
 
     <!-- ============ 补充知识板块（左右翻页卡片） ============ -->
     <section v-if="tab === 'knowledge'">
-      <div class="qr-banner">
-        <img :src="qrImg(17)" alt="音频二维码" />
+      <div v-if="unit.knowledge.audio" class="qr-banner">
+        <img :src="knowQrPage ? qrImg(knowQrPage) : ''" alt="音频二维码" />
         <div class="qr-text">
           <div class="qr-title">🔊 扫一扫，听音频</div>
           <div class="qr-sub">本单元知识点音频：{{ unit.knowledge.audio }}</div>
@@ -200,31 +220,32 @@
           <div class="block-card flip-card" :key="'k' + knowIndex">
             <div class="group-head">
               <h3>{{ curPart.heading }}</h3>
-              <span class="audio-tag">🎧 {{ curPart.audio }}</span>
+              <span v-if="curPart.audio" class="audio-tag">🎧 {{ curPart.audio }}</span>
             </div>
             <p v-if="curPart.intro" class="k-part-intro">{{ curPart.intro }}</p>
             <div class="k-table-wrap">
               <table class="k-table">
                 <thead>
                   <tr>
-                    <th class="col-a">左</th>
-                    <th>例</th>
-                    <th class="col-b">右</th>
-                    <th>例</th>
+                    <template v-for="(c, i) in kCols(curPart)" :key="'h' + i">
+                      <th :class="c.cls">{{ c.title }}</th>
+                    </template>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(p, i) in curPart.pairs" :key="i">
-                    <td class="col-a">
-                      <span class="k-word">{{ p.l }}</span>
-                      <span v-if="p.lk" class="k-kanji">{{ p.lk }}</span>
-                    </td>
-                    <td class="k-ex" v-html="jp(p.le, p.leFuri)"></td>
-                    <td class="col-b">
-                      <span class="k-word">{{ p.r }}</span>
-                      <span v-if="p.rk" class="k-kanji">{{ p.rk }}</span>
-                    </td>
-                    <td class="k-ex" v-html="jp(p.re, p.reFuri)"></td>
+                    <template v-for="(c, j) in kCols(curPart)" :key="'c' + j">
+                      <td v-if="c.key === 'l'" :class="c.cls">
+                        <span class="k-word" v-html="furiOn && p.lFuri ? p.lFuri : p.l"></span>
+                        <span v-if="p.lk" class="k-kanji">{{ p.lk }}</span>
+                      </td>
+                      <td v-else-if="c.key === 'le'" class="k-ex" v-html="jp(p.le, p.leFuri)"></td>
+                      <td v-else-if="c.key === 'r'" :class="c.cls">
+                        <span class="k-word" v-html="furiOn && p.rFuri ? p.rFuri : p.r"></span>
+                        <span v-if="p.rk" class="k-kanji">{{ p.rk }}</span>
+                      </td>
+                      <td v-else class="k-ex" v-html="jp(p.re, p.reFuri)"></td>
+                    </template>
                   </tr>
                 </tbody>
               </table>
@@ -252,6 +273,12 @@ const furigana = useFurigana()
 const furiOn = computed(() => furigana.isEnabled.value)
 
 const unit = computed(() => getListeningUnit(route.params.unit))
+const wordsQrPage = computed(() => (unit.value?.words?.groups[0]?.qrPage) || 0)
+const questionsQrPage = computed(() => {
+  const s = unit.value?.questions?.sections.find(sec => sec.qrPage)
+  return s ? s.qrPage : 0
+})
+const knowQrPage = computed(() => (unit.value?.knowledge?.qrPages && unit.value.knowledge.qrPages[0]) || 0)
 const tab = ref('words')
 const tabs = [
   { key: 'words', label: '词汇', emoji: '📖' },
@@ -321,16 +348,32 @@ function onKeydown(e) {
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
-// 二维码图片（按页码加载）
-const qrImgs = import.meta.glob('../assets/listening/qr_p*.png', { eager: true, import: 'default' })
+// 二维码图片（按页码加载，静态引入保证打包）
+import qrP009 from '../assets/listening/qr_p009.png'
+import qrP014 from '../assets/listening/qr_p014.png'
+import qrP017 from '../assets/listening/qr_p017.png'
+import qrP019 from '../assets/listening/qr_p019.png'
+import qrP022 from '../assets/listening/qr_p022.png'
+import qrP031 from '../assets/listening/qr_p031.png'
+import qrP035 from '../assets/listening/qr_p035.png'
+import qrP043 from '../assets/listening/qr_p043.png'
+import qrP047 from '../assets/listening/qr_p047.png'
+const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047 }
 function qrImg(page) {
-  const key = '../assets/listening/qr_p' + String(page).padStart(3, '0') + '.png'
-  return qrImgs[key] || ''
+  return qrImgs[page] || ''
 }
 
 // 振假名渲染：开启时显示 ruby，关闭时显示原文
 function jp(text, furi) {
   return furiOn.value && furi ? furi : text
+}
+
+// 知识表格列：按 part.head 配置表头（l/le/r/re 顺序），标题为空的列整列隐藏
+function kCols(part) {
+  const head = part.head || ['左', '例', '右', '例']
+  const keys = ['l', 'le', 'r', 're']
+  const cls = ['col-a', 'k-ex', 'col-b', 'k-ex']
+  return keys.map((k, i) => ({ key: k, title: head[i], cls: cls[i] })).filter(c => c.title)
 }
 
 // 答案展开状态
@@ -341,19 +384,19 @@ function toggleAns(item) {
 }
 function shown(item) { return shownSet.has(item) }
 
-// 选择题作答状态（数据为静态 import，须存于组件内响应式对象）
+// 选择题/判断题作答状态（数据为静态 import，须存于组件内响应式对象）
 const pick = reactive({})
 function pkey(item) { return item.n + (item.sub || '') }
 function picked(item) { return pick[pkey(item)] || null }
-function choose(item, sel) {
+function choose(item, sel, optText) {
   const k = pkey(item)
   if (pick[k] && pick[k].locked) return
-  pick[k] = { locked: true, selected: sel, correct: sel === item.answer }
+  pick[k] = { locked: true, selected: sel, optText, correct: sel === item.answer || optText === item.answer }
 }
 function optClass(item, key) {
   const p = picked(item)
   if (!p || !p.locked) return {}
-  if (key === item.answer) return { correct: true }
+  if (key === item.answer || (p.optText === item.answer && p.selected === key)) return { correct: true }
   if (key === p.selected) return { wrong: true }
   return { dim: true }
 }

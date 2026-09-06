@@ -70,7 +70,7 @@
           <div v-if="reading.analysis && reading.analysis.length" class="tr-section">
             <h4>难句分析</h4>
             <div v-for="(a, i) in reading.analysis" :key="i" class="an-item">
-              <p class="an-sentence" v-html="furigana.isEnabled ? (a.sentenceFurigana || a.sentence) : a.sentence"></p>
+              <p class="an-sentence" v-html="furigana.isEnabled.value ? (a.sentenceFurigana || a.sentence) : a.sentence"></p>
               <p class="an-note">→ {{ a.note }}</p>
             </div>
           </div>
@@ -140,9 +140,10 @@ function optionClass(i) {
   return ''
 }
 
-// 句号标记【n】→ 上标
+// 句号标记【n】→ 上标，每段用<p>包裹（首行缩进）
 function renderHtml(src) {
-  return (src || '').replace(/【(\d+)】/g, '<sup class="s-no">$1</sup>')
+  const text = (src || '').replace(/【(\d+)】/g, '<sup class="s-no">$1</sup>')
+  return text.split('\n').filter(p => p.trim()).map(p => `<p class="article-para">${p}</p>`).join('')
 }
 const articleHtml = computed(() => renderHtml(furigana.isEnabled.value ? (reading.articleFurigana || reading.article) : reading.article))
 const stemHtml = computed(() => renderHtml(furigana.isEnabled.value ? (current.value.stemFurigana || current.value.stem) : current.value.stem))
@@ -237,6 +238,13 @@ onUnmounted(() => {
   color: var(--sakura-500, #ff7da0);
   font-weight: 700;
   margin-right: 1px;
+}
+.passage-content :deep(.article-para) {
+  text-indent: 2em;
+  margin: 0 0 10px 0;
+}
+.passage-content :deep(.article-para:last-child) {
+  margin-bottom: 0;
 }
 .passage-box.has-overflow::after {
   content: '';

@@ -1,9 +1,12 @@
 // 听解板块总索引：绿宝书《新日本语能力考试N2听解（详解+练习）》Part1 基础编 Unit1-8
 // 每个单元含三个独立板块：词汇（聴いてみよう）、题目（問題）、补充知识（聴解の基礎知識）
-// 分单元分批上线：当前已收录 Unit1
+// 分单元分批上线：当前已收录 Unit1、Unit2、Unit3、Unit4
 import unit1 from './unit1/index.js'
+import unit2 from './unit2/index.js'
+import unit3 from './unit3/index.js'
+import unit4 from './unit4/index.js'
 
-export const listeningUnits = [unit1]
+export const listeningUnits = [unit1, unit2, unit3, unit4]
 
 // 按 id 取单元
 export function getListeningUnit(id) {

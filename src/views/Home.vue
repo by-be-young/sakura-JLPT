@@ -36,6 +36,16 @@
         <h3>模拟测试</h3>
         <p>全真模拟 · 成绩记录</p>
       </div>
+      <div class="mode-card" @click="$router.push('/reading')">
+        <div class="emoji">📖</div>
+        <h3>读解</h3>
+        <p>阅读文章 · 答题解析</p>
+      </div>
+      <div class="mode-card" @click="$router.push('/listening')">
+        <div class="emoji">🎧</div>
+        <h3>听解</h3>
+        <p>听力练习 · 音频播放</p>
+      </div>
     </div>
 
   </div>

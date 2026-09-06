@@ -4,11 +4,6 @@
     <div class="list-header">
       <h2>🎧 听解 · 绿宝书 N2</h2>
     </div>
-    <div class="intro-card">
-      <p>题库采用《绿宝书·新日本语能力考试 N2 听解（详解+练习）》Part1 基础编。</p>
-      <p>每个单元含 <b>词汇</b>、<b>题目</b>、<b>补充知识</b> 三个独立板块，可自由选择；单元之间相互独立。</p>
-      <p class="tip">🔊 听力音频请扫各板块中的二维码获取（需配合纸质书附赠音频）。</p>
-    </div>
 
     <!-- 单元列表 -->
     <div class="unit-grid">
@@ -29,7 +24,7 @@
     </div>
 
     <div class="coming-card">
-      <span>📌</span> Unit 2-8 及攻略编、实践编内容将分批陆续上线，敬请期待。
+      <span>📌</span> Unit 5-8 及攻略编、实践编内容将分批陆续上线，敬请期待。
     </div>
   </div>
 </template>
@@ -44,18 +39,6 @@ function go(id) { router.push('/listening/' + id) }
 </script>
 
 <style scoped>
-.intro-card {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 18px 22px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--sakura-50);
-  margin-bottom: 22px;
-}
-.intro-card p { font-size: 14px; color: var(--ink-light); line-height: 1.9; }
-.intro-card b { color: var(--sakura-600); }
-.intro-card .tip { margin-top: 4px; font-size: 13px; color: #b8860b; }
-
 .unit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
