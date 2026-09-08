@@ -1,4 +1,19 @@
 /* ===== 樱花日语 · 全局样式 ===== */
+
+/* 自托管 Noto 字体（Google Fonts 网络不可用时保证字体正常应用） */
+@font-face {
+  font-family: 'Noto Serif SC';
+  src: url('/fonts/NotoSerifSC-VF.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans JP';
+  src: url('/fonts/NotoSansJP-VF.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   --sakura-50: #fff5f7;
   --sakura-100: #ffe4ec;

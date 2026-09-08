@@ -24,7 +24,7 @@
     </div>
 
     <div class="coming-card">
-      <span>📌</span> Unit 5-8 及攻略编、实践编内容将分批陆续上线，敬请期待。
+      <span>📌</span> 攻略编后续单元及实践编内容将分批陆续上线，敬请期待。
     </div>
   </div>
 </template>

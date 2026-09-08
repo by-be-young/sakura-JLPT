@@ -58,7 +58,7 @@
         <img :src="questionsQrPage ? qrImg(questionsQrPage) : ''" alt="音频二维码" />
         <div class="qr-text">
           <div class="qr-title">🔊 扫一扫，听音频</div>
-          <div class="qr-sub">本单元题目音频：{{ unit.questions.sections[0].audio }} ~ {{ unit.questions.sections[unit.questions.sections.length - 1].audio }}</div>
+          <div class="qr-sub">本单元题目音频：{{ unit.questions.audio || (unit.questions.sections[0].audio + ' ~ ' + unit.questions.sections[unit.questions.sections.length - 1].audio) }}</div>
           <div class="qr-tip">先扫码听录音，再作答；点击选项或「查看答案」核对</div>
         </div>
       </div>
@@ -81,19 +81,32 @@
         <!-- 选择题 / 判断正误 -->
         <template v-if="curSec.type === 'select' || curSec.type === 'judge'">
         <div v-for="item in curSec.items" :key="item.n" class="q-item">
-          <div class="q-no">{{ item.n }}</div>
+          <div class="q-head">
+            <div class="q-no">{{ item.n }}</div>
+            <span v-if="item.audio" class="q-audio">🎧 {{ item.audio }}</span>
+          </div>
           <div class="q-body">
             <div v-if="item.text" class="q-text" v-html="jp(item.text, item.textFuri)"></div>
             <div class="q-options">
               <button v-for="(opt, i) in item.options" :key="i" class="q-opt"
-                :class="optClass(item, 'ab'[i])" :disabled="!!picked(item)"
-                @click="choose(item, 'ab'[i], opt)">
-                <span class="opt-num">{{ 'ab'[i] }}</span>{{ opt }}
+                :class="optClass(item, optKey(item, i))" :disabled="!!picked(item)"
+                @click="choose(item, optKey(item, i), opt)">
+                <span class="opt-num">{{ optKey(item, i) }}</span>{{ opt }}
               </button>
             </div>
             <div v-if="picked(item)" class="q-ans-box">
               <div class="q-ans-line" :class="picked(item).correct ? 'ok' : 'no'">
                 {{ picked(item).correct ? '✓ 回答正确' : '✗ 正确答案 ' + item.answer }}
+              </div>
+              <div v-if="item.vocab && item.vocab.length" class="q-vocab">
+                <span class="q-script-label">📖 词汇</span>
+                <span v-for="(v, vi) in item.vocab" :key="vi" class="q-vocab-item">
+                  <b v-html="jp(v.w, v.wFuri)"></b>：{{ v.m }}
+                </span>
+              </div>
+              <div v-if="item.analysis && item.analysis.length" class="q-analysis">
+                <span class="q-script-label">💡 精讲</span>
+                <div v-for="(p, ai) in item.analysis" :key="ai" class="q-analysis-p" v-html="jp(p.t, p.tFuri)"></div>
               </div>
               <div v-if="item.script" class="q-script">
                 <span class="q-script-label">🔉 听力原文</span>
@@ -223,7 +236,24 @@
               <span v-if="curPart.audio" class="audio-tag">🎧 {{ curPart.audio }}</span>
             </div>
             <p v-if="curPart.intro" class="k-part-intro">{{ curPart.intro }}</p>
-            <div class="k-table-wrap">
+            <!-- 表现卡片（kind=card）：句型+说明+中日例文 -->
+            <div v-if="curPart.kind === 'card'" class="k-cards">
+              <div v-for="(it, ii) in curPart.items" :key="ii" class="k-card">
+                <div class="k-card-head">
+                  <span class="k-card-no">{{ it.no }}</span>
+                  <span class="k-card-pattern" v-html="jp(it.pattern, it.patternFuri)"></span>
+                  <span class="k-card-meaning">{{ it.meaning }}</span>
+                </div>
+                <p v-if="it.desc" class="k-card-desc">{{ it.desc }}</p>
+                <div class="k-card-lines">
+                  <div v-for="(ln, li) in it.lines" :key="li" class="k-card-line">
+                    <div class="k-card-jp"><span v-if="ln.who" class="k-card-who">{{ ln.who }}</span><span v-html="jp(ln.jp, ln.jpFuri)"></span></div>
+                    <div class="k-card-cn">{{ ln.cn }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="k-table-wrap">
               <table class="k-table">
                 <thead>
                   <tr>
@@ -235,7 +265,8 @@
                 <tbody>
                   <tr v-for="(p, i) in curPart.pairs" :key="i">
                     <template v-for="(c, j) in kCols(curPart)" :key="'c' + j">
-                      <td v-if="c.key === 'l'" :class="c.cls">
+                      <td v-if="c.key === 'c'" class="k-cat">{{ p.c }}</td>
+                      <td v-else-if="c.key === 'l'" :class="c.cls">
                         <span class="k-word" v-html="furiOn && p.lFuri ? p.lFuri : p.l"></span>
                         <span v-if="p.lk" class="k-kanji">{{ p.lk }}</span>
                       </td>
@@ -274,17 +305,14 @@ const furiOn = computed(() => furigana.isEnabled.value)
 
 const unit = computed(() => getListeningUnit(route.params.unit))
 const wordsQrPage = computed(() => (unit.value?.words?.groups[0]?.qrPage) || 0)
-const questionsQrPage = computed(() => {
-  const s = unit.value?.questions?.sections.find(sec => sec.qrPage)
-  return s ? s.qrPage : 0
-})
+const questionsQrPage = computed(() => (unit.value?.questions?.sections[qIndex.value]?.qrPage) || 0)
 const knowQrPage = computed(() => (unit.value?.knowledge?.qrPages && unit.value.knowledge.qrPages[0]) || 0)
-const tab = ref('words')
-const tabs = [
+const tab = ref(unit.value.words.groups.length ? 'words' : 'questions')
+const tabs = computed(() => [
   { key: 'words', label: '词汇', emoji: '📖' },
   { key: 'questions', label: '题目', emoji: '📝' },
   { key: 'knowledge', label: '补充知识', emoji: '💡' },
-]
+].filter(t => t.key !== 'words' || unit.value.words.groups.length))
 
 // ===== 左右翻页卡片（参考「文法」板块分页翻书） =====
 const wordsIndex = ref(0)
@@ -358,7 +386,19 @@ import qrP031 from '../assets/listening/qr_p031.png'
 import qrP035 from '../assets/listening/qr_p035.png'
 import qrP043 from '../assets/listening/qr_p043.png'
 import qrP047 from '../assets/listening/qr_p047.png'
-const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047 }
+import qrP053 from '../assets/listening/qr_p053.png'
+import qrP057 from '../assets/listening/qr_p057.png'
+import qrP065 from '../assets/listening/qr_p065.png'
+import qrP070 from '../assets/listening/qr_p070.png'
+import qrP077 from '../assets/listening/qr_p077.png'
+import qrP080 from '../assets/listening/qr_p080.png'
+import qrP088 from '../assets/listening/qr_p088.png'
+import qrP091 from '../assets/listening/qr_p091.png'
+import qrP102 from '../assets/listening/qr_p102.png'
+import qrP114 from '../assets/listening/qr_p114.png'
+import qrP120 from '../assets/listening/qr_p120.png'
+import qrP126 from '../assets/listening/qr_p126.png'
+const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126 }
 function qrImg(page) {
   return qrImgs[page] || ''
 }
@@ -371,8 +411,9 @@ function jp(text, furi) {
 // 知识表格列：按 part.head 配置表头（l/le/r/re 顺序），标题为空的列整列隐藏
 function kCols(part) {
   const head = part.head || ['左', '例', '右', '例']
-  const keys = ['l', 'le', 'r', 're']
-  const cls = ['col-a', 'k-ex', 'col-b', 'k-ex']
+  const multi = head.length >= 5
+  const keys = multi ? ['c', 'l', 'le', 'r', 're'] : ['l', 'le', 'r', 're']
+  const cls = multi ? ['col-c', 'col-a', 'k-ex', 'col-b', 'k-ex'] : ['col-a', 'k-ex', 'col-b', 'k-ex']
   return keys.map((k, i) => ({ key: k, title: head[i], cls: cls[i] })).filter(c => c.title)
 }
 
@@ -392,6 +433,9 @@ function choose(item, sel, optText) {
   const k = pkey(item)
   if (pick[k] && pick[k].locked) return
   pick[k] = { locked: true, selected: sel, optText, correct: sel === item.answer || optText === item.answer }
+}
+function optKey(item, i) {
+  return item.options.length > 2 ? '1234'[i] : 'ab'[i]
 }
 function optClass(item, key) {
   const p = picked(item)
@@ -597,6 +641,12 @@ function optClass(item, key) {
   border-bottom: 1px dashed #f5e8ec;
 }
 .q-item:last-child { border-bottom: none; }
+.q-head {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
 .q-no {
   width: 34px;
   height: 34px;
@@ -695,6 +745,33 @@ function optClass(item, key) {
 }
 .q-script :deep(ruby), .q-ans-box :deep(ruby) { ruby-position: over; }
 
+.q-audio {
+  font-size: 11px;
+  color: var(--sakura-600);
+  margin-left: 8px;
+  background: var(--sakura-50, #fdf2f5);
+  padding: 1px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.q-vocab {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.9;
+}
+.q-vocab-item { margin-right: 12px; }
+.q-vocab-item b { color: #7a5c9e; }
+.q-analysis { margin-top: 8px; }
+.q-analysis-p {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.9;
+  margin-top: 5px;
+  text-align: justify;
+}
+.q-analysis-p :deep(ruby) { ruby-position: over; }
+
 .q-part-name {
   font-size: 13px;
   font-weight: 700;
@@ -770,10 +847,50 @@ function optClass(item, key) {
 }
 .k-table .col-a { background: #f8fbff; }
 .k-table .col-b { background: #fff8f3; }
+.k-table .col-c {
+  background: var(--sakura-50);
+  color: var(--sakura-700);
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  letter-spacing: 2px;
+  min-width: 26px;
+  text-align: center;
+}
 .k-word { font-weight: 600; color: var(--ink); margin-right: 6px; }
 .k-kanji { color: var(--ink-light); font-size: 12px; }
 .k-ex { color: var(--ink-light); font-size: 13px; }
 .k-ex :deep(ruby) { ruby-position: over; }
+
+/* 表现卡片（知识 kind=card） */
+.k-cards { display: flex; flex-direction: column; gap: 14px; }
+.k-card {
+  border: 1px solid #f5e8ec;
+  border-left: 4px solid var(--sakura-400);
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px 16px;
+}
+.k-card-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.k-card-no {
+  font-size: 12px; font-weight: 700; color: #fff;
+  background: var(--sakura-500); border-radius: 6px; padding: 2px 8px; white-space: nowrap;
+}
+.k-card-pattern { font-weight: 700; color: var(--sakura-700); font-size: 15px; }
+.k-card-meaning { font-size: 13px; color: var(--ink-light); }
+.k-card-desc { font-size: 13px; line-height: 1.9; color: var(--ink); margin-bottom: 10px; }
+.k-card-lines { display: flex; flex-direction: column; gap: 8px; }
+.k-card-line { border-top: 1px dashed #f5e8ec; padding-top: 8px; }
+.k-card-line:first-child { border-top: none; padding-top: 0; }
+.k-card-jp { font-size: 14px; line-height: 1.8; color: var(--ink); }
+.k-card-who {
+  display: inline-block; min-width: 24px; text-align: center;
+  font-size: 12px; color: #fff; background: var(--gold, #e8b86d);
+  border-radius: 4px; padding: 0 6px; margin-right: 6px;
+}
+.k-card-cn { font-size: 13px; color: var(--ink-light); line-height: 1.8; margin-top: 2px; }
+.k-card :deep(ruby) { ruby-position: over; }
 
 @media (max-width: 640px) {
   .word-table { grid-template-columns: 1fr; }
