@@ -87,6 +87,44 @@
           </div>
           <div class="q-body">
             <div v-if="item.text" class="q-text" v-html="jp(item.text, item.textFuri)"></div>
+
+            <!-- 双问（質問1/質問2，統合理解） -->
+            <template v-if="item.questions && item.questions.length">
+              <div v-for="(sq, qi) in item.questions" :key="qi" class="q-subq">
+                <div class="q-subq-name">{{ sq.q }}</div>
+                <div class="q-options">
+                  <button v-for="(opt, i) in sq.options" :key="i" class="q-opt"
+                    :class="optClass(item, optKey(sq, i), qi)" :disabled="!!picked(item, qi)"
+                    @click="choose(item, optKey(sq, i), opt, qi, sq.answer)">
+                    <span class="opt-num">{{ optKey(sq, i) }}</span>{{ opt }}
+                  </button>
+                </div>
+                <div v-if="picked(item, qi)" class="q-ans-box">
+                  <div class="q-ans-line" :class="picked(item, qi).correct ? 'ok' : 'no'">
+                    {{ picked(item, qi).correct ? '✓ 回答正确' : '✗ 正确答案 ' + sq.answer }}
+                  </div>
+                </div>
+              </div>
+              <div v-if="picked(item, 0) && picked(item, 1)" class="q-detail">
+                <div v-if="item.vocab && item.vocab.length" class="q-vocab">
+                  <span class="q-script-label">📖 词汇</span>
+                  <span v-for="(v, vi) in item.vocab" :key="vi" class="q-vocab-item">
+                    <b v-html="jp(v.w, v.wFuri)"></b>：{{ v.m }}
+                  </span>
+                </div>
+                <div v-if="item.analysis && item.analysis.length" class="q-analysis">
+                  <span class="q-script-label">💡 精讲</span>
+                  <div v-for="(p, ai) in item.analysis" :key="ai" class="q-analysis-p" v-html="jp(p.t, p.tFuri)"></div>
+                </div>
+                <div v-if="item.script" class="q-script">
+                  <span class="q-script-label">🔉 听力原文</span>
+                  <span v-html="jp(item.script, item.scriptFuri)"></span>
+                </div>
+              </div>
+            </template>
+
+            <!-- 单问 -->
+            <template v-else>
             <div class="q-options">
               <button v-for="(opt, i) in item.options" :key="i" class="q-opt"
                 :class="optClass(item, optKey(item, i))" :disabled="!!picked(item)"
@@ -113,6 +151,7 @@
                 <span v-html="jp(item.script, item.scriptFuri)"></span>
               </div>
             </div>
+            </template>
           </div>
         </div>
         </template>
@@ -413,7 +452,10 @@ import qrP195 from '../assets/listening/qr_p195.png'
 import qrP202 from '../assets/listening/qr_p202.png'
 import qrP215 from '../assets/listening/qr_p215.png'
 import qrP228 from '../assets/listening/qr_p228.png'
-const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184, 189: qrP189, 195: qrP195, 202: qrP202, 215: qrP215, 228: qrP228 }
+import qrP243 from '../assets/listening/qr_p243.png'
+import qrP253 from '../assets/listening/qr_p253.png'
+import qrP259 from '../assets/listening/qr_p259.png'
+const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184, 189: qrP189, 195: qrP195, 202: qrP202, 215: qrP215, 228: qrP228, 243: qrP243, 253: qrP253, 259: qrP259 }
 function qrImg(page) {
   return qrImgs[page] || ''
 }
@@ -442,20 +484,22 @@ function shown(item) { return shownSet.has(item) }
 
 // 选择题/判断题作答状态（数据为静态 import，须存于组件内响应式对象）
 const pick = reactive({})
-function pkey(item) { return item.n + (item.sub || '') }
-function picked(item) { return pick[pkey(item)] || null }
-function choose(item, sel, optText) {
-  const k = pkey(item)
+function pkey(item, qi) { return item.n + (item.sub || '') + (qi != null ? ':' + qi : '') }
+function picked(item, qi) { return pick[pkey(item, qi)] || null }
+function choose(item, sel, optText, qi, answer) {
+  const k = pkey(item, qi)
   if (pick[k] && pick[k].locked) return
-  pick[k] = { locked: true, selected: sel, optText, correct: sel === item.answer || optText === item.answer }
+  const ans = answer || item.answer
+  pick[k] = { locked: true, selected: sel, optText, correct: sel === ans || optText === ans }
 }
 function optKey(item, i) {
   return item.options.length > 2 ? '1234'[i] : 'ab'[i]
 }
-function optClass(item, key) {
-  const p = picked(item)
+function optClass(item, key, qi) {
+  const p = picked(item, qi)
   if (!p || !p.locked) return {}
-  if (key === item.answer || (p.optText === item.answer && p.selected === key)) return { correct: true }
+  const ans = qi != null && item.questions && item.questions[qi] ? item.questions[qi].answer : item.answer
+  if (key === ans || (p.optText === ans && p.selected === key)) return { correct: true }
   if (key === p.selected) return { wrong: true }
   return { dim: true }
 }
@@ -700,6 +744,10 @@ function optClass(item, key) {
 .q-text :deep(ruby) { ruby-position: over; }
 
 .q-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.q-subq { margin-top: 12px; }
+.q-subq + .q-subq { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--sakura-100); }
+.q-subq-name { font-size: 14px; font-weight: 700; color: var(--sakura-600); margin-bottom: 8px; }
+.q-detail { margin-top: 14px; }
 .q-opt {
   display: flex;
   align-items: center;
