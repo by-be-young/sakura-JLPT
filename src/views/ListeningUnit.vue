@@ -408,7 +408,12 @@ import qrP169 from '../assets/listening/qr_p169.png'
 import qrP175 from '../assets/listening/qr_p175.png'
 import qrP179 from '../assets/listening/qr_p179.png'
 import qrP184 from '../assets/listening/qr_p184.png'
-const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184 }
+import qrP189 from '../assets/listening/qr_p189.png'
+import qrP195 from '../assets/listening/qr_p195.png'
+import qrP202 from '../assets/listening/qr_p202.png'
+import qrP215 from '../assets/listening/qr_p215.png'
+import qrP228 from '../assets/listening/qr_p228.png'
+const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184, 189: qrP189, 195: qrP195, 202: qrP202, 215: qrP215, 228: qrP228 }
 function qrImg(page) {
   return qrImgs[page] || ''
 }
