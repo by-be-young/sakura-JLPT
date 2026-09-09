@@ -398,7 +398,12 @@ import qrP102 from '../assets/listening/qr_p102.png'
 import qrP114 from '../assets/listening/qr_p114.png'
 import qrP120 from '../assets/listening/qr_p120.png'
 import qrP126 from '../assets/listening/qr_p126.png'
-const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126 }
+import qrP132 from '../assets/listening/qr_p132.png'
+import qrP138 from '../assets/listening/qr_p138.png'
+import qrP144 from '../assets/listening/qr_p144.png'
+import qrP150 from '../assets/listening/qr_p150.png'
+import qrP156 from '../assets/listening/qr_p156.png'
+const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156 }
 function qrImg(page) {
   return qrImgs[page] || ''
 }
