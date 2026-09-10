@@ -1,6 +1,6 @@
-// 听解板块总索引：绿宝书《新日本语能力考试N2听解（详解+练习）》Part1 基础编 Unit1-8 + Part2 攻略編 Unit1-5
-// 每个单元含三个独立板块：词汇（聴いてみよう/攻略編无词汇）、题目（問題）、补充知识（聴解の基礎知識/試験対策）
-// 分单元分批上线：当前已收录 Unit1-13（攻略編已全部完成）
+// 听解板块总索引：绿宝书《新日本语能力考试N2听解（详解+练习）》Part1 基础编 Unit1-8 + Part2 攻略編 Unit1-5 + Part3 実践編
+// 每个单元含三个独立板块：词汇（聴いてみよう/攻略編・実践編无词汇）、题目（問題）、补充知识（聴解の基礎知識/試験対策/构成正解）
+// 分单元分批上线：当前已收录 Unit1-14（第1回模拟测试）
 import unit1 from './unit1/index.js'
 import unit2 from './unit2/index.js'
 import unit3 from './unit3/index.js'
@@ -14,8 +14,9 @@ import unit10 from './unit10/index.js'
 import unit11 from './unit11/index.js'
 import unit12 from './unit12/index.js'
 import unit13 from './unit13/index.js'
+import unit14 from './unit14/index.js'
 
-export const listeningUnits = [unit1, unit2, unit3, unit4, unit5, unit6, unit7, unit8, unit9, unit10, unit11, unit12, unit13]
+export const listeningUnits = [unit1, unit2, unit3, unit4, unit5, unit6, unit7, unit8, unit9, unit10, unit11, unit12, unit13, unit14]
 
 // 按 id 取单元
 export function getListeningUnit(id) {
