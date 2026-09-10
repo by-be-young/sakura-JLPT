@@ -562,9 +562,9 @@ function optClass(item, key, qi) {
   box-shadow: var(--shadow);
 }
 .qr-banner img {
-  width: 92px;
-  height: 92px;
-  border-radius: 8px;
+  width: 148px;
+  height: 148px;
+  border-radius: 10px;
   border: 1px solid #eee;
   flex-shrink: 0;
 }
