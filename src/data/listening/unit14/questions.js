@@ -234,7 +234,7 @@ export default {
     },
     {
       "section": 3,
-      "type": "kana",
+      "type": "select",
       "audio": "3-15～3-19",
       "qrPage": 267,
       "title": "問題3 概要理解（1～5番）",
@@ -244,7 +244,12 @@ export default {
           "sub": "",
           "audio": "3-15",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "1",
           "questions": null,
           "textFuri": "",
@@ -258,7 +263,12 @@ export default {
           "sub": "",
           "audio": "3-16",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "3",
           "questions": null,
           "textFuri": "",
@@ -272,7 +282,12 @@ export default {
           "sub": "",
           "audio": "3-17",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "1",
           "questions": null,
           "textFuri": "",
@@ -286,7 +301,12 @@ export default {
           "sub": "",
           "audio": "3-18",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "4",
           "questions": null,
           "textFuri": "",
@@ -300,7 +320,12 @@ export default {
           "sub": "",
           "audio": "3-19",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "3",
           "questions": null,
           "textFuri": "",
@@ -313,7 +338,7 @@ export default {
     },
     {
       "section": 4,
-      "type": "kana",
+      "type": "select",
       "audio": "3-21～3-32",
       "qrPage": 267,
       "title": "問題4 即時応答（1～12番）",
@@ -323,7 +348,12 @@ export default {
           "sub": "",
           "audio": "3-21",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "2",
           "questions": null,
           "textFuri": "",
@@ -337,7 +367,12 @@ export default {
           "sub": "",
           "audio": "3-22",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "2",
           "questions": null,
           "textFuri": "",
@@ -351,7 +386,12 @@ export default {
           "sub": "",
           "audio": "3-23",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "1",
           "questions": null,
           "textFuri": "",
@@ -365,7 +405,12 @@ export default {
           "sub": "",
           "audio": "3-24",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "3",
           "questions": null,
           "textFuri": "",
@@ -379,7 +424,12 @@ export default {
           "sub": "",
           "audio": "3-25",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "2",
           "questions": null,
           "textFuri": "",
@@ -393,7 +443,12 @@ export default {
           "sub": "",
           "audio": "3-26",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "3",
           "questions": null,
           "textFuri": "",
@@ -407,7 +462,12 @@ export default {
           "sub": "",
           "audio": "3-27",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "1",
           "questions": null,
           "textFuri": "",
@@ -421,7 +481,12 @@ export default {
           "sub": "",
           "audio": "3-28",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "1",
           "questions": null,
           "textFuri": "",
@@ -435,7 +500,12 @@ export default {
           "sub": "",
           "audio": "3-29",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "2",
           "questions": null,
           "textFuri": "",
@@ -449,7 +519,12 @@ export default {
           "sub": "",
           "audio": "3-30",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "2",
           "questions": null,
           "textFuri": "",
@@ -463,7 +538,12 @@ export default {
           "sub": "",
           "audio": "3-31",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "3",
           "questions": null,
           "textFuri": "",
@@ -477,7 +557,12 @@ export default {
           "sub": "",
           "audio": "3-32",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "1",
           "questions": null,
           "textFuri": "",
@@ -490,7 +575,7 @@ export default {
     },
     {
       "section": 5,
-      "type": "kana",
+      "type": "select",
       "audio": "3-33～3-34",
       "qrPage": 267,
       "title": "問題5 統合理解（1番・2番）",
@@ -500,7 +585,12 @@ export default {
           "sub": "",
           "audio": "3-33",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "2",
           "questions": null,
           "textFuri": "",
@@ -514,7 +604,12 @@ export default {
           "sub": "",
           "audio": "3-34",
           "text": "请听录音作答，选项在录音中（①～④）。",
-          "options": [],
+          "options": [
+            "①",
+            "②",
+            "③",
+            "④"
+          ],
           "answer": "3",
           "questions": null,
           "textFuri": "",

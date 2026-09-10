@@ -96,7 +96,7 @@
                   <button v-for="(opt, i) in sq.options" :key="i" class="q-opt"
                     :class="optClass(item, optKey(sq, i), qi)" :disabled="!!picked(item, qi)"
                     @click="choose(item, optKey(sq, i), opt, qi, sq.answer)">
-                    <span class="opt-num">{{ optKey(sq, i) }}</span>{{ opt }}
+                    <span v-if="!isNumOpt(opt)" class="opt-num">{{ optKey(sq, i) }}</span>{{ opt }}
                   </button>
                 </div>
                 <div v-if="picked(item, qi)" class="q-ans-box">
@@ -129,7 +129,7 @@
               <button v-for="(opt, i) in item.options" :key="i" class="q-opt"
                 :class="optClass(item, optKey(item, i))" :disabled="!!picked(item)"
                 @click="choose(item, optKey(item, i), opt)">
-                <span class="opt-num">{{ optKey(item, i) }}</span>{{ opt }}
+                <span v-if="!isNumOpt(opt)" class="opt-num">{{ optKey(item, i) }}</span>{{ opt }}
               </button>
             </div>
             <div v-if="picked(item)" class="q-ans-box">
@@ -497,6 +497,9 @@ function choose(item, sel, optText, qi, answer) {
 function optKey(item, i) {
   return item.options.length > 2 ? '1234'[i] : 'ab'[i]
 }
+function isNumOpt(opt) {
+  return /^[①②③④]$/.test(opt)
+}
 function optClass(item, key, qi) {
   const p = picked(item, qi)
   if (!p || !p.locked) return {}
@@ -562,9 +565,9 @@ function optClass(item, key, qi) {
   box-shadow: var(--shadow);
 }
 .qr-banner img {
-  width: 148px;
-  height: 148px;
-  border-radius: 10px;
+  width: 92px;
+  height: 92px;
+  border-radius: 8px;
   border: 1px solid #eee;
   flex-shrink: 0;
 }

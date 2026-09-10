@@ -35,36 +35,37 @@ q2 = [
     q('6', '3-13', '', ['A社', 'B社', 'C社', 'D社'], '2'),
 ]
 
-# ---------- 問題3 概要理解（1-5番，无印刷选项） ----------
+# ---------- 問題3 概要理解（1-5番，选项在录音中，用①②③④作答） ----------
 LISTEN = '请听录音作答，选项在录音中（①～④）。'
+NUM_OPTS = ['①', '②', '③', '④']
 q3 = [
-    q('1', '3-15', LISTEN, [], '1'),
-    q('2', '3-16', LISTEN, [], '3'),
-    q('3', '3-17', LISTEN, [], '1'),
-    q('4', '3-18', LISTEN, [], '4'),
-    q('5', '3-19', LISTEN, [], '3'),
+    q('1', '3-15', LISTEN, NUM_OPTS, '1'),
+    q('2', '3-16', LISTEN, NUM_OPTS, '3'),
+    q('3', '3-17', LISTEN, NUM_OPTS, '1'),
+    q('4', '3-18', LISTEN, NUM_OPTS, '4'),
+    q('5', '3-19', LISTEN, NUM_OPTS, '3'),
 ]
 
-# ---------- 問題4 即時応答（1-12番，无印刷选项） ----------
+# ---------- 問題4 即時応答（1-12番，选项在录音中，用①②③④作答） ----------
 q4 = [
-    q('1', '3-21', LISTEN, [], '2'),
-    q('2', '3-22', LISTEN, [], '2'),
-    q('3', '3-23', LISTEN, [], '1'),
-    q('4', '3-24', LISTEN, [], '3'),
-    q('5', '3-25', LISTEN, [], '2'),
-    q('6', '3-26', LISTEN, [], '3'),
-    q('7', '3-27', LISTEN, [], '1'),
-    q('8', '3-28', LISTEN, [], '1'),
-    q('9', '3-29', LISTEN, [], '2'),
-    q('10', '3-30', LISTEN, [], '2'),
-    q('11', '3-31', LISTEN, [], '3'),
-    q('12', '3-32', LISTEN, [], '1'),
+    q('1', '3-21', LISTEN, NUM_OPTS, '2'),
+    q('2', '3-22', LISTEN, NUM_OPTS, '2'),
+    q('3', '3-23', LISTEN, NUM_OPTS, '1'),
+    q('4', '3-24', LISTEN, NUM_OPTS, '3'),
+    q('5', '3-25', LISTEN, NUM_OPTS, '2'),
+    q('6', '3-26', LISTEN, NUM_OPTS, '3'),
+    q('7', '3-27', LISTEN, NUM_OPTS, '1'),
+    q('8', '3-28', LISTEN, NUM_OPTS, '1'),
+    q('9', '3-29', LISTEN, NUM_OPTS, '2'),
+    q('10', '3-30', LISTEN, NUM_OPTS, '2'),
+    q('11', '3-31', LISTEN, NUM_OPTS, '3'),
+    q('12', '3-32', LISTEN, NUM_OPTS, '1'),
 ]
 
 # ---------- 問題5 統合理解 ----------
 q5a = [
-    q('1', '3-33', LISTEN, [], '2'),
-    q('2', '3-34', LISTEN, [], '3'),
+    q('1', '3-33', LISTEN, NUM_OPTS, '2'),
+    q('2', '3-34', LISTEN, NUM_OPTS, '3'),
 ]
 q5b = [q('3', '3-35', '先听一段较长的会话，再听两个问题并作答。', [], '4、1',
          questions=[sq('質問1（问题在录音中，请听录音作答）', ['地下1階', '1階', '2階', '3階'], '4'),
@@ -77,9 +78,9 @@ questions = {
     'sections': [
         {'section': 1, 'type': 'select', 'audio': '3-2～3-6', 'qrPage': 267, 'title': '問題1 課題理解（1～5番）', 'items': q1},
         {'section': 2, 'type': 'select', 'audio': '3-8～3-13', 'qrPage': 267, 'title': '問題2 ポイント理解（1～6番）', 'items': q2},
-        {'section': 3, 'type': 'kana', 'audio': '3-15～3-19', 'qrPage': 267, 'title': '問題3 概要理解（1～5番）', 'items': q3},
-        {'section': 4, 'type': 'kana', 'audio': '3-21～3-32', 'qrPage': 267, 'title': '問題4 即時応答（1～12番）', 'items': q4},
-        {'section': 5, 'type': 'kana', 'audio': '3-33～3-34', 'qrPage': 267, 'title': '問題5 統合理解（1番・2番）', 'items': q5a},
+        {'section': 3, 'type': 'select', 'audio': '3-15～3-19', 'qrPage': 267, 'title': '問題3 概要理解（1～5番）', 'items': q3},
+        {'section': 4, 'type': 'select', 'audio': '3-21～3-32', 'qrPage': 267, 'title': '問題4 即時応答（1～12番）', 'items': q4},
+        {'section': 5, 'type': 'select', 'audio': '3-33～3-34', 'qrPage': 267, 'title': '問題5 統合理解（1番・2番）', 'items': q5a},
         {'section': 6, 'type': 'select', 'audio': '3-35', 'qrPage': 267, 'title': '問題5 統合理解（3番）', 'items': q5b},
     ],
 }
