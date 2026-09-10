@@ -5,7 +5,8 @@ import knowledge from './knowledge.js'
 
 export default {
   id: 15,
-  theme: '実践編 第2回 模擬テスト',
+  title: '実践編 第2回 模擬テスト',
+  theme: '音声3-37～3-70',
   words,
   questions,
   knowledge,

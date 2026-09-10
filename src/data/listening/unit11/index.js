@@ -5,7 +5,8 @@ import knowledge from './knowledge.js'
 
 export default {
   id: 11,
-  theme: '攻略編 Unit3 概要理解',
+  title: '攻略編 Unit3 概要理解',
+  theme: '音声2-44～2-63',
   words,
   questions,
   knowledge,
