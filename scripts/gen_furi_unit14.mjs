@@ -1,4 +1,4 @@
-﻿// 为听解 unit14 数据生成振假名（ruby）与读音（kana）
+// 为听解 unit14 数据生成振假名（ruby）与读音（kana）
 // 用法：node scripts/gen_furi_unit14.mjs
 import fs from 'fs'
 import { createRequire } from 'module'
@@ -35,8 +35,8 @@ for (const g of words.groups) {
   }
 }
 fs.writeFileSync(DIR + '/words.js',
-  '// 听解 unit14 Part2 攻略編 実践編 第1回 · 词汇板块（本单元为攻略编，无独立词汇表）\n' +
-  '// 来源：绿宝书《新日本语能力考试N2听解（详解+练习）》Part2 攻略編 実践編 第1回\n' +
+  '// 听解 unit14 Part3 実践編 第1回 N2聴解模擬テスト · 词汇板块（模拟测试无独立词汇表）\n' +
+  '// 来源：绿宝书《新日本语能力考试N2听解（详解+练习）》Part3 実践編 第1回 书页261-267\n' +
   'export default ' + JSON.stringify(words, null, 2) + '\n', 'utf-8')
 
 // ===== questions =====
@@ -44,8 +44,10 @@ const qMod = await import('file:///' + DIR + '/questions.js')
 const questions = qMod.default
 for (const sec of questions.sections) {
   for (const item of sec.items || []) {
-    if (item.text && hasKanji(item.text)) item.textFuri = await furiOf(item.text)
-    if (item.script && hasKanji(item.script)) item.scriptFuri = await furiOf(item.script)
+    item.textFuri = ''
+    if (item.text && hasKanji(item.text) && !isChinese(item.text)) item.textFuri = await furiOf(item.text)
+    item.scriptFuri = ''
+    if (item.script && hasKanji(item.script) && !isChinese(item.script)) item.scriptFuri = await furiOf(item.script)
     // 词汇 w 注音（vocab 的 m 为中文释义，不注音）
     for (const v of item.vocab || []) {
       v.wFuri = ''
@@ -59,10 +61,8 @@ for (const sec of questions.sections) {
   }
 }
 fs.writeFileSync(DIR + '/questions.js',
-  '// 听解 unit14 Part2 攻略編 実践編 第1回 · 题目板块（第1回模擬テスト）\n' +
-  '// 来源：绿宝书《新日本语能力考试N2听解（详解+练习）》Part2 攻略編 実践編 第1回 书页261-267\n' +
-  '// - sections: 例題解説（401-405）＋実践練習 その1-3（406-420）；type select 四选一\n' +
-  '// - 每题：text 场景+提问 / options 选项 / answer 答案 / script 听力原文 / vocab 词汇 / analysis 精讲\n' +
+  '// 听解 unit14 Part3 実践編 第1回 N2聴解模擬テスト · 题目板块\n' +
+  '// 音频：3-1～3-35；問題1・2选択印刷，問題3・4及問題5的1・2番选项在录音中\n' +
   'export default ' + JSON.stringify(questions, null, 2) + '\n', 'utf-8')
 
 // ===== knowledge =====
@@ -101,12 +101,7 @@ for (const part of knowledge.parts) {
   }
 }
 fs.writeFileSync(DIR + '/knowledge.js',
-  '// 听解 unit14 Part2 攻略編 実践編 第1回 · 补充知识（試験対策）\n' +
-  '// 来源：绿宝书《新日本语能力考试N2听解（详解+练习）》Part2 攻略編 実践編 第1回 书页98-103\n' +
-  '// - parts: 翻页部分；kind: card 表现卡片 / table 表格；qrPages: 音频二维码页\n' +
+  '// 听解 unit14 Part3 実践編 第1回 N2聴解模擬テスト · 补充知识（构成与正解）\n' +
   'export default ' + JSON.stringify(knowledge, null, 2) + '\n', 'utf-8')
 
 console.log('furi done')
-
-
-
