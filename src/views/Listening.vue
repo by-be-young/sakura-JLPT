@@ -22,10 +22,6 @@
         <div class="unit-go">进入单元 →</div>
       </div>
     </div>
-
-    <div class="coming-card">
-      <span>📌</span> 攻略编后续单元及实践编内容将分批陆续上线，敬请期待。
-    </div>
   </div>
 </template>
 
@@ -88,18 +84,6 @@ function go(id) { router.push('/listening/' + id) }
   font-size: 13px;
   font-weight: 600;
   color: var(--sakura-500);
-}
-.coming-card {
-  margin-top: 20px;
-  background: #fffaf0;
-  border: 1.5px dashed #f0d9a8;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  font-size: 13px;
-  color: #a07a2e;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 @media (max-width: 640px) {
   .unit-grid { grid-template-columns: 1fr; }
