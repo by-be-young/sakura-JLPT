@@ -2,12 +2,12 @@
   <div class="container">
     <!-- 头部 -->
     <div class="list-header">
-      <h2>🎧 听解 · 绿宝书 N2</h2>
+      <h2>🎧 听解 · 绿宝书 {{ level }}</h2>
     </div>
 
     <!-- 单元列表 -->
     <div class="unit-grid">
-      <div v-for="u in listeningUnits" :key="u.id" class="unit-card" @click="go(u.id)">
+      <div v-for="u in units" :key="u.id" class="unit-card" @click="go(u.id)">
         <div class="unit-head">
           <span class="unit-badge">Unit {{ u.id }}</span>
           <span class="unit-audio">🎧 音频</span>
@@ -26,11 +26,17 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { listeningUnits, unitSummary } from '../data/listening'
+import { listeningUnits as n2Units, unitSummary as n2Summary } from '../data/listening'
+import { listeningUnits as n1Units, unitSummary as n1Summary } from '../data/listening-n1'
+import { useLevel } from '../store/levelStore'
 
 const router = useRouter()
-function stats(u) { return unitSummary(u) }
+const { level } = useLevel()
+const isN1 = computed(() => level.value === 'N1')
+const units = computed(() => (isN1.value ? n1Units : n2Units))
+function stats(u) { return (isN1.value ? n1Summary : n2Summary)(u) }
 function go(id) { router.push('/listening/' + id) }
 </script>
 

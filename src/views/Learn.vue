@@ -34,7 +34,7 @@
         <div class="mode-card" @click="router.push('/listening')">
           <div class="emoji">🎧</div>
           <h3>听解</h3>
-          <p>绿宝书N2听解：词汇 · 题目 · 补充知识，三个板块自由练习（当前 N2）。</p>
+          <p>绿宝书{{ level }}听解：词汇 · 题目 · 补充知识，三个板块自由练习。</p>
         </div>
       </div>
     </template>

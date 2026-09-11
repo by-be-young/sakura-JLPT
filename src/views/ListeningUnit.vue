@@ -1,6 +1,7 @@
 <template>
   <div class="container" v-if="unit">
     <!-- 单元头部 -->
+    <!-- 单元头部 -->
     <div class="unit-header">
       <button class="btn btn-ghost btn-sm back-btn" @click="$router.push('/listening')">← 听解</button>
       <div class="unit-title-wrap">
@@ -330,54 +331,64 @@
       </div>
     </section>
   </div>
+  <div v-else class="container empty-tip">
+    <p>当前等级（{{ level }}）暂无此单元，请从听解列表进入。</p>
+    <button class="btn btn-primary" @click="$router.push('/listening')">返回听解列表</button>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { getListeningUnit } from '../data/listening'
+import { getListeningUnit as getN2ListeningUnit } from '../data/listening'
+import { getListeningUnit as getN1ListeningUnit } from '../data/listening-n1'
 import { useFurigana } from '../composables/useFurigana'
+import { useLevel } from '../store/levelStore'
 
 const route = useRoute()
+const { level } = useLevel()
 const furigana = useFurigana()
 const furiOn = computed(() => furigana.isEnabled.value)
 
-const unit = computed(() => getListeningUnit(route.params.unit))
+const unit = computed(() => {
+  const id = route.params.unit
+  return level.value === 'N1' ? getN1ListeningUnit(id) : getN2ListeningUnit(id)
+})
 const wordsQrPage = computed(() => (unit.value?.words?.groups[0]?.qrPage) || 0)
 const questionsQrPage = computed(() => (unit.value?.questions?.sections[qIndex.value]?.qrPage) || 0)
 const knowQrPage = computed(() => (unit.value?.knowledge?.qrPages && unit.value.knowledge.qrPages[0]) || 0)
-const tab = ref(unit.value.words.groups.length ? 'words' : 'questions')
+const tab = ref(unit.value?.words?.groups?.length ? 'words' : 'questions')
 const tabs = computed(() => [
   { key: 'words', label: '词汇', emoji: '📖' },
   { key: 'questions', label: '题目', emoji: '📝' },
   { key: 'knowledge', label: '补充知识', emoji: '💡' },
-].filter(t => t.key !== 'words' || unit.value.words.groups.length))
+].filter(t => t.key !== 'words' || (unit.value?.words?.groups?.length)))
 
 // ===== 左右翻页卡片（参考「文法」板块分页翻书） =====
 const wordsIndex = ref(0)
 const wordsAnim = ref('next')
-const curWords = computed(() => unit.value.words.groups[wordsIndex.value])
+const curWords = computed(() => unit.value?.words?.groups?.[wordsIndex.value] || { list: [] })
 function wordsNext() {
-  if (wordsIndex.value >= unit.value.words.groups.length - 1) return
+  if (!unit.value || wordsIndex.value >= unit.value.words.groups.length - 1) return
   wordsAnim.value = 'next'
   wordsIndex.value++
 }
 function wordsPrev() {
-  if (wordsIndex.value <= 0) return
+  if (!unit.value || wordsIndex.value <= 0) return
   wordsAnim.value = 'prev'
   wordsIndex.value--
 }
 
 const knowIndex = ref(0)
 const knowAnim = ref('next')
-const curPart = computed(() => unit.value.knowledge.parts[knowIndex.value])
+const curPart = computed(() => unit.value?.knowledge?.parts?.[knowIndex.value] || { pairs: [] })
 function knowNext() {
-  if (knowIndex.value >= unit.value.knowledge.parts.length - 1) return
+  if (!unit.value || knowIndex.value >= unit.value.knowledge.parts.length - 1) return
   knowAnim.value = 'next'
   knowIndex.value++
 }
 function knowPrev() {
-  if (knowIndex.value <= 0) return
+  if (!unit.value || knowIndex.value <= 0) return
   knowAnim.value = 'prev'
   knowIndex.value--
 }
@@ -385,14 +396,14 @@ function knowPrev() {
 // ===== 题目板块翻页（每个大题一页） =====
 const qIndex = ref(0)
 const qAnim = ref('next')
-const curSec = computed(() => unit.value.questions.sections[qIndex.value])
+const curSec = computed(() => unit.value?.questions?.sections?.[qIndex.value] || {})
 function qNext() {
-  if (qIndex.value >= unit.value.questions.sections.length - 1) return
+  if (!unit.value || qIndex.value >= unit.value.questions.sections.length - 1) return
   qAnim.value = 'next'
   qIndex.value++
 }
 function qPrev() {
-  if (qIndex.value <= 0) return
+  if (!unit.value || qIndex.value <= 0) return
   qAnim.value = 'prev'
   qIndex.value--
 }
@@ -457,9 +468,15 @@ import qrP253 from '../assets/listening/qr_p253.png'
 import qrP259 from '../assets/listening/qr_p259.png'
 import qrP267 from '../assets/listening/qr_p267.png'
 import qrP273 from '../assets/listening/qr_p273.png'
-const qrImgs = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184, 189: qrP189, 195: qrP195, 202: qrP202, 215: qrP215, 228: qrP228, 243: qrP243, 253: qrP253, 259: qrP259, 267: qrP267, 273: qrP273 }
+// N1 听解二维码（src/assets/listening-n1/，按 PDF 页号）
+import qrN1_9 from '../assets/listening-n1/qr_p9.png'
+import qrN1_11 from '../assets/listening-n1/qr_p11.png'
+import qrN1_13 from '../assets/listening-n1/qr_p13.png'
+const qrImgsN2 = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184, 189: qrP189, 195: qrP195, 202: qrP202, 215: qrP215, 228: qrP228, 243: qrP243, 253: qrP253, 259: qrP259, 267: qrP267, 273: qrP273 }
+const qrImgsN1 = { 9: qrN1_9, 11: qrN1_11, 13: qrN1_13 }
 function qrImg(page) {
-  return qrImgs[page] || ''
+  const map = level.value === 'N1' ? qrImgsN1 : qrImgsN2
+  return (page && map[page]) || ''
 }
 
 // 振假名渲染：开启时显示 ruby，关闭时显示原文
@@ -963,5 +980,14 @@ function optClass(item, key, qi) {
 @media (max-width: 640px) {
   .word-table { grid-template-columns: 1fr; }
   .unit-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+.empty-tip {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ink-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 </style>
