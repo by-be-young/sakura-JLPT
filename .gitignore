@@ -7,6 +7,7 @@ dist-ssr/
 
 # Electron builder output (electron-builder 打包产物，勿提交)
 release/
+release_*/
 out/
 dist_electron/
 
@@ -46,3 +47,4 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+!.env.example

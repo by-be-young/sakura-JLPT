@@ -65,6 +65,7 @@
             <button class="fav-btn" :class="{ active: isFav }" @click="toggleFav">
               {{ isFav ? '❤️' : '🤍' }}
             </button>
+            <button class="fb-btn" @click="feedbackVisible = true" title="反馈本题">💬</button>
           </div>
 
           <QuestionCard
@@ -87,6 +88,11 @@
         </button>
       </div>
     </template>
+
+    <!-- 反馈本题弹窗 -->
+    <FeedbackModal v-model:visible="feedbackVisible" type="question"
+      :question-id="`${level}-${currentQuestion.id}`"
+      :question-tag="`${level} No.${currentQuestion.id}`" />
   </div>
 </template>
 
@@ -99,12 +105,14 @@ import { useLevel } from '../store/levelStore'
 import { useFurigana } from '../composables/useFurigana'
 import QuestionCard from '../components/QuestionCard.vue'
 import QuestionPicker from '../components/QuestionPicker.vue'
+import FeedbackModal from '../components/FeedbackModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
 const { level } = useLevel()
 const furigana = useFurigana()
+const feedbackVisible = ref(false)
 
 // 文章面板：判断内容是否需要内部滚动（底部还有未读内容时显示渐隐提示）
 const passageRef = ref(null)
@@ -490,6 +498,15 @@ function goBack() {
   background: #fde4e6;
   color: #c44a52;
 }
+.fb-btn {
+  margin-left: auto;
+  border: 1px solid #ffd3e0; background: #fff0f5; color: #b34a6f;
+  width: 26px; height: 26px; border-radius: 50%;
+  font-size: 13px; cursor: pointer; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.fb-btn:hover { background: #ff7da0; border-color: #ff7da0; }
 .type-tag {
   font-size: 11px;
   padding: 2px 8px;

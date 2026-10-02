@@ -6,6 +6,26 @@
         <!-- 难度切换（全局同步） -->
         <LevelSelector />
       </div>
+      <!-- 账号栏：登录 / 云同步 -->
+      <div class="account-bar">
+        <template v-if="authState.user">
+          <div class="account-info">
+            <span class="account-avatar">👤</span>
+            <span class="account-email">{{ authState.user.email || authState.user.username }}</span>
+            <span v-if="syncState.message" class="account-sync">{{ syncState.message }}</span>
+          </div>
+          <button class="account-btn" @click="doLogout">退出登录</button>
+        </template>
+        <template v-else>
+          <div class="account-info account-guest">
+            <span class="account-avatar">🌱</span>
+            <span class="account-hint">登录后可跨设备同步学习数据</span>
+          </div>
+          <button class="account-btn primary" @click="authModalVisible = true">
+            {{ authState.configured ? '登录 / 注册' : '登录（未配置云端）' }}
+          </button>
+        </template>
+      </div>
       <div class="tabs">
         <button class="tab" :class="{ active: tab === 'stats' }" @click="switchTab('stats')">📊 统计</button>
         <button class="tab" :class="{ active: tab === 'wrong' }" @click="switchTab('wrong')">
@@ -91,6 +111,8 @@
             <button class="btn btn-secondary" @click="$router.push('/quiz/sequential')">{{ level }} 顺序练习</button>
             <button class="btn btn-secondary" @click="$router.push('/quiz/random')">{{ level }} 随机练习</button>
             <button class="btn btn-secondary" @click="switchTab('wrong')">查看错题</button>
+            <button class="btn btn-secondary" @click="feedbackVisible = true">📮 问题反馈</button>
+            <button v-if="authState.isAdmin" class="btn btn-secondary" @click="$router.push('/admin/feedback')">📋 反馈管理</button>
           </div>
         </div>
 
@@ -188,6 +210,11 @@
         </div>
       </div>
     </template>
+
+    <!-- 登录/注册弹窗 -->
+    <AuthModal v-model:visible="authModalVisible" @authed="authModalVisible = false" />
+    <!-- 问题反馈弹窗 -->
+    <FeedbackModal v-model:visible="feedbackVisible" type="general" />
   </div>
 </template>
 
@@ -200,7 +227,11 @@ import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
 import { useGrammarStore } from '../store/grammarStore'
 import { useFurigana } from '../composables/useFurigana'
+import { useAuth } from '../composables/useAuth'
+import { useSync } from '../composables/useSync'
 import LevelSelector from '../components/LevelSelector.vue'
+import AuthModal from '../components/AuthModal.vue'
+import FeedbackModal from '../components/FeedbackModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -208,6 +239,15 @@ const store = useStore()
 const { level } = useLevel()
 const grammarStore = useGrammarStore()
 const furigana = useFurigana()
+const { state: authState, logout } = useAuth()
+const { syncState, stopSync } = useSync()
+const authModalVisible = ref(false)
+const feedbackVisible = ref(false)
+
+function doLogout() {
+  logout()
+  stopSync()
+}
 
 const currentTitle = computed(() => levelTitle(level.value))
 const hasQuiz = computed(() => hasQuizData(level.value))
@@ -347,6 +387,29 @@ function removeFav(key) {
 .my-header { margin-bottom: 18px; }
 .my-head-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .my-header h2 { margin: 0; font-size: 22px; }
+
+/* 账号栏 */
+.account-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-top: 12px; padding: 10px 14px;
+  background: linear-gradient(135deg, #fff5f8, #ffeef4);
+  border: 1px solid #ffd9e8; border-radius: 12px;
+}
+.account-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.account-avatar { font-size: 18px; }
+.account-email { font-size: 14px; font-weight: 600; color: #b34a6f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-hint { font-size: 13px; color: #8a6a75; }
+.account-sync { font-size: 12px; color: #2ea06a; background: #e9f8ef; padding: 2px 8px; border-radius: 10px; }
+.account-btn {
+  border: 1px solid #ffc3d8; background: #fff; color: #b34a6f;
+  padding: 6px 16px; border-radius: 16px; font-size: 13px; cursor: pointer; transition: all 0.18s;
+}
+.account-btn:hover { background: #fff0f5; }
+.account-btn.primary {
+  background: linear-gradient(90deg, #ff9ec6, #ff6fa8); border: none; color: #fff; font-weight: 600;
+}
+.account-btn.primary:hover { filter: brightness(1.05); }
+
 .tabs { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .tab {
   border: 1px solid var(--sakura-100, #ffd3e0);

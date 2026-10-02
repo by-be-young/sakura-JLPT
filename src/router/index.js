@@ -14,6 +14,7 @@ import ReadingList from '../views/ReadingList.vue'
 import ReadingView from '../views/ReadingView.vue'
 import Listening from '../views/Listening.vue'
 import ListeningUnit from '../views/ListeningUnit.vue'
+import FeedbackAdmin from '../views/FeedbackAdmin.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -30,6 +31,7 @@ const routes = [
   { path: '/listening', name: 'listening', component: Listening },
   { path: '/listening/:unit', name: 'listening-unit', component: ListeningUnit, props: true },
   { path: '/my', name: 'my', component: My },
+  { path: '/admin/feedback', name: 'admin-feedback', component: FeedbackAdmin },
   { path: '/stats', redirect: '/my' },
   { path: '/wrong', redirect: { name: 'my', query: { tab: 'wrong' } } },
   { path: '/favorites', redirect: { name: 'my', query: { tab: 'favorites' } } },

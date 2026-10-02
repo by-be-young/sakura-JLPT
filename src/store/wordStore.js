@@ -2,11 +2,7 @@ import { reactive, watch, computed } from 'vue'
 
 const STORAGE_KEY = 'sakura_word_state_v1'
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch (e) {}
+function defaultWordState() {
   return {
     learned: {},      // wordId -> { learnedAt, wrongCount, reviewCount, lastReviewAt, types: {} }
     familiar: {},     // wordId -> true（熟词，不再进入学习/复习）
@@ -15,13 +11,63 @@ function loadState() {
   }
 }
 
+function isPlainObject(v) {
+  return !!v && typeof v === 'object' && !Array.isArray(v)
+}
+
+// 归一化任意来源的背词状态（本地缓存 / 云端），保证结构可用，
+// 避免畸形数据（如 learned 为数组）在渲染时抛错导致白屏。
+function migrateWord(raw) {
+  const s = defaultWordState()
+  if (!isPlainObject(raw)) return s
+  if (isPlainObject(raw.learned)) {
+    for (const id of Object.keys(raw.learned)) {
+      const rec = raw.learned[id]
+      if (!isPlainObject(rec)) continue
+      s.learned[id] = { ...rec, types: isPlainObject(rec.types) ? rec.types : {} }
+    }
+  }
+  if (isPlainObject(raw.familiar)) {
+    for (const id of Object.keys(raw.familiar)) s.familiar[id] = !!raw.familiar[id]
+  }
+  if (isPlainObject(raw.notes)) {
+    for (const id of Object.keys(raw.notes)) {
+      if (typeof raw.notes[id] === 'string') s.notes[id] = raw.notes[id]
+    }
+  }
+  if (isPlainObject(raw.settings)) {
+    s.settings.dailyGoal = Number(raw.settings.dailyGoal) || 20
+  }
+  return s
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return migrateWord(JSON.parse(raw))
+  } catch (e) {}
+  return defaultWordState()
+}
+
 const state = reactive(loadState())
 
-// 兼容旧数据：为已学单词补全 types 字段；补齐 familiar
-for (const id of Object.keys(state.learned)) {
-  if (!state.learned[id].types) state.learned[id].types = {}
+// 就地修复（模块初始化 + 云端合并后调用）；形态正确时不改动任何值。
+function repairState() {
+  if (!isPlainObject(state.learned)) state.learned = {}
+  if (!isPlainObject(state.familiar)) state.familiar = {}
+  if (!isPlainObject(state.notes)) state.notes = {}
+  if (!isPlainObject(state.settings)) state.settings = { dailyGoal: 20 }
+  for (const id of Object.keys(state.learned)) {
+    const rec = state.learned[id]
+    if (!isPlainObject(rec)) {
+      delete state.learned[id]
+      continue
+    }
+    if (!isPlainObject(rec.types)) rec.types = {}
+  }
 }
-if (!state.familiar) state.familiar = {}
+
+repairState()
 
 watch(state, (val) => {
   try {
@@ -197,5 +243,7 @@ export function useWordStore() {
     isFamiliar,
     unmarkFamiliar,
     familiarCount,
+    normalizeWordState: migrateWord,  // 云端数据合并前归一化
+    repairState,                      // 云端合并后就地修复
   }
 }
