@@ -32,6 +32,9 @@
     </nav>
 
     <router-view />
+
+    <!-- 更新提示 -->
+    <AppUpdateToast />
   </div>
 </template>
 
@@ -40,6 +43,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useStore } from './store/useStore'
 import { useLevel } from './store/levelStore'
 import { useFurigana } from './composables/useFurigana'
+import AppUpdateToast from './components/AppUpdateToast.vue'
 
 const store = useStore()
 const { level } = useLevel()

@@ -1,0 +1,19 @@
+{
+  "name": "樱花日语",
+  "short_name": "樱花日语",
+  "description": "日语自学助手：文法、词汇、听力、阅读与测验，全部离线可用",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff5f8",
+  "theme_color": "#ff8fbf",
+  "icons": [
+    { "src": "./icons/icon-48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "./icons/icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

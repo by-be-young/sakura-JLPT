@@ -5,6 +5,25 @@ node_modules/
 dist/
 dist-ssr/
 
+# Electron builder output (electron-builder 打包产物，勿提交)
+release/
+out/
+dist_electron/
+
+# Capacitor / Android 构建产物
+android/app/build/
+android/build/
+android/.gradle/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/local.properties
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
 # Logs
 *.log
 npm-debug.log*
