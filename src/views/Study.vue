@@ -1,33 +1,46 @@
 <template>
   <div class="container study-page">
-    <div class="study-header">
-      <button class="btn btn-ghost btn-sm" @click="$router.push('/')">← 返回</button>
-      <h2 class="page-title">🌸 文法 · 蓝宝书</h2>
-      <div class="header-spacer"></div>
+    <!-- 页头 -->
+    <div class="study-hero">
+      <div>
+        <div class="hero-title">🌸 文法 · 蓝宝书</div>
+        <div class="hero-sub">{{ currentTitle }} · 系统语法体系 · 详解例句</div>
+      </div>
+      <span class="hero-badge">{{ level }}</span>
     </div>
 
-    <!-- 等级选择（与全局同步） -->
-    <LevelSelector class="level-sel" />
-
-    <!-- 当前等级章节 -->
-    <div v-if="chapter" class="chapter-grid">
-      <div class="chapter-card" :class="chapter.id.toLowerCase()" @click="openLevel(chapter.id)">
-        <div class="chapter-top">
-          <span class="chapter-badge">{{ chapter.id }}</span>
-          <span class="chapter-count">{{ chapter.pointCount }} 点</span>
+    <!-- 当前等级总览 -->
+    <div v-if="chapter" class="grammar-overview" @click="openLevel(chapter.id)">
+      <div class="go-left">
+        <div class="go-badge">{{ chapter.id }}</div>
+        <div class="go-name">{{ chapter.title }}</div>
+        <div class="go-meta">
+          <span>📚 {{ chapter.unitCount }} 个单元</span>
+          <span>✦ 共 {{ chapter.pointCount }} 个语法点</span>
         </div>
-        <div class="chapter-name">{{ chapter.title }}</div>
-        <div class="chapter-meta">
-          <span v-if="chapter.unitCount" class="meta-item">📚 {{ chapter.unitCount }} 个单元</span>
-          <span class="meta-item">{{ chapter.pointCount }} 点</span>
-          <span v-if="chapter.learnedCount" class="meta-item learned">📖 已学 {{ chapter.learnedCount }}</span>
-          <span v-if="chapter.markedCount" class="meta-item marked">★ 已标记 {{ chapter.markedCount }}</span>
+        <div class="go-tags">
+          <span v-if="chapter.learnedCount" class="go-tag learned">📖 已学 {{ chapter.learnedCount }}</span>
+          <span v-if="chapter.markedCount" class="go-tag marked">★ 已标记 {{ chapter.markedCount }}</span>
+          <span v-if="!chapter.learnedCount && !chapter.markedCount" class="go-tag hint">从第一个单元开始学习</span>
         </div>
-        <div class="chapter-progress">
-          <div class="progress-track">
-            <div class="progress-fill" :style="{ width: chapter.learnedPercent + '%' }"></div>
+      </div>
+      <div class="go-right">
+        <div class="go-ring">
+          <svg width="112" height="112" viewBox="0 0 112 112">
+            <defs>
+              <linearGradient id="goGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff9dbd" />
+                <stop offset="100%" stop-color="#ff7da0" />
+              </linearGradient>
+            </defs>
+            <circle cx="56" cy="56" r="47" fill="none" stroke="rgba(128,128,128,0.14)" stroke-width="10" />
+            <circle cx="56" cy="56" r="47" fill="none" stroke="url(#goGrad)" stroke-width="10" stroke-linecap="round"
+              :stroke-dasharray="goC" :stroke-dashoffset="goOffset" />
+          </svg>
+          <div class="go-ring-center">
+            <div class="go-pct">{{ chapter.learnedPercent }}<small>%</small></div>
+            <div class="go-pct-label">已学进度</div>
           </div>
-          <span class="progress-text">{{ chapter.learnedPercent }}%</span>
         </div>
       </div>
     </div>
@@ -50,12 +63,15 @@ import { grammarLevels } from '../data/grammar'
 import { useGrammarStore } from '../store/grammarStore'
 import { useLevel } from '../store/levelStore'
 import { levelTitle } from '../data/questions'
-import LevelSelector from '../components/LevelSelector.vue'
 
 const router = useRouter()
 const store = useGrammarStore()
 const { level } = useLevel()
 const currentTitle = computed(() => levelTitle(level.value))
+
+// 文法总览环：2π × 47
+const goC = 2 * Math.PI * 47
+const goOffset = computed(() => goC - (goC * (chapter.value?.learnedPercent || 0)) / 100)
 
 const chapter = computed(() => {
   const lv = grammarLevels.find(l => l.id === level.value)
@@ -94,84 +110,83 @@ function confirmClearProgress() {
 
 <style scoped>
 .study-page { max-width: 960px; }
-.study-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.page-title { margin: 0; font-size: 22px; color: #c2556f; }
-.header-spacer { flex: 1; }
 .level-sel {
   margin-bottom: 16px;
 }
-.chapter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
-  margin-bottom: 24px;
-}
-.chapter-card {
-  background: #fffafc;
-  border: 2px solid #ffd3e0;
-  border-radius: 18px;
-  padding: 18px;
-  cursor: pointer;
-  transition: all 0.22s;
-  position: relative;
-  overflow: hidden;
-}
-.chapter-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ff9dbd, #ff7da0);
-  opacity: 0;
-  transition: opacity 0.22s;
-}
-.chapter-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 26px rgba(255, 125, 160, 0.22);
-  border-color: #ff9dbd;
-}
-.chapter-card:hover::before { opacity: 1; }
-.chapter-top {
+
+/* 页头 */
+.study-hero {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  align-items: center;
+  padding: 4px 2px 18px;
 }
-.chapter-badge {
+.hero-title { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+.hero-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+.hero-badge {
   background: linear-gradient(145deg, #ff9dbd, #ff7da0);
   color: #fff;
   font-weight: 800;
-  font-size: 15px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 14px rgba(255, 125, 160, 0.35);
+}
+
+/* 文法总览大卡 */
+.grammar-overview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border-radius: 24px;
+  padding: 26px 24px;
+  box-shadow: var(--card-float);
+  cursor: pointer;
+  transition: all 0.22s;
+  background: linear-gradient(150deg, rgba(255, 224, 178, 0.5), rgba(255, 247, 230, 0.2));
+}
+[data-theme="dark"] .grammar-overview { background: linear-gradient(150deg, rgba(217, 152, 61, 0.18), rgba(42, 34, 26, 0.08)); }
+.grammar-overview:hover { transform: translateY(-3px); }
+.go-left { min-width: 0; }
+.go-badge {
+  display: inline-block;
+  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
   padding: 4px 14px;
-  border-radius: 14px;
+  border-radius: 999px;
   letter-spacing: 1px;
 }
-.chapter-count { font-size: 12px; color: #b98a94; }
-.chapter-name { font-size: 17px; font-weight: 700; color: #7a4b55; margin-bottom: 8px; }
-.chapter-meta { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.meta-item { font-size: 12px; color: #b98a94; }
-.meta-item.learned { color: #5b9d7a; }
-.meta-item.marked { color: #e08a00; }
-.chapter-progress { display: flex; align-items: center; gap: 10px; }
-.progress-track {
-  flex: 1;
-  height: 8px;
-  background: #ffe3ec;
-  border-radius: 4px;
-  overflow: hidden;
+.go-name { font-size: 22px; font-weight: 800; margin: 12px 0 8px; }
+.go-meta { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-light); flex-wrap: wrap; }
+.go-tags { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.go-tag { padding: 4px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.go-tag.learned { background: rgba(91, 157, 122, 0.14); color: #5b9d7a; }
+.go-tag.marked { background: rgba(224, 138, 0, 0.14); color: #e08a00; }
+.go-tag.hint { background: rgba(255, 125, 160, 0.12); color: var(--sakura-600); }
+.go-right { flex-shrink: 0; }
+.go-ring { position: relative; width: 112px; height: 112px; }
+.go-ring svg { transform: rotate(-90deg); }
+.go-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ff9dbd, #ff7da0);
-  border-radius: 4px;
-  transition: width 0.4s;
+.go-pct { font-size: 23px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
+.go-pct small { font-size: 12px; }
+.go-pct-label { font-size: 10px; color: var(--text-light); margin-top: 3px; }
+
+/* 窄屏适配 */
+@media (max-width: 520px) {
+  .grammar-overview { flex-direction: column; align-items: flex-start; }
+  .go-right { align-self: center; }
 }
-.progress-text { font-size: 12px; color: #c2556f; font-weight: 600; min-width: 38px; text-align: right; }
 
 .reset-area {
   display: flex;
@@ -179,9 +194,5 @@ function confirmClearProgress() {
   gap: 10px;
   margin-top: 8px;
   flex-wrap: wrap;
-}
-
-@media (max-width: 480px) {
-  .chapter-grid { grid-template-columns: 1fr; }
 }
 </style>

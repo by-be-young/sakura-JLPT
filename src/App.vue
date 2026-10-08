@@ -27,11 +27,42 @@
             <span class="furi-icon">あ</span>
             <span class="furi-text">{{ furigana.isEnabled.value ? '振假名开' : '振假名关' }}</span>
           </button>
+          <button class="icon-btn" @click="toggleTheme" :title="theme.isDark() ? '切换到浅色模式' : '切换到深色模式'">
+            {{ theme.isDark() ? '☀️' : '🌙' }}
+          </button>
+          <router-link to="/settings" class="icon-btn" title="设置" :class="{ active: $route.path === '/settings' }">⚙️</router-link>
         </div>
       </div>
     </nav>
 
-    <router-view />
+    <!-- 页面切换 -->
+    <router-view v-slot="{ Component }">
+      <transition name="page-fade" mode="out-in">
+        <component :is="Component" :key="$route.path" />
+      </transition>
+    </router-view>
+
+    <!-- 移动端底部 Tab -->
+    <nav class="tabbar">
+      <div class="tabbar-inner">
+        <router-link to="/" class="tab-item" :class="{ active: $route.path === '/' }">
+          <span class="tab-emoji">🏠</span><span>首页</span>
+        </router-link>
+        <router-link to="/learn" class="tab-item" :class="{ active: $route.path.startsWith('/learn') }">
+          <span class="tab-emoji">📝</span><span>练习</span>
+        </router-link>
+        <router-link to="/words" class="tab-item" :class="{ active: $route.path.startsWith('/words') }">
+          <span class="tab-emoji">🌸</span><span>背词</span>
+        </router-link>
+        <router-link to="/study" class="tab-item" :class="{ active: $route.path.startsWith('/study') }">
+          <span class="tab-emoji">📘</span><span>文法</span>
+        </router-link>
+        <router-link to="/my" class="tab-item" :class="{ active: ['/my', '/stats', '/wrong', '/settings', '/admin'].some(p => $route.path.startsWith(p)) }">
+          <span class="tab-emoji">👤</span><span>我的</span>
+          <span v-if="wrongCount" class="tab-badge">{{ wrongCount }}</span>
+        </router-link>
+      </div>
+    </nav>
 
     <!-- 更新提示 -->
     <AppUpdateToast />
@@ -43,12 +74,18 @@ import { ref, computed, onMounted } from 'vue'
 import { useStore } from './store/useStore'
 import { useLevel } from './store/levelStore'
 import { useFurigana } from './composables/useFurigana'
+import { useTheme } from './store/themeStore'
 import AppUpdateToast from './components/AppUpdateToast.vue'
 
 const store = useStore()
 const { level } = useLevel()
 const furigana = useFurigana()
+const theme = useTheme()
 const wrongCount = computed(() => store.wrongCountOf(level.value))
+
+function toggleTheme() {
+  theme.setMode(theme.isDark() ? 'light' : 'dark')
+}
 
 // 生成樱花花瓣
 const petals = ref([])
@@ -66,3 +103,21 @@ onMounted(() => {
   petals.value = arr
 })
 </script>
+
+<style scoped>
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: transparent;
+  color: var(--text-light);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--sakura-100); transform: translateY(-1px); }
+.icon-btn.active { background: var(--sakura-100); }
+</style>

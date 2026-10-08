@@ -180,7 +180,7 @@ onUnmounted(() => {
   flex: 1;
   font-size: 17px;
   margin: 0;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
 }
 .rv-sub {
   display: flex;
@@ -193,7 +193,7 @@ onUnmounted(() => {
   padding: 2px 10px;
   border-radius: 999px;
   background: rgba(255, 157, 189, 0.14);
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
   font-weight: 600;
 }
 .unit-tag {
@@ -209,7 +209,7 @@ onUnmounted(() => {
 .passage-box {
   position: relative;
   background: #fffdf9;
-  border: 2px solid var(--sakura-100, #ffe3ec);
+  border: 2px solid var(--sakura-100, var(--sakura-100));
   border-radius: var(--radius, 16px);
   padding: 10px 16px 12px;
   margin-bottom: 10px;
@@ -218,7 +218,7 @@ onUnmounted(() => {
 }
 .passage-title {
   font-weight: 700;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
   font-size: 13px;
   margin-bottom: 6px;
 }
@@ -270,7 +270,7 @@ onUnmounted(() => {
   height: 44px;
   border-radius: 50%;
   border: 2px solid var(--sakura-200, #ffd0dd);
-  background: #fff;
+  background: var(--card-grad);
   color: var(--sakura-500, #ff7da0);
   font-size: 24px;
   line-height: 1;
@@ -298,14 +298,14 @@ onUnmounted(() => {
 .q-tag {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
 }
 .q-type {
   font-size: 11.5px;
   padding: 1px 8px;
   border-radius: 999px;
   background: rgba(255, 157, 189, 0.14);
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
 }
 .q-dots {
   margin-left: auto;
@@ -317,7 +317,7 @@ onUnmounted(() => {
   height: 22px;
   border-radius: 50%;
   border: 1.5px solid var(--sakura-200, #ffd0dd);
-  background: #fff;
+  background: var(--card-grad);
   color: var(--ink-2, #888);
   font-size: 11.5px;
   cursor: pointer;
@@ -450,7 +450,7 @@ onUnmounted(() => {
 .modal-panel {
   width: min(760px, 100%);
   max-height: 84vh;
-  background: #fff;
+  background: var(--card-grad);
   border-radius: 18px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, .22);
   display: flex;
@@ -462,12 +462,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  border-bottom: 2px solid var(--sakura-100, #ffe3ec);
+  border-bottom: 2px solid var(--sakura-100, var(--sakura-100));
 }
 .modal-head h3 {
   margin: 0;
   font-size: 16px;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
 }
 .modal-body {
   padding: 16px 20px 22px;
@@ -477,7 +477,7 @@ onUnmounted(() => {
 .tr-section h4 {
   margin: 0 0 8px;
   font-size: 14px;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
 }
 .tr-text {
   font-size: 14.5px;

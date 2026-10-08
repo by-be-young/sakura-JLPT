@@ -40,17 +40,17 @@ function save() {
   z-index: 100;
 }
 .note-modal-content {
-  background: #fff;
+  background: var(--card);
   border-radius: 20px;
   padding: 24px;
   width: 90%;
   max-width: 440px;
 }
-.note-modal-content h3 { color: #c2556f; margin-top: 0; }
+.note-modal-content h3 { color: var(--sakura-600); margin-top: 0; }
 .note-modal-content textarea {
   width: 100%;
   box-sizing: border-box;
-  border: 2px solid #ffd3e0;
+  border: 2px solid var(--border-strong);
   border-radius: 12px;
   padding: 10px;
   font-size: 15px;

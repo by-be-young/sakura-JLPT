@@ -102,6 +102,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { levelQuestions, levelMockQuestions } from '../data/questions'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
+import { useDaily } from '../store/dailyStore'
 import { useFurigana } from '../composables/useFurigana'
 import QuestionCard from '../components/QuestionCard.vue'
 import QuestionPicker from '../components/QuestionPicker.vue'
@@ -110,6 +111,7 @@ import FeedbackModal from '../components/FeedbackModal.vue'
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
+const daily = useDaily()
 const { level } = useLevel()
 const furigana = useFurigana()
 const feedbackVisible = ref(false)
@@ -257,8 +259,10 @@ function buildList() {
     list = allLevelQuestions.value.filter(q => q.unit === unitId.value).sort((a, b) => a.id - b.id)
   } else if (mode.value === 'wrong') {
     list = allLevelQuestions.value.filter(q => store.state.wrong.includes(q.key))
+      .sort((a, b) => (store.state.answered[b.key]?.time || 0) - (store.state.answered[a.key]?.time || 0))
   } else if (mode.value === 'favorites') {
     list = allLevelQuestions.value.filter(q => store.state.favorites.includes(q.key))
+      .sort((a, b) => (store.state.answered[b.key]?.time || 0) - (store.state.answered[a.key]?.time || 0))
   }
   questionList.value = list
   currentIndex.value = 0
@@ -317,6 +321,7 @@ function submitAnswer() {
   const correct = selected.value === currentQuestion.value.answer
   const origSelected = currentQuestion.value._optionOrder[selected.value - 1] + 1
   store.recordAnswer(currentQuestion.value.key, origSelected, correct)
+  daily.record('quiz')
   sessionResults.value.push({ qid: currentQuestion.value.id, selected: selected.value, correct })
 
   if (correct) {
@@ -419,7 +424,7 @@ function goBack() {
   width: 44px;
   height: 80px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--card-grad);
   border: 2px solid var(--sakura-100);
   color: var(--sakura-400);
   font-size: 28px;
@@ -467,7 +472,7 @@ function goBack() {
   justify-content: space-between;
   margin-bottom: 12px;
   padding: 10px 16px;
-  background: #fff;
+  background: var(--card-grad);
   border-radius: var(--radius-sm);
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
@@ -491,22 +496,22 @@ function goBack() {
   font-weight: 600;
 }
 .status-correct {
-  background: #e0f3ea;
-  color: #3a8c63;
+  background: var(--green-soft);
+  color: var(--green);
 }
 .status-wrong {
-  background: #fde4e6;
-  color: #c44a52;
+  background: var(--red-soft);
+  color: var(--red);
 }
 .fb-btn {
   margin-left: auto;
-  border: 1px solid #ffd3e0; background: #fff0f5; color: #b34a6f;
+  border: 1px solid var(--border-strong); background: var(--sakura-100); color: var(--sakura-600);
   width: 26px; height: 26px; border-radius: 50%;
   font-size: 13px; cursor: pointer; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center;
   transition: all 0.15s;
 }
-.fb-btn:hover { background: #ff7da0; border-color: #ff7da0; }
+.fb-btn:hover { background: #ff7da0; border-color: var(--sakura-400); }
 .type-tag {
   font-size: 11px;
   padding: 2px 8px;
@@ -519,7 +524,7 @@ function goBack() {
 }
 .type-語彙 {
   background: #e6f5ec;
-  color: #3a8c63;
+  color: var(--green);
 }
 .type-文法 {
   background: #f3e8fd;
@@ -528,7 +533,7 @@ function goBack() {
 /* 完形填空/读解文章面板 */
 .passage-box {
   background: #fffdf9;
-  border: 2px solid var(--sakura-100, #ffe3ec);
+  border: 2px solid var(--sakura-100, var(--sakura-100));
   border-radius: var(--radius, 16px);
   padding: 16px 20px;
   margin-bottom: 14px;
@@ -536,7 +541,7 @@ function goBack() {
 }
 .passage-title {
   font-weight: 700;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
   font-size: 14px;
   margin-bottom: 10px;
 }

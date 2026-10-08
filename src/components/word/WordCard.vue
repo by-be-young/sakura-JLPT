@@ -101,10 +101,10 @@ defineExpose({ flip, flipped })
   justify-content: center;
   transition: transform 0.5s;
   box-shadow: 0 8px 24px rgba(255, 145, 179, 0.18);
-  border: 2px solid #ffd3e0;
+  border: 2px solid var(--border-strong);
 }
 .card-front {
-  background: linear-gradient(145deg, #fff5f8, #ffe9f0);
+  background: linear-gradient(145deg, var(--sakura-50), #ffe9f0);
 }
 .card-back {
   background: linear-gradient(145deg, #fffdf9, #fff3e6);
@@ -121,7 +121,7 @@ defineExpose({ flip, flipped })
 .word-kanji {
   font-size: 52px;
   font-weight: 700;
-  color: #c2556f;
+  color: var(--sakura-600);
   letter-spacing: 0.05em;
 }
 .word-kanji :deep(ruby), .ex-jp :deep(ruby) {
@@ -145,7 +145,7 @@ defineExpose({ flip, flipped })
 }
 .word-pos {
   font-size: 14px;
-  color: #b98a94;
+  color: var(--text-light);
   background: #ffeef3;
   padding: 2px 10px;
   border-radius: 20px;
@@ -220,12 +220,12 @@ defineExpose({ flip, flipped })
   margin-top: 14px;
 }
 .btn-note {
-  background: #fff;
-  border: 2px solid #ffd3e0;
+  background: var(--card);
+  border: 2px solid var(--border-strong);
   border-radius: 20px;
   padding: 6px 16px;
   font-size: 13px;
-  color: #c2556f;
+  color: var(--sakura-600);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;

@@ -543,7 +543,7 @@ function optClass(item, key, qi) {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-  background: #fff;
+  background: var(--card-grad);
   padding: 6px;
   border-radius: 20px;
   box-shadow: var(--shadow);
@@ -574,7 +574,7 @@ function optClass(item, key, qi) {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: #fff;
+  background: var(--card-grad);
   border: 1.5px solid var(--sakura-100);
   border-radius: var(--radius);
   padding: 14px 18px;
@@ -593,7 +593,7 @@ function optClass(item, key, qi) {
 .qr-tip { font-size: 12px; color: var(--ink-light); margin-top: 3px; }
 
 .block-card {
-  background: #fff;
+  background: var(--card-grad);
   border-radius: var(--radius);
   padding: 18px 20px;
   box-shadow: var(--shadow);
@@ -637,7 +637,7 @@ function optClass(item, key, qi) {
   padding: 8px 16px;
   border-radius: 18px;
   border: 2px solid var(--sakura-100);
-  background: #fff;
+  background: var(--card-grad);
   color: var(--sakura-600);
   font-size: 13px;
   font-weight: 600;
@@ -650,7 +650,7 @@ function optClass(item, key, qi) {
 .page-indicator { font-size: 13px; color: var(--ink-light); }
 .kbd {
   display: inline-block;
-  background: #fff;
+  background: var(--card-grad);
   border: 1px solid var(--sakura-200);
   border-bottom-width: 2px;
   border-radius: 5px;
@@ -775,7 +775,7 @@ function optClass(item, key, qi) {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #fff;
+  background: var(--card-grad);
   border: 2px solid var(--sakura-100);
   border-radius: 20px;
   font-size: 14px;
@@ -954,7 +954,7 @@ function optClass(item, key, qi) {
   border: 1px solid #f5e8ec;
   border-left: 4px solid var(--sakura-400);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card-grad);
   padding: 14px 16px;
 }
 .k-card-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }

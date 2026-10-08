@@ -164,13 +164,13 @@ function select(i) {
 }
 .prompt-label {
   font-size: 14px;
-  color: #b98a94;
+  color: var(--text-light);
   margin-bottom: 14px;
   letter-spacing: 0.05em;
 }
 .prompt-word {
   font-weight: 700;
-  color: #c2556f;
+  color: var(--sakura-600);
 }
 .kana-big { font-size: 44px; letter-spacing: 0.06em; }
 .kanji-big { font-size: 46px; letter-spacing: 0.08em; }
@@ -209,24 +209,24 @@ function select(i) {
   margin-top: 10px;
   background: none;
   border: none;
-  color: #b98a94;
+  color: var(--text-light);
   font-size: 13px;
   cursor: pointer;
   font-family: inherit;
   text-decoration: underline dotted;
 }
-.btn-zh-toggle:hover { color: #c2556f; }
+.btn-zh-toggle:hover { color: var(--sakura-600); }
 .quiz-note-row {
   text-align: center;
   margin-top: 12px;
 }
 .btn-note {
-  background: #fff;
-  border: 2px solid #ffd3e0;
+  background: var(--card);
+  border: 2px solid var(--border-strong);
   border-radius: 20px;
   padding: 6px 16px;
   font-size: 13px;
-  color: #c2556f;
+  color: var(--sakura-600);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;

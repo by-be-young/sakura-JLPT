@@ -96,7 +96,7 @@ function statusClass(r) {
   padding: 2px 10px;
   border-radius: 999px;
   background: rgba(255, 157, 189, 0.14);
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
   font-weight: 600;
 }
 .unit-title {
@@ -115,8 +115,8 @@ function statusClass(r) {
   gap: 10px;
 }
 .reading-card {
-  background: #fff;
-  border: 2px solid var(--sakura-100, #ffe3ec);
+  background: var(--card-grad);
+  border: 2px solid var(--sakura-100, var(--sakura-100));
   border-radius: 14px;
   padding: 12px 14px;
   cursor: pointer;
@@ -130,7 +130,7 @@ function statusClass(r) {
 .r-num {
   font-size: 15px;
   font-weight: 700;
-  color: var(--sakura-600, #c2556f);
+  color: var(--sakura-600, var(--sakura-600));
   margin-bottom: 4px;
 }
 .r-meta {

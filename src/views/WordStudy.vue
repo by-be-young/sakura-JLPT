@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="container words-page">
     <!-- 顶部导航 -->
     <div class="words-header">
@@ -118,6 +118,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { wordsByLevel, pitchToCircle } from '../data/words'
 import { useWordStore } from '../store/wordStore'
 import { useLevel } from '../store/levelStore'
+import { useDaily } from '../store/dailyStore'
 import { useFurigana } from '../composables/useFurigana'
 import { buildQuizRound, getNewWords, availableTypes } from '../composables/wordQuiz'
 import WordCard from '../components/word/WordCard.vue'
@@ -128,6 +129,7 @@ const route = useRoute()
 const router = useRouter()
 const store = useWordStore()
 const furigana = useFurigana()
+const daily = useDaily()
 const { level: globalLevel, APP_LEVELS } = useLevel()
 
 // 有效等级：优先取全局同步等级（深链带 ?level= 时兼容旧入口）
@@ -184,6 +186,7 @@ watch(level, () => {
 
 function learnNext() {
   store.markLearned(learnWords.value[learnIndex.value].id)
+  daily.record('word')
   if (learnIndex.value < learnWords.value.length - 1) {
     learnIndex.value++
   }
@@ -233,6 +236,7 @@ function handleQuizAnswer(correct) {
   quizAnswered.value = true
   lastCorrect.value = correct
   if (correct) quizCorrect.value++
+  daily.record('word')
   const q = quizQuestions.value[quizIndex.value]
   if (q) {
     store.recordAnswer(q.wordId, correct)
@@ -373,11 +377,11 @@ onUnmounted(() => {
   gap: 12px;
   margin-bottom: 18px;
 }
-.page-title { margin: 0; font-size: 22px; color: #c2556f; }
+.page-title { margin: 0; font-size: 22px; color: var(--sakura-600); }
 .header-spacer { flex: 1; }
 .level-tag {
   background: #ffe9f0;
-  color: #c2556f;
+  color: var(--sakura-600);
   padding: 4px 14px;
   border-radius: 20px;
   font-size: 13px;
@@ -388,13 +392,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: #7a4b55;
+  color: var(--text);
   margin-bottom: 14px;
 }
 .progress-bar-wrap {
   flex: 1;
   height: 8px;
-  background: #ffe3ec;
+  background: var(--sakura-100);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -422,14 +426,14 @@ onUnmounted(() => {
   text-align: center;
   margin-top: 18px;
   padding: 20px;
-  background: #fff5f8;
+  background: var(--sakura-50);
   border-radius: 16px;
 }
-.learn-done p { margin: 0 0 12px; color: #7a4b55; }
+.learn-done p { margin: 0 0 12px; color: var(--text); }
 .word-list-panel {
   margin-top: 16px;
-  background: #fffafc;
-  border: 2px solid #ffd3e0;
+  background: var(--card-hover);
+  border: 2px solid var(--border-strong);
   border-radius: 16px;
   padding: 16px;
 }
@@ -439,9 +443,9 @@ onUnmounted(() => {
   justify-content: space-between;
   margin-bottom: 12px;
 }
-.notes-header h3 { margin: 0; color: #c2556f; font-size: 16px; }
+.notes-header h3 { margin: 0; color: var(--sakura-600); font-size: 16px; }
 .list-item {
-  border-bottom: 1px dashed #ffe3ec;
+  border-bottom: 1px dashed var(--sakura-100);
   padding: 6px 0;
 }
 .list-item:last-child { border-bottom: none; }
@@ -453,20 +457,20 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 8px;
 }
-.list-item-head:hover { background: #fff5f8; }
-.list-idx { font-size: 12px; color: #b98a94; width: 20px; }
-.list-kanji { font-size: 20px; font-weight: 700; color: #c2556f; }
+.list-item-head:hover { background: var(--sakura-50); }
+.list-idx { font-size: 12px; color: var(--text-light); width: 20px; }
+.list-kanji { font-size: 20px; font-weight: 700; color: var(--sakura-600); }
 .list-kana { font-size: 14px; color: #d9773e; }
-.list-mean { flex: 1; font-size: 13px; color: #7a4b55; }
+.list-mean { flex: 1; font-size: 13px; color: var(--text); }
 .list-toggle { color: #e884a0; font-size: 12px; }
 .list-item-detail {
-  background: #fff5f8;
+  background: var(--sakura-50);
   border-radius: 10px;
   padding: 12px 14px;
   margin: 4px 4px 8px;
 }
 .detail-pitch { font-size: 14px; color: #e884a0; margin-bottom: 6px; }
-.detail-pos { font-size: 13px; color: #b98a94; margin-bottom: 6px; }
+.detail-pos { font-size: 13px; color: var(--text-light); margin-bottom: 6px; }
 .word-examples {
   text-align: left;
   background: rgba(255, 255, 255, 0.7);
@@ -492,12 +496,12 @@ onUnmounted(() => {
   margin-bottom: 8px;
 }
 .btn-familiar {
-  background: #fff;
-  border: 2px solid #ffd3e0;
+  background: var(--card-grad);
+  border: 2px solid var(--border-strong);
   border-radius: 20px;
   padding: 5px 14px;
   font-size: 13px;
-  color: #c2556f;
+  color: var(--sakura-600);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
@@ -521,8 +525,8 @@ onUnmounted(() => {
   width: 44px;
   height: 80px;
   border-radius: 12px;
-  background: #fff;
-  border: 2px solid #ffd3e0;
+  background: var(--card-grad);
+  border: 2px solid var(--border-strong);
   color: #e884a0;
   font-size: 28px;
   cursor: pointer;
@@ -536,7 +540,7 @@ onUnmounted(() => {
 }
 .side-arrow:hover:not(:disabled) {
   background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  border-color: #ff7da0;
+  border-color: var(--sakura-400);
   color: #fff;
   transform: scale(1.05);
 }
@@ -550,7 +554,7 @@ onUnmounted(() => {
 }
 .quiz-mode-tag {
   background: #ffe9f0;
-  color: #c2556f;
+  color: var(--sakura-600);
   padding: 3px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -574,11 +578,11 @@ onUnmounted(() => {
   text-align: center;
   margin-top: 20px;
   padding: 28px;
-  background: #fff5f8;
+  background: var(--sakura-50);
   border-radius: 20px;
 }
-.result-score { font-size: 18px; color: #7a4b55; margin-bottom: 6px; }
-.result-rate { font-size: 44px; font-weight: 700; color: #c2556f; margin-bottom: 16px; }
+.result-score { font-size: 18px; color: var(--text); margin-bottom: 6px; }
+.result-rate { font-size: 44px; font-weight: 700; color: var(--sakura-600); margin-bottom: 16px; }
 .result-actions { display: flex; gap: 12px; justify-content: center; }
 @media (max-width: 640px) {
   .side-arrow {

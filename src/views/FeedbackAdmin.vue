@@ -89,7 +89,7 @@ onMounted(load)
 
 .fb-list { display: flex; flex-direction: column; gap: 12px; }
 .fb-item {
-  background: #fff; border: 1px solid var(--sakura-50, #ffe3ec);
+  background: var(--card-grad); border: 1px solid var(--sakura-50, var(--sakura-100));
   border-radius: 14px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .fb-item.fb-done { opacity: 0.62; }
@@ -97,14 +97,14 @@ onMounted(load)
 .fb-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9px; }
 .tag-q { background: #e8f4fd; color: #3a7ca5; }
 .tag-g { background: #f3e8fd; color: #7a5ca5; }
-.fb-qid { font-size: 12px; font-weight: 700; color: #b34a6f; background: #fff0f5; padding: 2px 8px; border-radius: 9px; }
+.fb-qid { font-size: 12px; font-weight: 700; color: var(--sakura-600); background: var(--sakura-100); padding: 2px 8px; border-radius: 9px; }
 .fb-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 9px; }
-.st-open { background: #fde4e6; color: #c44a52; }
-.st-done { background: #e0f3ea; color: #3a8c63; }
-.fb-time { margin-left: auto; font-size: 11px; color: #c9a2ad; }
+.st-open { background: var(--red-soft); color: var(--red); }
+.st-done { background: var(--green-soft); color: var(--green); }
+.fb-time { margin-left: auto; font-size: 11px; color: var(--text-light); }
 .fb-content { font-size: 14px; line-height: 1.7; color: #333; white-space: pre-wrap; word-break: break-word; }
 .fb-bottom { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .fb-contact { font-size: 12px; color: #3a7ca5; flex: 1; }
-.fb-contact.muted { color: #c9a2ad; }
+.fb-contact.muted { color: var(--text-light); }
 .btn-xs { font-size: 12px; padding: 3px 10px; }
 </style>

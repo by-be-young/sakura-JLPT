@@ -68,31 +68,31 @@ onMounted(() => {
   bottom: 20px;
   z-index: 9999;
   width: 300px;
-  background: #fff;
+  background: var(--card);
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(255, 143, 191, 0.35);
-  border: 1px solid #ffd9e8;
+  border: 1px solid var(--border-strong);
   padding: 14px 16px;
   font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
 }
-.upd-title { font-size: 14px; font-weight: 600; color: #b34a6f; margin-bottom: 4px; }
-.upd-desc { font-size: 12px; color: #8a6a75; margin-bottom: 10px; }
+.upd-title { font-size: 14px; font-weight: 600; color: var(--sakura-600); margin-bottom: 4px; }
+.upd-desc { font-size: 12px; color: var(--text-light); margin-bottom: 10px; }
 .upd-actions { display: flex; gap: 8px; }
 .upd-btn {
   flex: 1;
   padding: 6px 0;
-  border: 1px solid #ffc3d8;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #b34a6f;
+  background: var(--card);
+  color: var(--sakura-600);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
-.upd-btn:hover { background: #fff5f8; }
-.upd-btn.primary { background: #ff8fbf; border-color: #ff8fbf; color: #fff; }
-.upd-btn.primary:hover { background: #ff7fb4; }
-.upd-bar { height: 6px; background: #ffe3ef; border-radius: 3px; margin: 8px 0 4px; overflow: hidden; }
+.upd-btn:hover { background: var(--sakura-50); }
+.upd-btn.primary { background: var(--sakura-500); border-color: #ff8fbf; color: #fff; }
+.upd-btn.primary:hover { background: var(--sakura-400); }
+.upd-bar { height: 6px; background: var(--sakura-100); border-radius: 3px; margin: 8px 0 4px; overflow: hidden; }
 .upd-bar-inner { height: 100%; background: linear-gradient(90deg, #ff9ec6, #ff6fa8); border-radius: 3px; transition: width 0.3s; }
 .upd-fade-enter-active, .upd-fade-leave-active { transition: opacity 0.25s, transform 0.25s; }
 .upd-fade-enter-from, .upd-fade-leave-to { opacity: 0; transform: translateY(12px); }

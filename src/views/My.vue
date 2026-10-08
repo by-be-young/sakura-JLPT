@@ -3,9 +3,24 @@
     <div class="my-header">
       <div class="my-head-top">
         <h2>🌸 我的</h2>
-        <!-- 难度切换（全局同步） -->
-        <LevelSelector />
       </div>
+
+      <!-- 今日打卡条 -->
+      <div class="streak-bar">
+        <div class="streak-item">
+          <span class="streak-emoji">🔥</span>
+          <b>{{ daily.streak.value }}</b>
+          <span>天连续</span>
+        </div>
+        <div class="streak-div"></div>
+        <div class="streak-item">📝 今日 <b>{{ daily.todayQuiz.value }}</b>/{{ daily.state.settings.quizTarget }}</div>
+        <div class="streak-item">🌸 今日 <b>{{ daily.todayWord.value }}</b>/{{ daily.state.settings.wordTarget }}</div>
+        <button class="btn btn-ghost btn-xs" @click="$router.push('/settings')">⚙️ 设置</button>
+      </div>
+
+      <!-- 学习等级（唯一入口，全局同步） -->
+      <LevelSelector show-hint class="level-card-wrap" />
+
       <!-- 账号栏：登录 / 云同步 -->
       <div class="account-bar">
         <template v-if="authState.user">
@@ -113,20 +128,10 @@
             <button class="btn btn-secondary" @click="switchTab('wrong')">查看错题</button>
             <button class="btn btn-secondary" @click="feedbackVisible = true">📮 问题反馈</button>
             <button v-if="authState.isAdmin" class="btn btn-secondary" @click="$router.push('/admin/feedback')">📋 反馈管理</button>
+            <button class="btn btn-secondary" @click="$router.push('/settings')">⚙️ 设置</button>
           </div>
         </div>
 
-        <!-- 数据管理：各记录独立清除 -->
-        <div class="card data-card">
-          <h3 class="card-title">🗑 数据管理 · {{ level }}</h3>
-          <p class="mgmt-hint">各记录独立清除，互不影响</p>
-          <div class="mgmt-grid">
-            <button class="mgmt-btn" @click="clearAnswers">🗑 清空答题记录</button>
-            <button class="mgmt-btn" @click="clearWrongLevel">🗑 清空错题本</button>
-            <button class="mgmt-btn" @click="clearFavLevel">🗑 清空收藏</button>
-            <button class="mgmt-btn" @click="clearMockLevel">🗑 清空模拟成绩</button>
-          </div>
-        </div>
       </template>
 
       <!-- 文法学习进度（当前等级） -->
@@ -179,6 +184,7 @@
           <div class="sentence" v-html="displaySentence(q)"></div>
           <div class="meta">
             <span>正确答案：{{ q.answer }}. {{ q.options[q.answer - 1] }}</span>
+            <span class="wrong-time" v-if="store.getAnswer(q.key)?.time">最近答错 <b>{{ formatDate(store.getAnswer(q.key).time) }}</b></span>
           </div>
         </div>
       </div>
@@ -226,6 +232,7 @@ import { grammarLevels } from '../data/grammar'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
 import { useGrammarStore } from '../store/grammarStore'
+import { useDaily } from '../store/dailyStore'
 import { useFurigana } from '../composables/useFurigana'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
@@ -239,6 +246,7 @@ const store = useStore()
 const { level } = useLevel()
 const grammarStore = useGrammarStore()
 const furigana = useFurigana()
+const daily = useDaily()
 const { state: authState, logout } = useAuth()
 const { syncState, stopSync } = useSync()
 const authModalVisible = ref(false)
@@ -314,12 +322,6 @@ function startMock(id) {
   router.push({ name: 'quiz', params: { mode: 'mock' }, query: { mock: id } })
 }
 
-function clearAnswers() {
-  if (confirm(`确定清空 ${level.value} 的全部答题记录吗？（不影响错题、收藏、模拟成绩）`)) {
-    store.clearAnswers(level.value)
-  }
-}
-
 function clearWrongLevel() {
   if (confirm(`确定清空 ${level.value} 的全部错题吗？`)) {
     store.clearWrong(level.value)
@@ -332,13 +334,7 @@ function clearFavLevel() {
   }
 }
 
-function clearMockLevel() {
-  if (confirm(`确定清空 ${level.value} 的全部模拟测试成绩吗？`)) {
-    store.clearMockResults(level.value)
-  }
-}
-
-// ===== 错题本 =====
+// ===== 错题本（按最近答错时间倒序，像成熟学习 App） =====
 function displaySentence(q) {
   if (furigana.isEnabled.value && q.sentenceFurigana) return q.sentenceFurigana
   return q.sentence
@@ -347,7 +343,11 @@ function displaySentence(q) {
 const wrongQuestions = computed(() => {
   return levelQuestionsAll(level.value)
     .filter(q => store.state.wrong.includes(q.key))
-    .sort((a, b) => a.id - b.id)
+    .sort((a, b) => {
+      const ta = store.state.answered[a.key]?.time || 0
+      const tb = store.state.answered[b.key]?.time || 0
+      return tb - ta
+    })
 })
 
 function practiceOne(id) {
@@ -386,35 +386,55 @@ function removeFav(key) {
 <style scoped>
 .my-header { margin-bottom: 18px; }
 .my-head-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.my-header h2 { margin: 0; font-size: 22px; }
+.my-header h2 { margin: 0; font-size: 22px; color: var(--text); }
+
+/* 今日打卡条 */
+.streak-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--card-grad);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  font-size: 13px;
+  color: var(--text-light);
+}
+.streak-item { display: flex; align-items: center; gap: 5px; }
+.streak-item b { color: var(--sakura-600); font-size: 15px; }
+.streak-emoji { font-size: 16px; }
+.streak-div { width: 1px; height: 16px; background: var(--border-strong); }
 
 /* 账号栏 */
 .account-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   margin-top: 12px; padding: 10px 14px;
-  background: linear-gradient(135deg, #fff5f8, #ffeef4);
-  border: 1px solid #ffd9e8; border-radius: 12px;
+  background: var(--sakura-50);
+  border: 1px solid var(--border); border-radius: 12px;
 }
 .account-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .account-avatar { font-size: 18px; }
-.account-email { font-size: 14px; font-weight: 600; color: #b34a6f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.account-hint { font-size: 13px; color: #8a6a75; }
-.account-sync { font-size: 12px; color: #2ea06a; background: #e9f8ef; padding: 2px 8px; border-radius: 10px; }
+.account-email { font-size: 14px; font-weight: 600; color: var(--sakura-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-hint { font-size: 13px; color: var(--text-light); }
+.account-sync { font-size: 12px; color: var(--green); background: var(--green-soft); padding: 2px 8px; border-radius: 10px; }
 .account-btn {
-  border: 1px solid #ffc3d8; background: #fff; color: #b34a6f;
+  border: 1px solid var(--border-strong); background: var(--card-grad); color: var(--sakura-600);
   padding: 6px 16px; border-radius: 16px; font-size: 13px; cursor: pointer; transition: all 0.18s;
 }
-.account-btn:hover { background: #fff0f5; }
+.account-btn:hover { background: var(--sakura-100); }
 .account-btn.primary {
-  background: linear-gradient(90deg, #ff9ec6, #ff6fa8); border: none; color: #fff; font-weight: 600;
+  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600)); border: none; color: #fff; font-weight: 600;
 }
 .account-btn.primary:hover { filter: brightness(1.05); }
 
 .tabs { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .tab {
-  border: 1px solid var(--sakura-100, #ffd3e0);
-  background: #fff;
-  color: var(--ink-light);
+  border: 1px solid var(--border-strong);
+  background: var(--card-grad);
+  color: var(--text-light);
   padding: 7px 16px;
   border-radius: 20px;
   font-size: 14px;
@@ -423,7 +443,7 @@ function removeFav(key) {
   position: relative;
 }
 .tab.active {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
+  background: linear-gradient(145deg, var(--sakura-400), var(--sakura-600));
   border-color: transparent;
   color: #fff;
   font-weight: 700;
@@ -435,7 +455,7 @@ function removeFav(key) {
   line-height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: var(--red, #e5484d);
+  background: var(--red);
   color: #fff;
   font-size: 11px;
   text-align: center;
@@ -447,7 +467,7 @@ function removeFav(key) {
 .empty-inline {
   text-align: center;
   padding: 24px 16px;
-  color: var(--ink-light);
+  color: var(--text-light);
   font-size: 13px;
   line-height: 1.7;
 }
@@ -459,7 +479,7 @@ function removeFav(key) {
   margin: 0 0 12px;
   font-size: 15px;
   font-weight: 700;
-  color: #7a4b55;
+  color: var(--text);
 }
 .card-title::before {
   content: '';
@@ -469,7 +489,7 @@ function removeFav(key) {
   margin-right: 8px;
   vertical-align: -1px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #ff9dbd, #ff7da0);
+  background: linear-gradient(180deg, var(--sakura-400), var(--sakura-600));
 }
 
 /* ===== 数据总览 ===== */
@@ -480,27 +500,27 @@ function removeFav(key) {
   margin-bottom: 20px;
 }
 .stat-card {
-  background: #fff;
+  background: var(--card-grad);
   border-radius: var(--radius);
   padding: 20px 12px;
   text-align: center;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--sakura-50);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
 }
 .stat-card .num { font-size: 30px; font-weight: 700; color: var(--sakura-600); line-height: 1.1; }
 .stat-card .num.good { color: var(--green); }
 .stat-card .num.bad { color: var(--red); }
-.stat-card .label { font-size: 13px; color: var(--ink-light); margin-top: 6px; }
+.stat-card .label { font-size: 13px; color: var(--text-light); margin-top: 6px; }
 
 /* ===== 正确率 ===== */
 .accuracy-card { margin-bottom: 20px; }
 .accuracy-card .card-head { display: flex; align-items: baseline; justify-content: space-between; }
 .accuracy-card .card-title { margin-bottom: 14px; }
 .accuracy-pct { font-size: 26px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
-.accuracy-pct small { font-size: 15px; color: var(--ink-light); margin-left: 2px; }
+.accuracy-pct small { font-size: 15px; color: var(--text-light); margin-left: 2px; }
 .accuracy-bar {
   height: 18px;
-  background: #f6eff2;
+  background: var(--sakura-100);
   border-radius: 9px;
   overflow: hidden;
 }
@@ -510,7 +530,7 @@ function removeFav(key) {
   border-radius: 9px;
   transition: width 0.5s;
 }
-.accuracy-sub { margin-top: 10px; font-size: 13px; color: var(--ink-light); }
+.accuracy-sub { margin-top: 10px; font-size: 13px; color: var(--text-light); }
 
 /* ===== 模拟测试成绩 ===== */
 .mock-results {
@@ -520,20 +540,20 @@ function removeFav(key) {
   margin-bottom: 20px;
 }
 .mock-result-card {
-  background: #fff;
+  background: var(--card-grad);
   border-radius: var(--radius-sm);
   padding: 16px 12px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  border: 1px solid var(--sakura-50);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
 }
 .mock-result-card.mock-coming { opacity: 0.6; }
-.mock-round { font-size: 15px; font-weight: 700; color: var(--sakura-700); margin-bottom: 10px; }
+.mock-round { font-size: 15px; font-weight: 700; color: var(--sakura-600); margin-bottom: 10px; }
 .score-num { font-size: 32px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
-.score-num .unit { font-size: 14px; color: var(--ink-light); }
-.score-detail { font-size: 12px; color: var(--ink-light); margin-top: 6px; }
-.score-date { font-size: 11px; color: #bbb; margin-top: 4px; }
-.mock-empty { color: var(--ink-light); font-size: 13px; padding: 12px 0; }
+.score-num .unit { font-size: 14px; color: var(--text-light); }
+.score-detail { font-size: 12px; color: var(--text-light); margin-top: 6px; }
+.score-date { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+.mock-empty { color: var(--text-light); font-size: 13px; padding: 12px 0; }
 .coming-hint { font-size: 11px; color: var(--sakura-600); margin-top: 4px; font-weight: 600; }
 
 /* ===== 快捷操作 ===== */
@@ -545,30 +565,8 @@ function removeFav(key) {
 }
 .quick-actions .btn { width: 100%; }
 
-/* ===== 数据管理 ===== */
-.data-card { margin-bottom: 20px; }
-.mgmt-hint { margin: -4px 0 12px; font-size: 12px; color: var(--ink-light); }
-.mgmt-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.mgmt-btn {
-  border: 1px solid var(--sakura-100);
-  background: #fff;
-  color: var(--ink);
-  border-radius: 12px;
-  padding: 11px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s;
-}
-.mgmt-btn:hover {
-  background: var(--sakura-50);
-  border-color: var(--sakura-300);
-  color: var(--sakura-700);
-}
+/* ===== 数据管理（已移至设置中心） ===== */
+.level-card-wrap { margin-top: 12px; }
 
 /* ===== 文法进度 ===== */
 .grammar-body { margin-bottom: 4px; }
@@ -579,24 +577,24 @@ function removeFav(key) {
   margin-bottom: 8px;
 }
 .grammar-badge {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
+  background: linear-gradient(145deg, var(--sakura-400), var(--sakura-600));
   color: #fff;
   font-weight: 800;
   font-size: 12px;
   padding: 2px 10px;
   border-radius: 10px;
 }
-.grammar-name { font-size: 14px; font-weight: 600; color: #7a4b55; flex: 1; }
-.grammar-progress-text { font-size: 12px; color: #c2556f; font-weight: 700; min-width: 40px; text-align: right; }
+.grammar-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.grammar-progress-text { font-size: 12px; color: var(--sakura-600); font-weight: 700; min-width: 40px; text-align: right; }
 .grammar-track {
   height: 10px;
-  background: #ffe3ec;
+  background: var(--sakura-100);
   border-radius: 5px;
   overflow: hidden;
 }
 .grammar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff9dbd, #ff7da0);
+  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
   border-radius: 5px;
   transition: width 0.4s;
 }
@@ -606,7 +604,7 @@ function removeFav(key) {
   gap: 12px;
   margin-top: 10px;
   font-size: 12px;
-  color: #b98a94;
+  color: var(--text-light);
 }
 .grammar-meta .gm-marked { color: #e08a00; }
 .grammar-meta .btn { margin-left: auto; }
@@ -616,7 +614,7 @@ function removeFav(key) {
   text-decoration: none;
   border-bottom: 2px solid var(--sakura-400);
   padding-bottom: 1px;
-  color: var(--sakura-700);
+  color: var(--sakura-600);
   font-weight: 600;
 }
 .del-btn {
@@ -624,8 +622,8 @@ function removeFav(key) {
   width: 24px;
   height: 24px;
   border: none;
-  background: #fde4e6;
-  color: #c44a52;
+  background: var(--red-soft);
+  color: var(--red);
   border-radius: 50%;
   font-size: 12px;
   cursor: pointer;
@@ -641,6 +639,5 @@ function removeFav(key) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .mock-results { grid-template-columns: repeat(3, 1fr); }
   .quick-actions { grid-template-columns: 1fr; }
-  .mgmt-grid { grid-template-columns: 1fr; }
 }
 </style>

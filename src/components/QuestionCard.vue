@@ -107,7 +107,7 @@ function optionClass(idx) {
   line-height: 1.4;
 }
 .question-sentence :deep(.sort-star) {
-  border-bottom-color: #ff7da0;
+  border-bottom-color: var(--sakura-400);
   color: var(--sakura-600);
   font-weight: 700;
   text-align: center;

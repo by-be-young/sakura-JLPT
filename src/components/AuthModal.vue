@@ -147,7 +147,7 @@ async function submit() {
 }
 .auth-card {
   position: relative; width: 100%; max-width: 360px;
-  background: #fff; border-radius: 16px; padding: 28px 26px 22px;
+  background: var(--card); border-radius: 16px; padding: 28px 26px 22px;
   box-shadow: 0 12px 40px rgba(179, 74, 111, 0.25);
 }
 .auth-close {
@@ -155,17 +155,17 @@ async function submit() {
   border: none; background: none; font-size: 16px; color: #b98a9c; cursor: pointer;
 }
 .auth-title {
-  font-size: 18px; font-weight: 700; color: #b34a6f; margin-bottom: 18px; text-align: center;
+  font-size: 18px; font-weight: 700; color: var(--sakura-600); margin-bottom: 18px; text-align: center;
 }
-.auth-label { display: block; font-size: 12px; color: #8a6a75; margin: 10px 0 4px; }
+.auth-label { display: block; font-size: 12px; color: var(--text-light); margin: 10px 0 4px; }
 .auth-input {
   width: 100%; box-sizing: border-box;
   padding: 9px 12px; border: 1px solid #ffd0e0; border-radius: 8px;
-  font-size: 14px; color: #4a3a40; background: #fff;
+  font-size: 14px; color: var(--text); background: var(--card);
 }
 .auth-input:focus { outline: none; border-color: #ff8fbf; }
-.auth-error { color: #d43b6a; font-size: 12px; margin: 8px 0 0; }
-.auth-success { color: #2ea06a; font-size: 12px; margin: 8px 0 0; }
+.auth-error { color: var(--sakura-600); font-size: 12px; margin: 8px 0 0; }
+.auth-success { color: var(--green); font-size: 12px; margin: 8px 0 0; }
 .auth-btn {
   width: 100%; margin-top: 16px; padding: 10px 0;
   border: none; border-radius: 10px; background: linear-gradient(90deg, #ff9ec6, #ff6fa8);
@@ -173,9 +173,9 @@ async function submit() {
 }
 .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .auth-switch { display: flex; justify-content: space-between; margin-top: 14px; font-size: 13px; }
-.auth-switch a { color: #d06a92; cursor: pointer; text-decoration: none; }
-.auth-notice { font-size: 13px; color: #8a6a75; line-height: 1.7; }
-.auth-notice code { background: #fff0f5; padding: 1px 5px; border-radius: 4px; color: #b34a6f; }
+.auth-switch a { color: var(--sakura-600); cursor: pointer; text-decoration: none; }
+.auth-notice { font-size: 13px; color: var(--text-light); line-height: 1.7; }
+.auth-notice code { background: var(--sakura-100); padding: 1px 5px; border-radius: 4px; color: var(--sakura-600); }
 .auth-fade-enter-active, .auth-fade-leave-active { transition: opacity 0.2s; }
 .auth-fade-enter-from, .auth-fade-leave-to { opacity: 0; }
 </style>

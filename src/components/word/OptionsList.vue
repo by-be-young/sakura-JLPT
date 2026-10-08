@@ -78,13 +78,13 @@ function select(i) {
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  background: #fff;
-  border: 2px solid #ffd3e0;
+  background: var(--card);
+  border: 2px solid var(--border-strong);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 15px;
-  color: #7a4b55;
+  color: var(--text);
   font-family: inherit;
   animation: optionIn 0.25s ease both;
 }
@@ -94,7 +94,7 @@ function select(i) {
 }
 .option-item:hover:not(.disabled) {
   border-color: #f79ab4;
-  background: #fff5f8;
+  background: var(--sakura-50);
 }
 .option-item.selected {
   border-color: #f79ab4;
@@ -126,7 +126,7 @@ function select(i) {
   height: 28px;
   border-radius: 50%;
   background: #ffe9f0;
-  color: #c2556f;
+  color: var(--sakura-600);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -160,6 +160,6 @@ function select(i) {
   font-size: 18px;
   flex-shrink: 0;
 }
-.option-item.correct .mark { color: #3a8c63; }
+.option-item.correct .mark { color: var(--green); }
 .option-item.wrong .mark { color: #c0392b; }
 </style>

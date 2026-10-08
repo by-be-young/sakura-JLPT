@@ -47,7 +47,7 @@ function go(id) { router.push('/listening/' + id) }
   gap: 16px;
 }
 .unit-card {
-  background: #fff;
+  background: var(--card-grad);
   border-radius: var(--radius);
   padding: 22px;
   box-shadow: var(--shadow);

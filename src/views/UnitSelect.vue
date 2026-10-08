@@ -94,7 +94,7 @@ function startUnit(id) {
   gap: 16px;
 }
 .unit-card {
-  background: #fff;
+  background: var(--card-grad);
   border-radius: var(--radius);
   padding: 18px;
   cursor: pointer;
@@ -127,7 +127,7 @@ function startUnit(id) {
 }
 .unit-progress {
   height: 8px;
-  background: #f0ecee;
+  background: var(--sakura-100);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 14px;

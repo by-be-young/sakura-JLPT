@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="container words-page">
     <!-- 顶部导航 -->
     <div class="words-header">
@@ -105,6 +105,7 @@ import { useRoute } from 'vue-router'
 import { wordsByLevel, pitchToCircle, wordRelationsOf } from '../data/words'
 import { useWordStore } from '../store/wordStore'
 import { useLevel } from '../store/levelStore'
+import { useDaily } from '../store/dailyStore'
 import { availableTypes } from '../composables/wordQuiz'
 import { useFurigana } from '../composables/useFurigana'
 import WordNoteModal from '../components/word/WordNoteModal.vue'
@@ -112,6 +113,7 @@ import WordNoteModal from '../components/word/WordNoteModal.vue'
 const route = useRoute()
 const store = useWordStore()
 const furigana = useFurigana()
+const daily = useDaily()
 const { level: globalLevel, APP_LEVELS } = useLevel()
 
 // 有效等级：优先取全局同步等级（深链带 ?level= 时兼容旧入口）
@@ -181,12 +183,15 @@ function buildQueue() {
     queue.value = []
     reviewStage.value = 'done'
   } else {
-    // 随机打乱
-    const arr = [...due]
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[arr[i], arr[j]] = [arr[j], arr[i]]
-    }
+    // 生疏优先：错误次数多的排前面，其次按最近复习时间（越久越优先）
+    const arr = [...due].sort((a, b) => {
+      const wa = store.wrongCount(a.id)
+      const wb = store.wrongCount(b.id)
+      if (wb !== wa) return wb - wa
+      const ta = store.state.learned[a.id]?.lastReviewAt || 0
+      const tb = store.state.learned[b.id]?.lastReviewAt || 0
+      return ta - tb
+    })
     queue.value = arr
     totalCount.value = arr.length
     doneCount.value = 0
@@ -199,6 +204,7 @@ function selfEval(level) {
 }
 
 function confirmEval(ok) {
+  daily.record('word')
   const w = currentWord.value
   if (ok) {
     // 没问题：视为掌握，清除错误计数
@@ -219,6 +225,7 @@ function confirmEval(ok) {
 
 // 标记为熟词：从复习队列移除，不再进入学习与复习
 function markFamiliar() {
+  daily.record('word')
   const w = currentWord.value
   if (!w) return
   store.markFamiliar(w.id)
@@ -252,11 +259,11 @@ function restartReview() {
   gap: 12px;
   margin-bottom: 18px;
 }
-.page-title { margin: 0; font-size: 22px; color: #c2556f; }
+.page-title { margin: 0; font-size: 22px; color: var(--sakura-600); }
 .header-spacer { flex: 1; }
 .level-tag {
   background: #ffe9f0;
-  color: #c2556f;
+  color: var(--sakura-600);
   padding: 4px 14px;
   border-radius: 20px;
   font-size: 13px;
@@ -267,13 +274,13 @@ function restartReview() {
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: #7a4b55;
+  color: var(--text);
   margin-bottom: 18px;
 }
 .progress-bar-wrap {
   flex: 1;
   height: 8px;
-  background: #ffe3ec;
+  background: var(--sakura-100);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -286,12 +293,12 @@ function restartReview() {
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #b98a94;
+  color: var(--text-light);
 }
 .empty-icon { font-size: 60px; margin-bottom: 12px; }
 .review-card {
-  background: linear-gradient(145deg, #fff5f8, #ffe9f0);
-  border: 2px solid #ffd3e0;
+  background: linear-gradient(145deg, var(--sakura-50), #ffe9f0);
+  border: 2px solid var(--border-strong);
   border-radius: 20px;
   padding: 40px 24px;
   text-align: center;
@@ -306,7 +313,7 @@ function restartReview() {
 .word-kanji {
   font-size: 52px;
   font-weight: 700;
-  color: #c2556f;
+  color: var(--sakura-600);
   letter-spacing: 0.05em;
 }
 .word-kanji :deep(ruby), .ex-jp :deep(ruby) {
@@ -322,7 +329,7 @@ function restartReview() {
   font-weight: 700;
   letter-spacing: 0.05em;
 }
-.eval-hint { font-size: 14px; color: #b98a94; margin: 18px 0; }
+.eval-hint { font-size: 14px; color: var(--text-light); margin: 18px 0; }
 .eval-actions {
   display: flex;
   gap: 12px;
@@ -337,12 +344,12 @@ function restartReview() {
   margin-top: 18px;
 }
 .btn-familiar {
-  background: #fff;
-  border: 2px solid #ffd3e0;
+  background: var(--card-grad);
+  border: 2px solid var(--border-strong);
   border-radius: 20px;
   padding: 6px 16px;
   font-size: 13px;
-  color: #c2556f;
+  color: var(--sakura-600);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
@@ -356,7 +363,7 @@ function restartReview() {
 .btn-wrong { background: #fff0f0; color: #c0392b; border: 2px solid #f79b9b; border-radius: 14px; padding: 12px 24px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
 .review-reveal {
   background: linear-gradient(145deg, #fffdf9, #fff3e6);
-  border: 2px solid #ffd3e0;
+  border: 2px solid var(--border-strong);
   border-radius: 20px;
   padding: 32px 28px;
 }
@@ -365,7 +372,7 @@ function restartReview() {
 .word-pos {
   display: inline-block;
   font-size: 13px;
-  color: #b98a94;
+  color: var(--text-light);
   background: #ffeef3;
   padding: 2px 10px;
   border-radius: 20px;
@@ -437,7 +444,7 @@ function restartReview() {
   text-align: center;
 }
 .reveal-note-text {
-  background: #fff5f8;
+  background: var(--sakura-50);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 14px;
@@ -456,11 +463,11 @@ function restartReview() {
 .review-finished {
   text-align: center;
   padding: 40px 20px;
-  background: #fff5f8;
+  background: var(--sakura-50);
   border-radius: 20px;
 }
-.result-score { font-size: 18px; color: #7a4b55; margin-bottom: 6px; }
-.result-rate { font-size: 22px; font-weight: 700; color: #c2556f; margin-bottom: 16px; }
+.result-score { font-size: 18px; color: var(--text); margin-bottom: 6px; }
+.result-rate { font-size: 22px; font-weight: 700; color: var(--sakura-600); margin-bottom: 16px; }
 .result-actions { display: flex; gap: 12px; justify-content: center; }
 </style>
 

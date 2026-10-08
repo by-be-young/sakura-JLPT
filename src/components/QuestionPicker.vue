@@ -71,7 +71,7 @@ function jumpTo() {
 
 <style scoped>
 .picker {
-  background: #fff;
+  background: var(--card);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
@@ -108,7 +108,7 @@ function jumpTo() {
   display: inline-block;
 }
 .dot-current { background: var(--sakura-400); }
-.dot-unseen { background: #f0ecee; border: 1px solid #ddd; }
+.dot-unseen { background: var(--sakura-100); border: 1px solid #ddd; }
 .dot-correct { background: var(--green); }
 .dot-wrong { background: var(--red); }
 .picker-search {
@@ -155,16 +155,16 @@ function jumpTo() {
   font-weight: 700;
 }
 .picker-cell.unseen {
-  background: #f7f4f5;
+  background: var(--sakura-100);
   color: var(--ink-light);
 }
 .picker-cell.correct {
-  background: #e0f3ea;
-  color: #3a8c63;
+  background: var(--green-soft);
+  color: var(--green);
 }
 .picker-cell.wrong {
-  background: #fde4e6;
-  color: #c44a52;
+  background: var(--red-soft);
+  color: var(--red);
 }
 .picker-cell:hover {
   transform: scale(1.1);
