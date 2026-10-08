@@ -1,159 +1,138 @@
 <template>
-  <div class="container">
-    <div class="my-header">
-      <div class="my-head-top">
-        <h2>🌸 我的</h2>
-      </div>
-
-      <!-- 今日打卡条 -->
-      <div class="streak-bar">
-        <div class="streak-item">
-          <span class="streak-emoji">🔥</span>
-          <b>{{ daily.streak.value }}</b>
-          <span>天连续</span>
+  <div class="container my-page">
+    <!-- ===== 个人资料 ===== -->
+    <section class="profile-card">
+      <div class="profile-main">
+        <div class="profile-avatar" :class="{ guest: !authState.user }">
+          {{ authState.user ? '👤' : '🌱' }}
         </div>
-        <div class="streak-div"></div>
-        <div class="streak-item">📝 今日 <b>{{ daily.todayQuiz.value }}</b>/{{ daily.state.settings.quizTarget }}</div>
-        <div class="streak-item">🌸 今日 <b>{{ daily.todayWord.value }}</b>/{{ daily.state.settings.wordTarget }}</div>
-        <button class="btn btn-ghost btn-xs" @click="$router.push('/settings')">⚙️ 设置</button>
-      </div>
-
-      <!-- 学习等级（唯一入口，全局同步） -->
-      <LevelSelector show-hint class="level-card-wrap" />
-
-      <!-- 账号栏：登录 / 云同步 -->
-      <div class="account-bar">
-        <template v-if="authState.user">
-          <div class="account-info">
-            <span class="account-avatar">👤</span>
-            <span class="account-email">{{ authState.user.email || authState.user.username }}</span>
-            <span v-if="syncState.message" class="account-sync">{{ syncState.message }}</span>
+        <div class="profile-text">
+          <div class="profile-name" :title="profileName">{{ profileName }}</div>
+          <div class="profile-meta">
+            <span class="meta-chip streak">🔥 连续 {{ daily.streak.value }} 天</span>
+            <span v-if="authState.user && syncState.message" class="meta-chip sync">☁️ {{ syncState.message }}</span>
           </div>
-          <button class="account-btn" @click="doLogout">退出登录</button>
-        </template>
-        <template v-else>
-          <div class="account-info account-guest">
-            <span class="account-avatar">🌱</span>
-            <span class="account-hint">登录后可跨设备同步学习数据</span>
-          </div>
-          <button class="account-btn primary" @click="authModalVisible = true">
-            {{ authState.configured ? '登录 / 注册' : '登录（未配置云端）' }}
-          </button>
-        </template>
-      </div>
-      <div class="tabs">
-        <button class="tab" :class="{ active: tab === 'stats' }" @click="switchTab('stats')">📊 统计</button>
-        <button class="tab" :class="{ active: tab === 'wrong' }" @click="switchTab('wrong')">
-          📝 错题本<span v-if="wrongCountTotal" class="tab-badge">{{ wrongCountTotal }}</span>
-        </button>
-        <button class="tab" :class="{ active: tab === 'favorites' }" @click="switchTab('favorites')">
-          ⭐ 收藏<span v-if="favCount" class="tab-badge fav-badge">{{ favCount }}</span>
+        </div>
+        <button class="profile-action" :class="{ 'is-primary': !authState.user }" @click="onAccountClick">
+          {{ authState.user ? '退出登录' : '登录 / 注册' }}
         </button>
       </div>
+      <p class="profile-tip" v-if="!authState.user">
+        {{ authState.configured ? '登录后可跨设备同步学习数据' : '本地学习 · 数据保存在本设备' }}
+      </p>
+    </section>
+
+    <!-- ===== 学习等级（全局唯一入口） ===== -->
+    <LevelSelector show-hint class="level-card-wrap" />
+
+    <!-- ===== 内容切换 ===== -->
+    <div class="seg-tabs">
+      <button
+        v-for="t in tabs"
+        :key="t.id"
+        class="seg-tab"
+        :class="{ active: tab === t.id }"
+        @click="switchTab(t.id)"
+      >
+        <span>{{ t.label }}</span>
+        <span v-if="t.badge" class="seg-badge" :class="t.badgeClass">{{ t.badge }}</span>
+      </button>
     </div>
 
-    <!-- ============ 统计 ============ -->
+    <!-- ============ 学习数据 ============ -->
     <template v-if="tab === 'stats'">
-      <!-- 无题库等级：占位 -->
-      <div v-if="!hasQuiz" class="card placeholder-card">
-        <div class="empty-inline">
-          <div class="emoji">📚</div>
-          <p>{{ currentTitle }}题库待补充，暂无刷题数据。</p>
+      <div v-if="hasQuiz" class="panel-card">
+        <div class="panel-head">
+          <h3 class="panel-title">学习数据</h3>
+          <span class="panel-tag">{{ level }}</span>
         </div>
+
+        <div class="data-body">
+          <div class="acc-ring">
+            <svg width="104" height="104" viewBox="0 0 104 104">
+              <defs>
+                <linearGradient id="myAccGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ff7aa2" />
+                  <stop offset="100%" stop-color="#e03e74" />
+                </linearGradient>
+              </defs>
+              <circle class="acc-bg" cx="52" cy="52" r="44" fill="none" stroke-width="10" />
+              <circle
+                class="acc-fg" cx="52" cy="52" r="44" fill="none" stroke-width="10"
+                :stroke-dasharray="RING_C" :stroke-dashoffset="ringOffset"
+              />
+            </svg>
+            <div class="acc-center">
+              <span class="acc-num">{{ accuracy }}<small>%</small></span>
+              <span class="acc-label">正确率</span>
+            </div>
+          </div>
+
+          <div class="data-list">
+            <div class="data-row">
+              <span class="dr-label">题库总数</span>
+              <span class="dr-value">{{ totalQuestions }}</span>
+            </div>
+            <div class="data-row">
+              <span class="dr-label">已答题数</span>
+              <span class="dr-value">{{ answeredCount }}</span>
+            </div>
+            <div class="data-row">
+              <span class="dr-label">答对</span>
+              <span class="dr-value good">{{ correctCount }}</span>
+            </div>
+            <div class="data-row">
+              <span class="dr-label">错题</span>
+              <span class="dr-value bad">{{ wrongCountTotal }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-progress">
+          <div class="dp-head">
+            <span>{{ currentTitle }}刷题进度</span>
+            <b>{{ answeredPercent }}%</b>
+          </div>
+          <div class="dp-track"><div class="dp-fill" :style="{ width: answeredPercent + '%' }"></div></div>
+        </div>
+
+        <button class="data-link" @click="goMock">
+          <span class="dl-icon">🧪</span>
+          <span class="dl-text">
+            <b>模拟测试</b>
+            <small>{{ mockSummary }}</small>
+          </span>
+          <span class="dl-arrow">›</span>
+        </button>
       </div>
 
-      <template v-else>
-        <!-- 数据总览 -->
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="num">{{ totalQuestions }}</div>
-            <div class="label">{{ level }} 题库总数</div>
-          </div>
-          <div class="stat-card">
-            <div class="num">{{ answeredCount }}</div>
-            <div class="label">已答题数</div>
-          </div>
-          <div class="stat-card">
-            <div class="num good">{{ correctCount }}</div>
-            <div class="label">答对题数</div>
-          </div>
-          <div class="stat-card">
-            <div class="num bad">{{ wrongCountTotal }}</div>
-            <div class="label">错题数</div>
-          </div>
+      <!-- 无题库等级 -->
+      <div v-else class="panel-card empty-card">
+        <div class="empty-emoji">📚</div>
+        <p class="empty-title">{{ currentTitle }}题库待补充</p>
+        <p class="empty-desc">当前等级暂无刷题数据，可以先通过「背词」「文法」学习该等级内容。</p>
+      </div>
+
+      <!-- 文法进度 -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <h3 class="panel-title">📘 文法学习</h3>
         </div>
-
-        <!-- 正确率 -->
-        <div class="card accuracy-card">
-          <div class="card-head">
-            <h3 class="card-title">🎯 {{ level }} 总正确率</h3>
-            <span class="accuracy-pct">{{ accuracy }}<small>%</small></span>
+        <template v-if="grammarCard">
+          <div class="g-head">
+            <span class="g-badge">{{ grammarCard.id }}</span>
+            <span class="g-name">{{ grammarCard.title }}</span>
+            <span class="g-pct">{{ grammarCard.learnedPercent }}%</span>
           </div>
-          <div class="accuracy-bar">
-            <div class="accuracy-fill" :style="{ width: accuracy + '%' }"></div>
-          </div>
-          <div class="accuracy-sub">
-            <span v-if="answeredCount">答对 {{ correctCount }} 题 · 已答 {{ answeredCount }} 题</span>
-            <span v-else>暂无答题数据，去刷题吧</span>
-          </div>
-        </div>
-
-        <!-- 模拟测试成绩 -->
-        <h3 class="section-title">{{ level }} · 模拟测试成绩</h3>
-        <div class="mock-results">
-          <div v-for="m in mockList" :key="m.id" class="mock-result-card" :class="{ 'mock-coming': !m.available }">
-            <div class="mock-round">第{{ m.id }}回</div>
-            <div v-if="m.available && store.state.mockResults[m.mockKey]" class="mock-score">
-              <div class="score-num">{{ store.state.mockResults[m.mockKey].score }}<span class="unit">分</span></div>
-              <div class="score-detail">{{ store.state.mockResults[m.mockKey].correct }}/{{ store.state.mockResults[m.mockKey].total }} 题</div>
-              <div class="score-date">{{ formatDate(store.state.mockResults[m.mockKey].date) }}</div>
-            </div>
-            <div v-else-if="m.available" class="mock-empty">
-              <span>未测试</span>
-              <button class="btn btn-primary btn-sm" @click="startMock(m.id)">开始测试</button>
-            </div>
-            <div v-else class="mock-empty">
-              <span>待补充</span>
-              <div class="coming-hint">即将上线</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 快捷操作 -->
-        <div class="card quick-card">
-          <h3 class="card-title">⚡ 快捷操作</h3>
-          <div class="quick-actions">
-            <button class="btn btn-secondary" @click="$router.push('/quiz/sequential')">{{ level }} 顺序练习</button>
-            <button class="btn btn-secondary" @click="$router.push('/quiz/random')">{{ level }} 随机练习</button>
-            <button class="btn btn-secondary" @click="switchTab('wrong')">查看错题</button>
-            <button class="btn btn-secondary" @click="feedbackVisible = true">📮 问题反馈</button>
-            <button v-if="authState.isAdmin" class="btn btn-secondary" @click="$router.push('/admin/feedback')">📋 反馈管理</button>
-            <button class="btn btn-secondary" @click="$router.push('/settings')">⚙️ 设置</button>
-          </div>
-        </div>
-
-      </template>
-
-      <!-- 文法学习进度（当前等级） -->
-      <div class="card grammar-card">
-        <h3 class="card-title">📘 文法学习 · {{ level }}</h3>
-        <div v-if="grammarCard" class="grammar-body">
-          <div class="grammar-head">
-            <span class="grammar-badge">{{ grammarCard.id }}</span>
-            <span class="grammar-name">{{ grammarCard.title }}</span>
-            <span class="grammar-progress-text">{{ grammarCard.learnedPercent }}%</span>
-          </div>
-          <div class="grammar-track">
-            <div class="grammar-fill" :style="{ width: grammarCard.learnedPercent + '%' }"></div>
-          </div>
-          <div class="grammar-meta">
+          <div class="g-track"><div class="g-fill" :style="{ width: grammarCard.learnedPercent + '%' }"></div></div>
+          <div class="g-meta">
             <span>已学 {{ grammarCard.learnedCount }}/{{ grammarCard.pointCount }} 点</span>
-            <span v-if="grammarCard.markedCount" class="gm-marked">★ 标记 {{ grammarCard.markedCount }}</span>
-            <button class="btn btn-ghost btn-xs" @click="$router.push('/study')">去学习 →</button>
+            <span v-if="grammarCard.markedCount" class="g-marked">★ 标记 {{ grammarCard.markedCount }}</span>
+            <button class="btn btn-ghost btn-xs g-go" @click="$router.push('/study')">去学习 →</button>
           </div>
-        </div>
+        </template>
         <div v-else class="empty-inline">
-          <div class="emoji">📘</div>
+          <div class="empty-emoji">📘</div>
           <p>当前等级暂无文法内容</p>
         </div>
       </div>
@@ -161,73 +140,84 @@
 
     <!-- ============ 错题本 ============ -->
     <template v-else-if="tab === 'wrong'">
-      <div v-if="wrongQuestions.length" class="wrong-toolbar">
-        <button class="btn btn-primary btn-sm" @click="practiceAll">全部重练（{{ wrongQuestions.length }}）</button>
-        <button class="btn btn-ghost btn-sm" @click="clearWrongLevel">🗑 清空错题本</button>
-      </div>
-      <div v-if="wrongQuestions.length === 0" class="empty-state">
-        <div class="emoji">🎉</div>
-        <p>{{ level }} 还没有错题，继续保持！</p>
-        <button class="btn btn-primary" style="margin-top:16px;" @click="$router.push('/')">去做题</button>
-      </div>
-      <div v-else class="question-list">
-        <div v-for="q in wrongQuestions" :key="q.key" class="question-list-item" @click="practiceOne(q.id)">
-          <div class="top">
-            <span class="qid-tag">{{ level }} No.{{ q.id }}</span>
-            <span v-if="q.mock" class="mock-tag">第{{ q.mock }}回</span>
-            <span v-else-if="q.unit" class="mock-tag" style="background:#fef0e6;color:#c47a3a;">第{{ q.unit }}单元</span>
-            <span v-if="store.getAnswer(q.key)" :style="{ color: store.getAnswer(q.key).correct ? 'var(--green)' : 'var(--red)' }">
-              {{ store.getAnswer(q.key).correct ? '已答对' : '仍答错' }}
-            </span>
-            <button class="del-btn" @click.stop="removeOne(q.key)" title="从错题本移除">✕</button>
-          </div>
-          <div class="sentence" v-html="displaySentence(q)"></div>
-          <div class="meta">
-            <span>正确答案：{{ q.answer }}. {{ q.options[q.answer - 1] }}</span>
-            <span class="wrong-time" v-if="store.getAnswer(q.key)?.time">最近答错 <b>{{ formatDate(store.getAnswer(q.key).time) }}</b></span>
-          </div>
+      <template v-if="wrongQuestions.length">
+        <div class="tool-bar">
+          <button class="btn btn-primary btn-sm" @click="practiceAll">全部重练 · {{ wrongQuestions.length }}</button>
+          <button class="btn btn-ghost btn-sm" @click="clearWrongLevel">清空错题本</button>
         </div>
+        <div class="q-list">
+          <article v-for="q in wrongQuestions" :key="q.key" class="q-item" @click="practiceOne(q.id)">
+            <div class="q-top">
+              <span class="qid-tag">{{ level }} No.{{ q.id }}</span>
+              <span v-if="q.mock" class="mock-tag">第{{ q.mock }}回</span>
+              <span v-else-if="q.unit" class="mock-tag unit-tag">第{{ q.unit }}单元</span>
+              <span v-if="answerState(q.key)" class="q-state" :class="answerState(q.key)">
+                {{ answerState(q.key) === 'correct' ? '已答对' : '仍答错' }}
+              </span>
+              <button class="q-del" @click.stop="removeOne(q.key)" title="从错题本移除">✕</button>
+            </div>
+            <div class="q-sentence" v-html="displaySentence(q)"></div>
+            <div class="q-foot">
+              <span class="q-answer">正确答案 {{ q.answer }}. {{ q.options[q.answer - 1] }}</span>
+              <span class="q-time" v-if="store.getAnswer(q.key)?.time">最近答错 {{ formatDate(store.getAnswer(q.key).time) }}</span>
+            </div>
+          </article>
+        </div>
+      </template>
+      <div v-else class="panel-card empty-card">
+        <div class="empty-emoji">🎉</div>
+        <p class="empty-title">{{ level }} 还没有错题</p>
+        <p class="empty-desc">继续保持！做错的题会自动进入这里，方便集中重练。</p>
+        <button class="btn btn-primary btn-sm" @click="$router.push('/learn')">去练习</button>
       </div>
     </template>
 
     <!-- ============ 收藏 ============ -->
     <template v-else>
-      <div v-if="favQuestions.length" class="wrong-toolbar">
-        <button class="btn btn-primary btn-sm" @click="practiceAllFav">全部练习（{{ favQuestions.length }}）</button>
-        <button class="btn btn-ghost btn-sm" @click="clearFavLevel">🗑 清空收藏</button>
-      </div>
-      <div v-if="favQuestions.length === 0" class="empty-state">
-        <div class="emoji">🌟</div>
-        <p>{{ level }} 还没有收藏题目，做题时点击❤️收藏吧</p>
-        <button class="btn btn-primary" style="margin-top:16px;" @click="$router.push('/')">去做题</button>
-      </div>
-      <div v-else class="question-list">
-        <div v-for="q in favQuestions" :key="q.key" class="question-list-item" @click="practiceOneFav(q.id)">
-          <div class="top">
-            <span class="qid-tag">{{ level }} No.{{ q.id }}</span>
-            <span v-if="q.mock" class="mock-tag">第{{ q.mock }}回</span>
-            <span v-else-if="q.unit" class="mock-tag" style="background:#fef0e6;color:#c47a3a;">第{{ q.unit }}单元</span>
-            <button class="fav-btn active" @click.stop="removeFav(q.key)">❤️</button>
-          </div>
-          <div class="sentence" v-html="displaySentence(q)"></div>
-          <div class="meta">
-            <span>正确答案：{{ q.answer }}. {{ q.options[q.answer - 1] }}</span>
-          </div>
+      <template v-if="favQuestions.length">
+        <div class="tool-bar">
+          <button class="btn btn-primary btn-sm" @click="practiceAllFav">全部练习 · {{ favQuestions.length }}</button>
+          <button class="btn btn-ghost btn-sm" @click="clearFavLevel">清空收藏</button>
         </div>
+        <div class="q-list">
+          <article v-for="q in favQuestions" :key="q.key" class="q-item" @click="practiceOneFav(q.id)">
+            <div class="q-top">
+              <span class="qid-tag">{{ level }} No.{{ q.id }}</span>
+              <span v-if="q.mock" class="mock-tag">第{{ q.mock }}回</span>
+              <span v-else-if="q.unit" class="mock-tag unit-tag">第{{ q.unit }}单元</span>
+              <button class="q-del fav" @click.stop="removeFav(q.key)" title="取消收藏">❤️</button>
+            </div>
+            <div class="q-sentence" v-html="displaySentence(q)"></div>
+            <div class="q-foot">
+              <span class="q-answer">正确答案 {{ q.answer }}. {{ q.options[q.answer - 1] }}</span>
+            </div>
+          </article>
+        </div>
+      </template>
+      <div v-else class="panel-card empty-card">
+        <div class="empty-emoji">🌟</div>
+        <p class="empty-title">{{ level }} 还没有收藏题目</p>
+        <p class="empty-desc">做题时点击 ❤️ 收藏，重要题目会集中在这里。</p>
+        <button class="btn btn-primary btn-sm" @click="$router.push('/learn')">去练习</button>
       </div>
     </template>
 
+    <!-- 管理员入口（仅管理员可见） -->
+    <button v-if="authState.isAdmin" class="admin-row" @click="$router.push('/admin/feedback')">
+      <span class="admin-icon">📋</span>
+      <span class="admin-text">反馈管理</span>
+      <span class="admin-arrow">›</span>
+    </button>
+
     <!-- 登录/注册弹窗 -->
     <AuthModal v-model:visible="authModalVisible" @authed="authModalVisible = false" />
-    <!-- 问题反馈弹窗 -->
-    <FeedbackModal v-model:visible="feedbackVisible" type="general" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { levelConfig, levelQuestionsAll, levelTitle, hasQuizData, mockInfo } from '../data/questions'
+import { levelQuestionsAll, levelTitle, hasQuizData, mockInfo } from '../data/questions'
 import { grammarLevels } from '../data/grammar'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
@@ -238,7 +228,6 @@ import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import LevelSelector from '../components/LevelSelector.vue'
 import AuthModal from '../components/AuthModal.vue'
-import FeedbackModal from '../components/FeedbackModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -250,16 +239,28 @@ const daily = useDaily()
 const { state: authState, logout } = useAuth()
 const { syncState, stopSync } = useSync()
 const authModalVisible = ref(false)
-const feedbackVisible = ref(false)
 
-function doLogout() {
-  logout()
-  stopSync()
+// ===== 账号 =====
+const profileName = computed(() => {
+  const u = authState.user
+  if (!u) return '未登录'
+  return u.email || u.username || '已登录'
+})
+
+function onAccountClick() {
+  if (authState.user) {
+    logout()
+    stopSync()
+  } else {
+    authModalVisible.value = true
+  }
 }
 
+// ===== 等级 / 题库 =====
 const currentTitle = computed(() => levelTitle(level.value))
 const hasQuiz = computed(() => hasQuizData(level.value))
 
+// ===== 分页（支持 ?tab= 深链） =====
 const tab = ref(route.query.tab === 'wrong' || route.query.tab === 'favorites' ? route.query.tab : 'stats')
 
 watch(() => route.query.tab, (v) => {
@@ -271,7 +272,7 @@ function switchTab(t) {
   router.replace({ query: { tab: t === 'stats' ? undefined : t } })
 }
 
-// ===== 统计 =====
+// ===== 学习数据 =====
 const totalQuestions = computed(() => levelQuestionsAll(level.value).length)
 const answeredCount = computed(() => store.state.counts[level.value]?.answered || 0)
 const correctCount = computed(() => store.state.counts[level.value]?.correct || 0)
@@ -280,6 +281,31 @@ const accuracy = computed(() => {
   if (answeredCount.value === 0) return 0
   return Math.round(correctCount.value / answeredCount.value * 100)
 })
+const answeredPercent = computed(() => {
+  if (!totalQuestions.value) return 0
+  return Math.round(answeredCount.value / totalQuestions.value * 100)
+})
+
+// 正确率进度环（r = 44）
+const RING_C = 2 * Math.PI * 44
+const ringOffset = computed(() => RING_C * (1 - accuracy.value / 100))
+
+// 模拟测试：成绩明细在「练习 · 模拟测试」，这里只做概览入口
+const mockSummary = computed(() => {
+  const prefix = level.value + ':'
+  const total = Object.keys(mockInfo).filter(k => k.startsWith(prefix)).length
+  if (!total) return '当前等级暂无模拟卷'
+  let done = 0, sum = 0
+  for (const [k, v] of Object.entries(store.state.mockResults || {})) {
+    if (k.startsWith(prefix) && v) { done++; sum += (v.score || 0) }
+  }
+  if (!done) return `共 ${total} 套 · 尚未测试`
+  return `已完成 ${done}/${total} 套 · 平均 ${Math.round(sum / done)} 分`
+})
+
+function goMock() {
+  router.push({ path: '/learn', query: { mode: 'mock' } })
+}
 
 // 文法进度：只显示当前等级
 const grammarCard = computed(() => {
@@ -298,46 +324,22 @@ const grammarCard = computed(() => {
   }
 })
 
-const mockList = computed(() => {
-  const cfg = levelConfig[level.value]
-  const count = cfg?.mockCount || 0
-  const arr = []
-  for (let id = 1; id <= count; id++) {
-    const mockKey = level.value + ':' + id
-    const info = mockInfo[mockKey]
-    arr.push(info
-      ? { id, mockKey, available: true, count: info.count }
-      : { id, mockKey, available: false, count: 0 })
-  }
-  return arr
-})
-
 function formatDate(ts) {
   if (!ts) return ''
   const d = new Date(ts)
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function startMock(id) {
-  router.push({ name: 'quiz', params: { mode: 'mock' }, query: { mock: id } })
-}
-
-function clearWrongLevel() {
-  if (confirm(`确定清空 ${level.value} 的全部错题吗？`)) {
-    store.clearWrong(level.value)
-  }
-}
-
-function clearFavLevel() {
-  if (confirm(`确定清空 ${level.value} 的全部收藏吗？`)) {
-    store.clearFavorites(level.value)
-  }
-}
-
-// ===== 错题本（按最近答错时间倒序，像成熟学习 App） =====
+// ===== 错题本 =====
 function displaySentence(q) {
   if (furigana.isEnabled.value && q.sentenceFurigana) return q.sentenceFurigana
   return q.sentence
+}
+
+function answerState(key) {
+  const a = store.getAnswer(key)
+  if (!a) return ''
+  return a.correct ? 'correct' : 'wrong'
 }
 
 const wrongQuestions = computed(() => {
@@ -362,8 +364,15 @@ function removeOne(key) {
   store.removeWrong(key)
 }
 
+function clearWrongLevel() {
+  if (confirm(`确定清空 ${level.value} 的全部错题吗？`)) {
+    store.clearWrong(level.value)
+  }
+}
+
 // ===== 收藏 =====
 const favCount = computed(() => levelQuestionsAll(level.value).filter(q => store.state.favorites.includes(q.key)).length)
+
 const favQuestions = computed(() => {
   return levelQuestionsAll(level.value)
     .filter(q => store.state.favorites.includes(q.key))
@@ -381,74 +390,158 @@ function practiceAllFav() {
 function removeFav(key) {
   store.toggleFavorite(key)
 }
+
+function clearFavLevel() {
+  if (confirm(`确定清空 ${level.value} 的全部收藏吗？`)) {
+    store.clearFavorites(level.value)
+  }
+}
+
+// ===== 分页配置 =====
+const tabs = computed(() => [
+  { id: 'stats', label: '学习数据', badge: 0 },
+  { id: 'wrong', label: '错题本', badge: wrongCountTotal.value, badgeClass: '' },
+  { id: 'favorites', label: '收藏', badge: favCount.value, badgeClass: 'fav' },
+])
 </script>
 
 <style scoped>
-.my-header { margin-bottom: 18px; }
-.my-head-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.my-header h2 { margin: 0; font-size: 22px; color: var(--text); }
+.my-page { max-width: 860px; }
 
-/* 今日打卡条 */
-.streak-bar {
+/* ===== 个人资料卡 ===== */
+.profile-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, rgba(255, 205, 224, 0.5), rgba(255, 240, 246, 0.18));
+  box-shadow: var(--card-float);
+}
+[data-theme="dark"] .profile-card {
+  background: linear-gradient(135deg, rgba(224, 94, 142, 0.2), rgba(42, 26, 34, 0.12));
+}
+.profile-card::after {
+  content: '';
+  position: absolute;
+  right: -70px;
+  top: -90px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 122, 162, 0.3), rgba(255, 122, 162, 0) 70%);
+  pointer-events: none;
+}
+[data-theme="dark"] .profile-card::after {
+  background: radial-gradient(circle, rgba(224, 94, 142, 0.24), rgba(224, 94, 142, 0) 70%);
+}
+.profile-main {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: var(--card-grad);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
-  font-size: 13px;
-  color: var(--text-light);
+  gap: 14px;
 }
-.streak-item { display: flex; align-items: center; gap: 5px; }
-.streak-item b { color: var(--sakura-600); font-size: 15px; }
-.streak-emoji { font-size: 16px; }
-.streak-div { width: 1px; height: 16px; background: var(--border-strong); }
-
-/* 账号栏 */
-.account-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  margin-top: 12px; padding: 10px 14px;
-  background: var(--sakura-50);
-  border: 1px solid var(--border); border-radius: 12px;
-}
-.account-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.account-avatar { font-size: 18px; }
-.account-email { font-size: 14px; font-weight: 600; color: var(--sakura-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.account-hint { font-size: 13px; color: var(--text-light); }
-.account-sync { font-size: 12px; color: var(--green); background: var(--green-soft); padding: 2px 8px; border-radius: 10px; }
-.account-btn {
-  border: 1px solid var(--border-strong); background: var(--card-grad); color: var(--sakura-600);
-  padding: 6px 16px; border-radius: 16px; font-size: 13px; cursor: pointer; transition: all 0.18s;
-}
-.account-btn:hover { background: var(--sakura-100); }
-.account-btn.primary {
-  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600)); border: none; color: #fff; font-weight: 600;
-}
-.account-btn.primary:hover { filter: brightness(1.05); }
-
-.tabs { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-.tab {
-  border: 1px solid var(--border-strong);
-  background: var(--card-grad);
-  color: var(--text-light);
-  padding: 7px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.18s;
-  position: relative;
-}
-.tab.active {
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
   background: linear-gradient(145deg, var(--sakura-400), var(--sakura-600));
-  border-color: transparent;
-  color: #fff;
-  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(244, 92, 142, 0.34);
 }
-.tab-badge {
+.profile-avatar.guest {
+  background: linear-gradient(145deg, #cdeadd, #98d3ba);
+  box-shadow: 0 6px 18px rgba(76, 191, 140, 0.24);
+}
+[data-theme="dark"] .profile-avatar.guest {
+  background: linear-gradient(145deg, #2f5c4a, #1f3d33);
+  box-shadow: none;
+}
+.profile-text { flex: 1; min-width: 0; }
+.profile-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.meta-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--text-light);
+}
+[data-theme="dark"] .meta-chip { background: rgba(255, 255, 255, 0.08); }
+.meta-chip.streak { background: rgba(232, 184, 109, 0.22); color: #c8860f; }
+[data-theme="dark"] .meta-chip.streak { color: #e8b86d; }
+.meta-chip.sync { background: var(--green-soft); color: var(--green); }
+.profile-action {
+  flex-shrink: 0;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sakura-600);
+  background: var(--card);
+  border: 1.5px solid var(--border-strong);
+  transition: all 0.2s;
+}
+.profile-action:hover { border-color: var(--sakura-400); transform: translateY(-1px); }
+.profile-action.is-primary {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--sakura-400), var(--sakura-600));
+  box-shadow: 0 4px 14px rgba(244, 92, 142, 0.35);
+}
+.profile-action.is-primary:hover { filter: brightness(1.05); }
+.profile-tip {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+.level-card-wrap { margin-bottom: 16px; }
+
+/* ===== 内容切换（分段控件） ===== */
+.seg-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 5px;
+  border-radius: 18px;
+  background: var(--sakura-100);
+  margin-bottom: 18px;
+}
+.seg-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 8px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+.seg-tab:hover:not(.active) { color: var(--sakura-600); }
+.seg-tab.active {
+  background: var(--card);
+  color: var(--sakura-600);
+  box-shadow: 0 2px 10px rgba(60, 30, 45, 0.1);
+}
+[data-theme="dark"] .seg-tab.active { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
+.seg-badge {
   display: inline-block;
   min-width: 18px;
   height: 18px;
@@ -459,185 +552,265 @@ function removeFav(key) {
   color: #fff;
   font-size: 11px;
   text-align: center;
-  margin-left: 4px;
-  vertical-align: 1px;
 }
-.tab-badge.fav-badge { background: #e08a00; }
+.seg-badge.fav { background: #e08a00; }
 
-.empty-inline {
-  text-align: center;
-  padding: 24px 16px;
-  color: var(--text-light);
-  font-size: 13px;
-  line-height: 1.7;
+/* ===== 通用面板卡 ===== */
+.panel-card {
+  background: var(--card-grad);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
 }
-.empty-inline .emoji { font-size: 34px; margin-bottom: 8px; }
-.btn-xs { font-size: 12px; padding: 3px 10px; }
-
-/* ===== 卡片通用标题 ===== */
-.card-title {
-  margin: 0 0 12px;
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.panel-title {
+  margin: 0;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text);
+  display: flex;
+  align-items: center;
 }
-.card-title::before {
+.panel-title::before {
   content: '';
-  display: inline-block;
   width: 4px;
   height: 15px;
   margin-right: 8px;
-  vertical-align: -1px;
   border-radius: 2px;
   background: linear-gradient(180deg, var(--sakura-400), var(--sakura-600));
 }
-
-/* ===== 数据总览 ===== */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 20px;
-}
-.stat-card {
-  background: var(--card-grad);
-  border-radius: var(--radius);
-  padding: 20px 12px;
-  text-align: center;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--border);
-}
-.stat-card .num { font-size: 30px; font-weight: 700; color: var(--sakura-600); line-height: 1.1; }
-.stat-card .num.good { color: var(--green); }
-.stat-card .num.bad { color: var(--red); }
-.stat-card .label { font-size: 13px; color: var(--text-light); margin-top: 6px; }
-
-/* ===== 正确率 ===== */
-.accuracy-card { margin-bottom: 20px; }
-.accuracy-card .card-head { display: flex; align-items: baseline; justify-content: space-between; }
-.accuracy-card .card-title { margin-bottom: 14px; }
-.accuracy-pct { font-size: 26px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
-.accuracy-pct small { font-size: 15px; color: var(--text-light); margin-left: 2px; }
-.accuracy-bar {
-  height: 18px;
+.panel-tag {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--sakura-600);
   background: var(--sakura-100);
-  border-radius: 9px;
-  overflow: hidden;
+  border-radius: 10px;
+  padding: 3px 12px;
 }
-.accuracy-fill {
+
+/* ===== 学习数据 ===== */
+.data-body {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.acc-ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; }
+.acc-ring svg { transform: rotate(-90deg); }
+.acc-bg { stroke: var(--sakura-100); }
+.acc-fg { stroke: url(#myAccGrad); stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.acc-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.acc-num { font-size: 25px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
+.acc-num small { font-size: 13px; }
+.acc-label { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+
+.data-list { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+}
+.data-row + .data-row { border-top: 1px solid var(--line); }
+.dr-label { font-size: 13px; color: var(--text-light); }
+.dr-value { font-size: 19px; font-weight: 800; color: var(--sakura-600); }
+.dr-value.good { color: var(--green); }
+.dr-value.bad { color: var(--red); }
+
+.data-progress { margin-top: 16px; }
+.dp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 7px;
+}
+.dp-head b { color: var(--sakura-600); font-size: 13px; }
+.dp-track { height: 8px; border-radius: 4px; background: var(--sakura-100); overflow: hidden; }
+.dp-fill {
   height: 100%;
+  border-radius: 4px;
   background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
-  border-radius: 9px;
   transition: width 0.5s;
 }
-.accuracy-sub { margin-top: 10px; font-size: 13px; color: var(--text-light); }
 
-/* ===== 模拟测试成绩 ===== */
-.mock-results {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+.data-link {
+  width: 100%;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  text-align: left;
+  transition: opacity 0.18s;
 }
-.mock-result-card {
-  background: var(--card-grad);
-  border-radius: var(--radius-sm);
-  padding: 16px 12px;
-  text-align: center;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--border);
+.data-link:hover { opacity: 0.78; }
+.dl-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: var(--green-soft);
 }
-.mock-result-card.mock-coming { opacity: 0.6; }
-.mock-round { font-size: 15px; font-weight: 700; color: var(--sakura-600); margin-bottom: 10px; }
-.score-num { font-size: 32px; font-weight: 800; color: var(--sakura-600); line-height: 1; }
-.score-num .unit { font-size: 14px; color: var(--text-light); }
-.score-detail { font-size: 12px; color: var(--text-light); margin-top: 6px; }
-.score-date { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
-.mock-empty { color: var(--text-light); font-size: 13px; padding: 12px 0; }
-.coming-hint { font-size: 11px; color: var(--sakura-600); margin-top: 4px; font-weight: 600; }
-
-/* ===== 快捷操作 ===== */
-.quick-card { margin-bottom: 20px; }
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-.quick-actions .btn { width: 100%; }
-
-/* ===== 数据管理（已移至设置中心） ===== */
-.level-card-wrap { margin-top: 12px; }
+.dl-text { flex: 1; min-width: 0; }
+.dl-text b { display: block; font-size: 14px; font-weight: 700; color: var(--text); }
+.dl-text small { display: block; font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.dl-arrow { font-size: 18px; color: var(--text-faint); }
 
 /* ===== 文法进度 ===== */
-.grammar-body { margin-bottom: 4px; }
-.grammar-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.grammar-badge {
-  background: linear-gradient(145deg, var(--sakura-400), var(--sakura-600));
-  color: #fff;
-  font-weight: 800;
+.g-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.g-badge {
   font-size: 12px;
-  padding: 2px 10px;
+  font-weight: 800;
+  color: #fff;
+  padding: 3px 10px;
   border-radius: 10px;
+  background: linear-gradient(145deg, var(--sakura-400), var(--sakura-600));
 }
-.grammar-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
-.grammar-progress-text { font-size: 12px; color: var(--sakura-600); font-weight: 700; min-width: 40px; text-align: right; }
-.grammar-track {
-  height: 10px;
-  background: var(--sakura-100);
-  border-radius: 5px;
-  overflow: hidden;
-}
-.grammar-fill {
+.g-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.g-pct { font-size: 13px; font-weight: 800; color: var(--sakura-600); }
+.g-track { height: 10px; border-radius: 5px; background: var(--sakura-100); overflow: hidden; }
+.g-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
   border-radius: 5px;
+  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
   transition: width 0.4s;
 }
-.grammar-meta {
+.g-meta {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 12px;
   color: var(--text-light);
 }
-.grammar-meta .gm-marked { color: #e08a00; }
-.grammar-meta .btn { margin-left: auto; }
+.g-meta .g-marked { color: #e08a00; }
+.g-meta .g-go { margin-left: auto; }
 
-.wrong-toolbar { margin-bottom: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.sentence :deep(u) {
+/* ===== 空态 ===== */
+.empty-card { text-align: center; padding: 40px 20px; }
+.empty-emoji { font-size: 40px; margin-bottom: 10px; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.empty-desc { font-size: 13px; color: var(--text-light); line-height: 1.7; margin: 8px auto 16px; max-width: 340px; }
+.empty-inline { text-align: center; padding: 24px 16px; color: var(--text-light); font-size: 13px; line-height: 1.7; }
+.empty-inline .empty-emoji { font-size: 32px; margin-bottom: 6px; }
+
+/* ===== 错题 / 收藏 列表 ===== */
+.tool-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.q-list { display: flex; flex-direction: column; gap: 12px; }
+.q-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.q-item:hover {
+  border-color: var(--sakura-300);
+  transform: translateY(-2px);
+  box-shadow: var(--card-float);
+}
+.q-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.q-state {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.q-state.correct { color: var(--green); background: var(--green-soft); }
+.q-state.wrong { color: var(--red); background: var(--red-soft); }
+.q-del {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--red);
+  background: var(--red-soft);
+  transition: all 0.15s;
+}
+.q-del:hover { color: #fff; background: var(--red); transform: scale(1.08); }
+.q-del.fav { font-size: 14px; background: transparent; }
+.q-del.fav:hover { background: var(--sakura-100); transform: scale(1.12); }
+.unit-tag { background: #fef0e6; color: #c47a3a; }
+[data-theme="dark"] .unit-tag { background: #3a2c18; color: #e8b86d; }
+.q-sentence { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 10px; }
+.q-sentence :deep(u) {
   text-decoration: none;
   border-bottom: 2px solid var(--sakura-400);
   padding-bottom: 1px;
   color: var(--sakura-600);
   font-weight: 600;
 }
-.del-btn {
-  margin-left: auto;
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: var(--red-soft);
-  color: var(--red);
-  border-radius: 50%;
-  font-size: 12px;
-  cursor: pointer;
+.q-foot {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  flex-shrink: 0;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-light);
 }
-.del-btn:hover { background: var(--red); color: #fff; transform: scale(1.1); }
+.q-time { margin-left: auto; color: var(--text-faint); }
+
+/* ===== 管理员入口 ===== */
+.admin-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  margin-top: 4px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 13px;
+  transition: all 0.18s;
+}
+.admin-row:hover { border-color: var(--sakura-300); color: var(--sakura-600); }
+.admin-icon { font-size: 16px; }
+.admin-text { flex: 1; text-align: left; font-weight: 600; }
+.admin-arrow { color: var(--text-faint); font-size: 16px; }
 
 @media (max-width: 640px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .mock-results { grid-template-columns: repeat(3, 1fr); }
-  .quick-actions { grid-template-columns: 1fr; }
+  .profile-card { padding: 18px; }
+  .profile-main { flex-wrap: wrap; }
+  .profile-action { width: 100%; }
+  .data-body { flex-direction: column; gap: 16px; }
+  .data-list { width: 100%; }
+  .q-time { margin-left: 0; }
 }
 </style>
