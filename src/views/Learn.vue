@@ -14,10 +14,16 @@
           <div class="hero-title">📚 练习中心</div>
           <div class="hero-sub">{{ currentTitle }} · 真题演练 · 全真模拟</div>
         </div>
+        <div class="hero-books" aria-hidden="true">
+          <img class="hero-cover" src="./covers/vocabulary-red.svg" alt="" />
+          <img class="hero-cover" src="./covers/grammar-blue.svg" alt="" />
+          <img class="hero-cover" src="./covers/reading-orange.svg" alt="" />
+          <img class="hero-cover" src="./covers/listening-green.svg" alt="" />
+        </div>
         <span class="hero-badge">{{ level }}</span>
       </div>
 
-      <div class="learn-grid">
+      <div class="learn-grid stagger">
         <div class="learn-card lc-quiz" :class="{ disabled: !hasQuiz }" @click="hasQuiz && choose('bank')">
           <div class="lc-top">
             <span class="lc-icon">📝</span>

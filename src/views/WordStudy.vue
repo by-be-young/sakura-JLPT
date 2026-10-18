@@ -1,108 +1,138 @@
 <template>
   <div class="container words-page">
     <!-- 顶部导航 -->
-    <div class="words-header">
-      <button class="btn btn-ghost btn-sm" @click="$router.push('/words')">← 返回</button>
-      <h2 class="page-title">🌸 新学单词</h2>
-      <div class="header-spacer"></div>
-      <span class="level-tag">{{ levelName }}</span>
-    </div>
+    <header class="page-head">
+      <div class="page-head-main">
+        <button class="back-btn" @click="$router.push('/words')" title="返回背词" aria-label="返回背词">← 返回</button>
+        <span class="icon-tile study-tile" aria-hidden="true">{{ phase === 'learn' ? '📖' : '✍️' }}</span>
+        <div class="page-head-text">
+          <h2 class="page-title">{{ phase === 'learn' ? '新学单词' : '学习测验' }}</h2>
+          <p class="page-sub">
+            {{ phase === 'learn' ? '点击卡片翻面 · Enter 翻面 · A / D 切换 · F 熟词 · N 笔记' : '选出正确答案，答对后会自动进入下一题' }}
+          </p>
+        </div>
+      </div>
+      <div class="page-actions">
+        <span class="chip-pill accent">{{ levelName }}</span>
+        <span v-if="phase === 'learn'" class="chip-pill">本组 {{ learnWords.length }} 词</span>
+        <span v-else class="chip-pill">已答对 {{ quizCorrect }}</span>
+      </div>
+    </header>
 
     <!-- 学习阶段 -->
     <template v-if="phase === 'learn'">
-      <div class="learn-progress">
-        <span>正在学习 {{ learnIndex + 1 }} / {{ learnWords.length }}</span>
-        <div class="progress-bar-wrap"><div class="progress-bar-inner" :style="{ width: (learnIndex + 1) / learnWords.length * 100 + '%' }"></div></div>
-      </div>
+      <section class="study-progress" aria-label="学习进度">
+        <span class="pt-label">正在学习</span>
+        <span class="pt-count">{{ learnIndex + 1 }}<i>/</i>{{ learnWords.length }}</span>
+        <div class="progress-bar-wrap" role="progressbar" :aria-valuenow="learnIndex + 1" aria-valuemin="1" :aria-valuemax="learnWords.length">
+          <div class="progress-bar-inner" :style="{ width: (learnIndex + 1) / learnWords.length * 100 + '%' }"></div>
+        </div>
+      </section>
       <div class="learn-card-area">
         <WordCard ref="wordCardRef" :key="learnWords[learnIndex].id" :word="learnWords[learnIndex]" />
         <div class="learn-note-btn">
-          <button class="btn btn-ghost btn-sm" @click="openNote(learnWords[learnIndex])" title="添加笔记 (N)">📝 添加笔记</button>
-          <button class="btn btn-ghost btn-sm" @click="markLearnFamiliar" title="标记为熟词，从本组移除 (F)">⭐ 标记为熟词</button>
-          <button class="btn btn-ghost btn-sm" @click="showList = true" title="查看本组单词">📋 查看本组单词</button>
+          <button class="btn btn-ghost btn-sm" @click="openNote(learnWords[learnIndex])" title="添加笔记 (N)" aria-label="为当前单词添加笔记">📝 添加笔记</button>
+          <button class="btn btn-ghost btn-sm" @click="markLearnFamiliar" title="标记为熟词，从本组移除 (F)" aria-label="把当前单词标记为熟词">⭐ 标记为熟词</button>
+          <button class="btn btn-ghost btn-sm" @click="showList = true" title="查看本组单词" aria-label="查看本组单词列表">📋 查看本组单词</button>
         </div>
       </div>
       <div class="learn-actions">
-        <button v-if="learnIndex > 0" class="btn btn-ghost" @click="learnIndex--" title="上一个 (A)">← 上一个</button>
+        <button v-if="learnIndex > 0" class="btn btn-ghost" @click="learnIndex--" title="上一个 (A)" aria-label="上一个单词">← 上一个</button>
         <span class="learn-spacer"></span>
-        <button class="btn btn-ghost" @click="skipToQuiz" title="跳过学习，直接测验 (S)">跳过学习，直接测验 →</button>
+        <button class="btn btn-ghost" @click="skipToQuiz" title="跳过学习，直接测验 (S)" aria-label="跳过学习，直接测验">跳过学习，直接测验 →</button>
         <button class="btn btn-primary" @click="learnNext" :title="learnIndex < learnWords.length - 1 ? '下一个 (D)' : '完成学习'">
           {{ learnIndex < learnWords.length - 1 ? '下一个 → (D)' : '完成学习 ✓' }}
         </button>
       </div>
-      <div v-if="learnIndex === learnWords.length - 1" class="learn-done">
-        <p>本组学习完成！可以开始测验了。</p>
+      <div v-if="learnIndex === learnWords.length - 1" class="learn-done empty-card">
+        <div class="empty-emoji" aria-hidden="true">🎉</div>
+        <div class="empty-title">本组学习完成！</div>
+        <p class="empty-desc">可以开始测验，检验这一组的掌握情况。</p>
         <button class="btn btn-primary" @click="startLearnQuiz">开始本组测验</button>
       </div>
     </template>
 
     <!-- 本组单词列表 -->
-    <div v-if="showList" class="word-list-panel">
-      <div class="notes-header">
-        <h3>📋 本组单词（{{ learnWords.length }}）</h3>
-        <button class="btn btn-ghost btn-sm" @click="showList = false">关闭</button>
+    <div v-if="showList" v-reveal class="word-list-panel surface">
+      <div class="surface-head">
+        <h3 class="surface-title">📋 本组单词（{{ learnWords.length }}）</h3>
+        <button class="btn btn-ghost btn-sm" @click="showList = false" title="关闭单词列表" aria-label="关闭本组单词列表">关闭</button>
       </div>
-      <div class="list-item" v-for="(w, i) in learnWords" :key="w.id">
-        <div class="list-item-head" @click="toggleExpand(i)">
-          <span class="list-idx">{{ i + 1 }}</span>
-          <span class="list-kanji">{{ w.kanji || w.kana }}</span>
-          <span class="list-kana">{{ w.kana }}</span>
-          <span class="list-mean">{{ w.meaning }}</span>
-          <span class="list-toggle">{{ expandedIndex === i ? '▲' : '▼' }}</span>
-        </div>
-        <div v-if="expandedIndex === i" class="list-item-detail">
-          <div v-if="w.pitch && w.pitch.length" class="detail-pitch">音调：{{ w.pitch.map(pitchToCircle).join(' ') }}</div>
-          <div v-if="w.pos" class="detail-pos">{{ w.pos }}</div>
-          <div v-if="w.examples && w.examples.length" class="word-examples">
-            <div v-for="(ex, j) in w.examples" :key="j" class="ex-item">
-              <div class="ex-jp">{{ ex.jp }}</div>
-              <div class="ex-zh">{{ ex.zh }}</div>
-            </div>
+      <div class="word-list">
+        <div class="list-item" v-for="(w, i) in learnWords" :key="w.id">
+          <div class="list-item-head" @click="toggleExpand(i)" role="button" tabindex="0"
+            :aria-expanded="expandedIndex === i"
+            :aria-label="`${expandedIndex === i ? '收起' : '展开'} ${w.kanji || w.kana} 的详细信息`"
+            @keydown.enter.prevent="toggleExpand(i)" @keydown.space.prevent="toggleExpand(i)">
+            <span class="list-idx">{{ i + 1 }}</span>
+            <span class="list-kanji">{{ w.kanji || w.kana }}</span>
+            <span class="list-kana">{{ w.kana }}</span>
+            <span class="list-mean">{{ w.meaning }}</span>
+            <span class="list-toggle" aria-hidden="true">{{ expandedIndex === i ? '▲' : '▼' }}</span>
           </div>
-          <div v-if="store.getNote(w.id)" class="detail-note">📝 {{ store.getNote(w.id) }}</div>
-          <button class="btn btn-ghost btn-xs" @click="openNote(w)">📝 {{ store.getNote(w.id) ? '编辑笔记' : '添加笔记' }}</button>
+          <div v-if="expandedIndex === i" class="list-item-detail">
+            <div v-if="w.pitch && w.pitch.length" class="detail-pitch">音调：{{ w.pitch.map(pitchToCircle).join(' ') }}</div>
+            <div v-if="w.pos" class="detail-pos">{{ w.pos }}</div>
+            <div v-if="w.examples && w.examples.length" class="word-examples">
+              <div v-for="(ex, j) in w.examples" :key="j" class="ex-item">
+                <div class="ex-jp">{{ ex.jp }}</div>
+                <div class="ex-zh">{{ ex.zh }}</div>
+              </div>
+            </div>
+            <div v-if="store.getNote(w.id)" class="detail-note">📝 {{ store.getNote(w.id) }}</div>
+            <button class="btn btn-ghost btn-xs" @click="openNote(w)" :title="store.getNote(w.id) ? '编辑笔记 (N)' : '添加笔记 (N)'">
+              📝 {{ store.getNote(w.id) ? '编辑笔记' : '添加笔记' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 测验阶段 -->
     <template v-if="phase === 'quiz'">
-      <div class="quiz-header-bar">
-        <span class="quiz-mode-tag">学习测验</span>
-        <span>{{ quizIndex + 1 }} / {{ quizQuestions.length }}</span>
-        <div class="progress-bar-wrap"><div class="progress-bar-inner" :style="{ width: (quizIndex + 1) / quizQuestions.length * 100 + '%' }"></div></div>
-      </div>
-      <div class="quiz-area">
-        <!-- 左箭头（上一题） -->
-        <button class="side-arrow side-arrow-left" :disabled="quizIndex === 0" @click="prevQuizQuestion" title="上一题 (A)">
-          <span class="arrow-icon">‹</span>
-        </button>
-
-        <div class="quiz-card-wrap">
-          <div class="quiz-familiar-row">
-            <button class="btn-familiar" @click="markQuizFamiliar" title="标记为熟词，删除该词剩余题目 (F)">⭐ 标记为熟词</button>
-          </div>
-          <WordQuiz :key="quizIndex" ref="wordQuizRef" :type="quizQuestions[quizIndex].type" :question="quizQuestions[quizIndex]"
-            @answer="handleQuizAnswer" @note="openQuizNote" />
-          <div v-if="quizAnswered" class="quiz-nav">
-            <button v-if="!lastCorrect" class="btn btn-primary" @click="quizNext">
-              {{ quizIndex < quizQuestions.length - 1 ? '下一题 →' : '查看结果' }}
-            </button>
-            <span v-else class="auto-next-hint">回答正确，即将自动跳转…</span>
+      <template v-if="!quizFinished">
+        <div class="quiz-header-bar">
+          <span class="chip-pill accent quiz-mode-tag">学习测验</span>
+          <span class="quiz-counter">{{ quizIndex + 1 }}<i>/</i>{{ quizQuestions.length }}</span>
+          <div class="progress-bar-wrap" role="progressbar" :aria-valuenow="quizIndex + 1" aria-valuemin="1" :aria-valuemax="quizQuestions.length">
+            <div class="progress-bar-inner" :style="{ width: (quizIndex + 1) / quizQuestions.length * 100 + '%' }"></div>
           </div>
         </div>
+        <div class="quiz-area">
+          <!-- 左箭头（上一题） -->
+          <button class="side-arrow side-arrow-left" :disabled="quizIndex === 0" @click="prevQuizQuestion" title="上一题 (A)" aria-label="上一题">
+            <span class="arrow-icon" aria-hidden="true">‹</span>
+          </button>
 
-        <!-- 右箭头（下一题） -->
-        <button class="side-arrow side-arrow-right" :disabled="quizIndex >= quizQuestions.length - 1" @click="quizNext" title="下一题 (D)">
-          <span class="arrow-icon">›</span>
-        </button>
-      </div>
-      <div v-if="quizFinished" class="quiz-result">
+          <div class="quiz-card-wrap">
+            <div class="quiz-familiar-row">
+              <button class="btn-familiar" @click="markQuizFamiliar" title="标记为熟词，删除该词剩余题目 (F)" aria-label="把当前单词标记为熟词">⭐ 标记为熟词</button>
+            </div>
+            <WordQuiz :key="quizIndex" ref="wordQuizRef" :type="quizQuestions[quizIndex].type" :question="quizQuestions[quizIndex]"
+              @answer="handleQuizAnswer" @note="openQuizNote" />
+            <div v-if="quizAnswered" class="quiz-nav">
+              <button v-if="!lastCorrect" class="btn btn-primary" @click="quizNext">
+                {{ quizIndex < quizQuestions.length - 1 ? '下一题 →' : '查看结果' }}
+              </button>
+              <span v-else class="auto-next-hint">回答正确，即将自动跳转…</span>
+            </div>
+          </div>
+
+          <!-- 右箭头（下一题） -->
+          <button class="side-arrow side-arrow-right" :disabled="quizIndex >= quizQuestions.length - 1" @click="quizNext" title="下一题 (D)" aria-label="下一题">
+            <span class="arrow-icon" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </template>
+
+      <div v-else class="quiz-result empty-card">
+        <div class="empty-emoji" aria-hidden="true">{{ quizRate >= 80 ? '🎉' : quizRate >= 60 ? '🌸' : '🌱' }}</div>
+        <div class="result-title">{{ quizRate >= 80 ? '这一组掌握得不错！' : quizRate >= 60 ? '再巩固一下会更好' : '别急，多过几遍就熟了' }}</div>
         <div class="result-score">答对 {{ quizCorrect }} / {{ quizQuestions.length }}</div>
-        <div class="result-rate">{{ Math.round(quizCorrect / quizQuestions.length * 100) }}%</div>
+        <div class="result-rate">{{ quizRate }}<small>%</small></div>
         <div class="result-actions">
           <button class="btn btn-ghost" @click="$router.push('/words')">返回背词</button>
-          <button class="btn btn-primary" @click="retryQuiz">再来一轮</button>
+          <button v-if="quizQuestions.length" class="btn btn-primary" @click="retryQuiz">再来一轮</button>
         </div>
       </div>
     </template>
@@ -159,6 +189,8 @@ const wordCardRef = ref(null)
 const editingWord = ref(null)
 const lastCorrect = ref(false)
 let autoTimer = null
+
+const quizRate = computed(() => quizQuestions.value.length ? Math.min(100, Math.round(quizCorrect.value / quizQuestions.value.length * 100)) : 0)
 
 // 初始化：随机抽取未学单词（排除熟词）
 const learnedIds = computed(() => new Set(pool.value.filter(w => store.isLearned(w.id) || store.isFamiliar(w.id)).map(w => w.id)))
@@ -371,146 +403,272 @@ onUnmounted(() => {
 
 <style scoped>
 .words-page { max-width: 960px; }
-.words-header {
+
+/* ---------- 页头 ---------- */
+.page-head { align-items: center; }
+.study-tile { background: var(--sakura-100); }
+.back-btn { min-height: 40px; }
+
+/* ---------- 进度条 ---------- */
+.study-progress,
+.quiz-header-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+  padding: 11px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  font-size: 12.5px;
+  color: var(--text-light);
 }
-.page-title { margin: 0; font-size: 22px; color: var(--sakura-600); }
-.header-spacer { flex: 1; }
-.level-tag {
-  background: #ffe9f0;
-  color: var(--sakura-600);
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-.learn-progress, .quiz-header-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.pt-label { flex-shrink: 0; }
+.pt-count,
+.quiz-counter {
+  flex-shrink: 0;
   font-size: 14px;
+  font-weight: 800;
   color: var(--text);
-  margin-bottom: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.pt-count i,
+.quiz-counter i {
+  font-style: normal;
+  margin: 0 2px;
+  color: var(--text-faint);
+  font-weight: 600;
 }
 .progress-bar-wrap {
   flex: 1;
-  height: 8px;
+  min-width: 56px;
+  height: 7px;
+  border-radius: var(--radius-pill);
   background: var(--sakura-100);
-  border-radius: 8px;
   overflow: hidden;
 }
 .progress-bar-inner {
+  position: relative;
   height: 100%;
-  background: linear-gradient(90deg, #ff9dbd, #ff7da0);
-  border-radius: 8px;
-  transition: width 0.3s;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  overflow: hidden;
+  transition: width var(--dur-4) var(--ease-out-expo);
 }
-.learn-card-area { position: relative; }
+.progress-bar-inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: bar-shine 2.4s var(--ease-soft) infinite;
+}
+@keyframes bar-shine {
+  0% { transform: translateX(-100%); }
+  55%, 100% { transform: translateX(200%); }
+}
+
+/* ---------- 学习卡片区 ---------- */
+.learn-card-area { margin-top: 4px; }
 .learn-note-btn {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 8px;
   margin-top: 14px;
+}
+.learn-note-btn .btn {
+  min-height: 40px;
+  padding: 7px 15px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  color: var(--text-light);
+}
+@media (hover: hover) and (pointer: fine) {
+  .learn-note-btn .btn:hover {
+    color: var(--sakura-600);
+    border-color: var(--sakura-300);
+    background: var(--sakura-50);
+    transform: translateY(-1px);
+  }
 }
 .learn-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-top: 18px;
+  flex-wrap: wrap;
 }
 .learn-spacer { flex: 1; }
-.learn-done {
+.learn-actions .btn {
+  min-height: 44px;
+  font-size: 14px;
+}
+.learn-actions .btn-ghost {
+  border: 1px solid transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .learn-actions .btn-ghost:hover { border-color: var(--border); }
+}
+
+/* ---------- 统一结束态卡片 ---------- */
+.empty-card {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 22px;
   text-align: center;
-  margin-top: 18px;
-  padding: 20px;
-  background: var(--sakura-50);
-  border-radius: 16px;
+  background: var(--card-grad);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-float);
+  animation: rise-in var(--dur-4) var(--ease-out-expo) both;
 }
-.learn-done p { margin: 0 0 12px; color: var(--text); }
-.word-list-panel {
-  margin-top: 16px;
-  background: var(--card-hover);
-  border: 2px solid var(--border-strong);
-  border-radius: 16px;
-  padding: 16px;
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
 }
-.notes-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+.empty-emoji {
+  font-size: 42px;
+  line-height: 1;
+  margin-bottom: 10px;
 }
-.notes-header h3 { margin: 0; color: var(--sakura-600); font-size: 16px; }
-.list-item {
-  border-bottom: 1px dashed var(--sakura-100);
-  padding: 6px 0;
+.empty-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 6px;
 }
-.list-item:last-child { border-bottom: none; }
+.empty-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-light);
+  max-width: 420px;
+  margin: 0 auto 16px;
+}
+.learn-done { margin-top: 20px; }
+.learn-done .btn-primary { min-height: 44px; }
+
+/* ---------- 本组单词列表 ---------- */
+.word-list-panel { margin-top: 18px; }
+.word-list-panel .surface-head .btn { min-height: 40px; }
+.word-list { display: flex; flex-direction: column; }
+.list-item { border-top: 1px solid var(--line); }
+.list-item:first-child { border-top: none; }
 .list-item-head {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 6px 4px;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 9px 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  border-radius: 8px;
+  transition: background var(--dur-2);
 }
-.list-item-head:hover { background: var(--sakura-50); }
-.list-idx { font-size: 12px; color: var(--text-light); width: 20px; }
-.list-kanji { font-size: 20px; font-weight: 700; color: var(--sakura-600); }
-.list-kana { font-size: 14px; color: #d9773e; }
-.list-mean { flex: 1; font-size: 13px; color: var(--text); }
-.list-toggle { color: #e884a0; font-size: 12px; }
-.list-item-detail {
+@media (hover: hover) and (pointer: fine) {
+  .list-item-head:hover { background: var(--sakura-50); }
+}
+.list-idx {
+  flex-shrink: 0;
+  width: 22px;
+  padding: 2px 0;
+  border-radius: 7px;
   background: var(--sakura-50);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin: 4px 4px 8px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
-.detail-pitch { font-size: 14px; color: #e884a0; margin-bottom: 6px; }
-.detail-pos { font-size: 13px; color: var(--text-light); margin-bottom: 6px; }
+.list-kanji {
+  flex-shrink: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+}
+.list-kana {
+  flex-shrink: 0;
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--sakura-700);
+}
+.list-mean {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--text-light);
+}
+.list-toggle {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.list-item-detail {
+  margin: 2px 4px 10px;
+  padding: 12px 14px;
+  background: var(--sakura-50);
+  border-radius: var(--radius-sm);
+  animation: detail-in var(--dur-3) var(--ease-out-expo) both;
+}
+@keyframes detail-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.detail-pitch {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sakura-700);
+  margin-bottom: 6px;
+}
+.detail-pos {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text-light);
+  font-size: 11.5px;
+}
 .word-examples {
   text-align: left;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
 }
-.ex-item { margin-bottom: 6px; }
+.ex-item { margin-bottom: 8px; }
 .ex-item:last-child { margin-bottom: 0; }
-.ex-jp { font-size: 15px; color: #8a5a45; }
-.ex-zh { font-size: 13px; color: #b8a091; margin-top: 2px; }
+.ex-jp { font-size: 15px; line-height: 1.7; color: var(--text); }
+.ex-zh { font-size: 12.5px; color: var(--text-light); margin-top: 2px; }
 .detail-note {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #6b4a52;
-  background: #ffeef3;
-  border-radius: 8px;
-  padding: 8px 10px;
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-left: 3px solid var(--sakura-300);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.7;
   white-space: pre-wrap;
 }
-.quiz-card-wrap { min-height: 300px; }
-.quiz-familiar-row {
-  text-align: right;
-  margin-bottom: 8px;
+.list-item-detail .btn-xs {
+  margin-top: 10px;
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
 }
-.btn-familiar {
-  background: var(--card-grad);
-  border: 2px solid var(--border-strong);
-  border-radius: 20px;
-  padding: 5px 14px;
-  font-size: 13px;
-  color: var(--sakura-600);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
-}
-.btn-familiar:hover {
-  background: #fff3e6;
-  border-color: #f5b06a;
-  color: #b8860b;
-}
+
+/* ---------- 测验 ---------- */
+.quiz-mode-tag { flex-shrink: 0; }
 .quiz-area {
   position: relative;
   display: flex;
@@ -520,76 +678,162 @@ onUnmounted(() => {
 .quiz-card-wrap {
   flex: 1;
   min-width: 0;
+  min-height: 300px;
 }
-.side-arrow {
-  width: 44px;
-  height: 80px;
-  border-radius: 12px;
-  background: var(--card-grad);
-  border: 2px solid var(--border-strong);
-  color: #e884a0;
-  font-size: 28px;
+.quiz-familiar-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.btn-familiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--amber-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
+  font-family: inherit;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-2),
+    box-shadow var(--dur-2),
+    color var(--dur-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-familiar:hover {
+    transform: translateY(-1px);
+    border-color: var(--amber);
+    color: var(--sakura-700);
+    box-shadow: 0 8px 18px -12px var(--amber);
+  }
+}
+.btn-familiar:active { transform: scale(0.96); }
+.side-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  width: 44px;
+  height: 88px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--sakura-500);
+  font-size: 28px;
+  cursor: pointer;
   font-family: inherit;
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    background var(--dur-2),
+    border-color var(--dur-2),
+    color var(--dur-2),
+    box-shadow var(--dur-3);
 }
-.side-arrow:hover:not(:disabled) {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  border-color: var(--sakura-400);
-  color: #fff;
-  transform: scale(1.05);
+@media (hover: hover) and (pointer: fine) {
+  .side-arrow:hover:not(:disabled) {
+    background: var(--grad-sakura);
+    border-color: transparent;
+    color: var(--card);
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: var(--shadow-lg);
+  }
 }
+.side-arrow:active:not(:disabled) { transform: scale(0.96); }
 .side-arrow:disabled {
-  opacity: 0.25;
+  opacity: 0.3;
   cursor: not-allowed;
+  box-shadow: none;
 }
 .arrow-icon {
   line-height: 1;
   font-weight: 700;
 }
-.quiz-mode-tag {
-  background: #ffe9f0;
-  color: var(--sakura-600);
-  padding: 3px 12px;
-  border-radius: 20px;
+.quiz-nav {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+.quiz-nav .btn { min-height: 44px; }
+.auto-next-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
   font-weight: 600;
+  color: var(--text);
+  background: var(--green-soft);
+  border-radius: var(--radius-pill);
+  padding: 10px 18px;
 }
-.quiz-nav { margin-top: 16px; text-align: center; }
-.auto-next-hint {
-  display: inline-block;
-  font-size: 14px;
-  color: #2d8a3e;
-  background: #eefbf0;
-  border-radius: 20px;
-  padding: 8px 20px;
-  animation: pulseHint 1s ease-in-out infinite;
+.auto-next-hint::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: hint-pulse 1s ease-in-out infinite;
 }
-@keyframes pulseHint {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+@keyframes hint-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
 }
-.quiz-result {
-  text-align: center;
-  margin-top: 20px;
-  padding: 28px;
-  background: var(--sakura-50);
-  border-radius: 20px;
+
+/* ---------- 测验结果 ---------- */
+.quiz-result { margin-top: 20px; }
+.result-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
 }
-.result-score { font-size: 18px; color: var(--text); margin-bottom: 6px; }
-.result-rate { font-size: 44px; font-weight: 700; color: var(--sakura-600); margin-bottom: 16px; }
-.result-actions { display: flex; gap: 12px; justify-content: center; }
-@media (max-width: 640px) {
-  .side-arrow {
-    width: 36px;
-    height: 60px;
-    font-size: 22px;
-  }
+.result-score {
+  font-size: 13px;
+  color: var(--text-light);
+}
+.result-rate {
+  font-size: clamp(46px, 12vw, 66px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  background: var(--grad-sakura);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.result-rate small { font-size: 0.38em; margin-left: 2px; }
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 18px;
+}
+.result-actions .btn { min-height: 44px; }
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 560px) {
+  .learn-spacer { display: none; }
+  .learn-actions .btn-primary { flex: 1 1 100%; order: 1; }
+  .learn-actions .btn-ghost { flex: 1 1 auto; order: 2; }
+  .learn-note-btn .btn { flex: 1 1 auto; }
+}
+@media (max-width: 480px) {
+  .study-progress,
+  .quiz-header-bar { gap: 9px; padding: 10px 12px; }
+  .pt-label { font-size: 11.5px; }
+  .quiz-area { gap: 6px; }
+  .side-arrow { width: 40px; height: 68px; font-size: 22px; }
+  .word-list-panel { padding: 14px; }
+  .list-kana { display: none; }
+  .list-mean { font-size: 11.5px; }
+  .quiz-card-wrap { min-height: 280px; }
 }
 </style>
-

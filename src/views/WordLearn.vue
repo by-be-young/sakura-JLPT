@@ -1,10 +1,13 @@
-﻿<template>
+<template>
   <div class="container words-page">
     <!-- 页头 -->
     <div class="word-hero">
-      <div>
-        <div class="hero-title">🌸 背词</div>
-        <div class="hero-sub">{{ level }} 级 · 每日新学 · 间隔复习</div>
+      <div class="hero-lead">
+        <img class="hero-cover" src="./covers/vocabulary-red.svg" alt="红宝书 · 文字词汇" />
+        <div>
+          <div class="hero-title">🌸 背词 · 红宝书</div>
+          <div class="hero-sub">{{ level }} 级 · 每日新学 · 间隔复习</div>
+        </div>
       </div>
       <span class="hero-badge">{{ level }}</span>
     </div>

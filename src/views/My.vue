@@ -145,7 +145,7 @@
           <button class="btn btn-primary btn-sm" @click="practiceAll">全部重练 · {{ wrongQuestions.length }}</button>
           <button class="btn btn-ghost btn-sm" @click="clearWrongLevel">清空错题本</button>
         </div>
-        <div class="q-list">
+        <div class="q-list stagger">
           <article v-for="q in wrongQuestions" :key="q.key" class="q-item" @click="practiceOne(q.id)">
             <div class="q-top">
               <span class="qid-tag">{{ level }} No.{{ q.id }}</span>
@@ -179,7 +179,7 @@
           <button class="btn btn-primary btn-sm" @click="practiceAllFav">全部练习 · {{ favQuestions.length }}</button>
           <button class="btn btn-ghost btn-sm" @click="clearFavLevel">清空收藏</button>
         </div>
-        <div class="q-list">
+        <div class="q-list stagger">
           <article v-for="q in favQuestions" :key="q.key" class="q-item" @click="practiceOneFav(q.id)">
             <div class="q-top">
               <span class="qid-tag">{{ level }} No.{{ q.id }}</span>

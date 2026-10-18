@@ -1,22 +1,69 @@
 <template>
   <div class="reader-page">
-    <!-- 顶部工具条 -->
-    <div class="reader-bar">
-      <button class="btn btn-ghost btn-sm" @click="$router.push('/study')">← 学习</button>
-      <span class="reader-title">{{ level?.name.replace(' 文法详解（整理版）', '') || '' }} <span class="reader-sub">{{ points.length }} 点</span></span>
-      <div class="reader-actions">
-        <button class="mode-toggle" :class="{ active: mode === 'paged' }" @click="setMode('paged')">分页阅读</button>
-        <button class="mode-toggle" :class="{ active: mode === 'sequential' }" @click="setMode('sequential')">顺序阅读</button>
-        <button class="toc-btn" @click="tocOpen = true">☰ 目录<span v-if="markedCount" class="marked-badge">{{ markedCount }}</span></button>
+    <!-- 顶部粘性玻璃工具条 -->
+    <header class="reader-bar glass-bar" :class="{ 'is-stuck': scrolled }">
+      <div class="rb-main">
+        <button class="back-btn rb-back" @click="$router.push('/study')" title="返回文法列表" aria-label="返回文法列表">
+          <span class="rb-back-arrow" aria-hidden="true">←</span>
+          <span class="rb-back-text">学习</span>
+        </button>
+        <div class="rb-titles">
+          <h1 class="reader-title">
+            {{ level?.name.replace(' 文法详解（整理版）', '') || '' }}
+            <span class="reader-sub">{{ points.length }} 点</span>
+          </h1>
+          <div class="rb-meta">
+            <span class="rb-state">{{ mode === 'paged' ? '分页阅读' : '顺序阅读' }}</span>
+            <span class="rb-sep" aria-hidden="true"></span>
+            <span class="rb-pos">第 <b>{{ points.length ? currentIndex + 1 : 0 }}</b> / {{ points.length }} 点</span>
+            <span v-if="markedCount" class="rb-marked">★ {{ markedCount }}</span>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- 分页模式：上一页/下一页 -->
-    <div v-if="mode === 'paged'" class="pager-bar">
-      <button class="page-btn" :disabled="currentIndex <= 0" @click="prevPage">← 上一页 <span class="kbd">A</span></button>
-      <span class="page-indicator">第 {{ currentIndex + 1 }} / {{ points.length }} 点</span>
-      <button class="page-btn" :disabled="currentIndex >= points.length - 1" @click="nextPage"><span class="kbd">D</span> 下一页 →</button>
-    </div>
+      <div class="reader-actions">
+        <div class="mode-switch" role="group" aria-label="阅读模式">
+          <button
+            class="mode-toggle pressable"
+            :class="{ active: mode === 'paged' }"
+            :aria-pressed="mode === 'paged'"
+            title="分页阅读（快捷键 A / D 翻页）"
+            @click="setMode('paged')"
+          >分页</button>
+          <button
+            class="mode-toggle pressable"
+            :class="{ active: mode === 'sequential' }"
+            :aria-pressed="mode === 'sequential'"
+            title="顺序阅读（连续滚动）"
+            @click="setMode('sequential')"
+          >顺序</button>
+        </div>
+        <button
+          class="toc-btn pressable"
+          @click="tocOpen = true"
+          aria-haspopup="dialog"
+          :aria-expanded="tocOpen"
+          aria-controls="grammar-toc"
+          title="打开目录"
+        >
+          <span class="toc-btn-icon" aria-hidden="true">☰</span>
+          <span>目录</span>
+          <span v-if="markedCount" class="marked-badge">{{ markedCount }}</span>
+        </button>
+      </div>
+
+      <!-- 阅读进度：随当前点平滑推进 -->
+      <div
+        class="rb-progress"
+        role="progressbar"
+        :aria-valuenow="progressPercent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        :aria-label="'阅读进度 ' + progressPercent + '%'"
+      >
+        <span class="rb-progress-fill" :style="{ transform: 'scaleX(' + (progressPercent / 100) + ')' }"></span>
+      </div>
+    </header>
 
     <!-- 主阅读区 -->
     <div
@@ -28,7 +75,11 @@
       <!-- 顺序阅读：连续滚动 -->
       <template v-if="mode === 'sequential'">
         <div v-for="(u, ui) in level.units" :key="u.id" class="unit-block">
-          <div class="unit-head" :data-unit="ui"><span class="unit-dot"></span>{{ u.title }}</div>
+          <div class="unit-head" v-reveal="'left'" :data-unit="ui">
+            <span class="unit-dot" aria-hidden="true"></span>
+            <span class="unit-name">{{ u.title }}</span>
+            <span class="unit-count">{{ u.points.length }} 点</span>
+          </div>
           <section
             v-for="p in u.points"
             :key="p.id"
@@ -39,9 +90,16 @@
           >
             <div class="gp-head">
               <h3 class="gp-title">{{ p.title }}</h3>
-              <button class="mark-btn" :class="{ active: isMarked(p.id) }" @click="toggleMark(p.id)" title="在目录中标记/取消此点">★</button>
+              <button
+                class="mark-btn pressable"
+                :class="{ active: isMarked(p.id) }"
+                :aria-pressed="isMarked(p.id)"
+                :aria-label="isMarked(p.id) ? '取消标记此点' : '标记此点'"
+                @click="toggleMark(p.id)"
+                title="在目录中标记 / 取消此点"
+              >★</button>
             </div>
-            <div class="gp-body">
+            <div class="gp-body reader-prose">
               <template v-for="(g, gi) in usageGroups(p.blocks)" :key="gi">
                 <div class="gp-usage" :class="{ 'gp-usage--boxed': g.box }">
                 <template v-for="(b, i) in g.blocks" :key="i">
@@ -84,12 +142,20 @@
             class="page-wrap book-leaf"
             :class="[leaf.cls, { marked: isMarked(leaf.point.id) }]"
           >
+            <span class="page-corner" aria-hidden="true"></span>
             <div class="page-meta">{{ leaf.point.unitTitle }}</div>
             <div class="gp-head">
               <h3 class="gp-title">{{ leaf.point.title }}</h3>
-              <button class="mark-btn" :class="{ active: isMarked(leaf.point.id) }" @click="toggleMark(leaf.point.id)" title="在目录中标记/取消此点">★</button>
+              <button
+                class="mark-btn pressable"
+                :class="{ active: isMarked(leaf.point.id) }"
+                :aria-pressed="isMarked(leaf.point.id)"
+                :aria-label="isMarked(leaf.point.id) ? '取消标记此点' : '标记此点'"
+                @click="toggleMark(leaf.point.id)"
+                title="在目录中标记 / 取消此点"
+              >★</button>
             </div>
-            <div class="gp-body">
+            <div class="gp-body reader-prose">
               <template v-for="(g, gi) in usageGroups(leaf.point.blocks)" :key="gi">
                 <div class="gp-usage" :class="{ 'gp-usage--boxed': g.box }">
                 <template v-for="(b, i) in g.blocks" :key="i">
@@ -124,16 +190,51 @@
       </template>
     </div>
 
+    <!-- 底部翻页操作条（分页模式） -->
+    <div v-if="mode === 'paged'" class="pager-bar sticky-actions">
+      <button class="page-btn pressable" :disabled="currentIndex <= 0" @click="prevPage" title="上一页（快捷键 A）">
+        <span aria-hidden="true">←</span> 上一页 <span class="kbd">A</span>
+      </button>
+      <div class="pager-mid">
+        <span class="page-indicator">第 <b>{{ currentIndex + 1 }}</b> / {{ points.length }} 点</span>
+        <span class="pager-rail" aria-hidden="true">
+          <span class="pager-rail-fill" :style="{ transform: 'scaleX(' + (progressPercent / 100) + ')' }"></span>
+        </span>
+      </div>
+      <button class="page-btn pressable" :disabled="currentIndex >= points.length - 1" @click="nextPage" title="下一页（快捷键 D）">
+        下一页 <span class="kbd">D</span> <span aria-hidden="true">→</span>
+      </button>
+    </div>
+
     <!-- 侧边目录 -->
     <div v-if="tocOpen" class="toc-backdrop" @click="tocOpen = false" @wheel="onTocBackdropWheel"></div>
-    <aside v-if="tocOpen" class="toc">
+    <aside v-if="tocOpen" id="grammar-toc" class="toc" role="dialog" aria-modal="true" aria-label="文法目录">
       <div class="toc-header">
-        <span class="toc-title">目录 · {{ level?.name.replace(' 文法详解（整理版）', '') }}</span>
-        <button class="toc-close" @click="tocOpen = false">✕</button>
+        <div class="toc-head-text">
+          <div class="toc-title">目录</div>
+          <div class="toc-sub">{{ level?.name.replace(' 文法详解（整理版）', '') }} · {{ points.length }} 个文法点</div>
+        </div>
+        <button class="toc-close" @click="tocOpen = false" title="关闭目录" aria-label="关闭目录">✕</button>
       </div>
-      <div class="toc-list">
+
+      <div class="toc-progress">
+        <div class="toc-progress-label"><span>阅读进度</span><b>{{ progressPercent }}%</b></div>
+        <span class="toc-progress-rail" aria-hidden="true">
+          <span class="toc-progress-fill" :style="{ transform: 'scaleX(' + (progressPercent / 100) + ')' }"></span>
+        </span>
+        <div class="toc-stats">
+          <span class="chip-pill accent">★ {{ markedCount }} 标记</span>
+          <span class="chip-pill mint">进度 {{ points.length ? currentIndex + 1 : 0 }} / {{ points.length }}</span>
+        </div>
+      </div>
+
+      <div class="toc-list stagger">
         <div v-for="(u, ui) in level.units" :key="u.id" class="toc-unit">
-          <div class="toc-unit-title">{{ u.title }}</div>
+          <div class="toc-unit-title">
+            <span class="toc-unit-dot" aria-hidden="true"></span>
+            <span class="toc-unit-name">{{ u.title }}</span>
+            <span class="toc-unit-count">{{ u.points.length }}</span>
+          </div>
           <div
             v-for="p in u.points"
             :key="p.id"
@@ -141,13 +242,20 @@
             :class="{ current: p.id === currentPointId, marked: isMarked(p.id) }"
             :ref="el => setTocRef(el, p.id)"
           >
-            <button class="toc-mark" :class="{ active: isMarked(p.id) }" @click.stop="toggleMark(p.id)" :title="isMarked(p.id) ? '取消标记' : '标记此点'">
+            <button
+              class="toc-mark"
+              :class="{ active: isMarked(p.id) }"
+              @click.stop="toggleMark(p.id)"
+              :title="isMarked(p.id) ? '取消标记' : '标记此点'"
+              :aria-label="isMarked(p.id) ? '取消标记' : '标记此点'"
+            >
               {{ isMarked(p.id) ? '★' : '☆' }}
             </button>
-            <span class="toc-label" @click="jumpTo(p.id)">{{ p.title }}</span>
+            <button type="button" class="toc-label" @click="jumpTo(p.id)">{{ p.title }}</button>
           </div>
         </div>
       </div>
+      <div class="toc-foot">点击目录项跳转 · Esc 关闭</div>
     </aside>
   </div>
 </template>
@@ -183,6 +291,13 @@ const currentPointId = ref('')
 const contentEl = ref(null)
 const tocRefs = {}
 const markedCount = computed(() => store.markedCountOf(points.value))
+// 工具条滚动阴影 & 阅读进度（按当前点位置推进）
+const scrolled = ref(false)
+const progressPercent = computed(() => {
+  const total = points.value.length
+  if (!total) return 0
+  return Math.min(100, Math.round(((currentIndex.value + 1) / total) * 100))
+})
 
 const currentPoint = computed(() => points.value[currentIndex.value] || null)
 
@@ -386,15 +501,23 @@ function placeTermTip(term) {
   tip.style.transform = 'none'
 }
 let termTipEntered = null
+function termOf(e) {
+  const t = e && e.target
+  // e.target 可能是 document / window / 文本节点，不一定有 closest
+  return t && typeof t.closest === 'function' ? t.closest('.cont-term') : null
+}
 function onTermTipOver(e) {
-  const term = e.target.closest('.cont-term')
+  const term = termOf(e)
   if (term && term !== termTipEntered) {
     termTipEntered = term
     placeTermTip(term)
   }
 }
 function onTermTipOut(e) {
-  const term = e.target.closest('.cont-term')
+  const term = termOf(e)
+  // 关键守卫：term 为 null 时不能继续（此前 term === termTipEntered 在两者都为 null 时成立，
+  // 随后 term.contains 直接抛 TypeError，鼠标每移出一次就报一次）
+  if (!term) { termTipEntered = null; return }
   if (term === termTipEntered && (!e.relatedTarget || !term.contains(e.relatedTarget))) {
     termTipEntered = null
   }
@@ -536,13 +659,14 @@ const bookLeaves = computed(() => {
   if (!cp) return []
   const leaves = []
   if (flip.value === 'next' && animTarget.value) {
-    // 下一页：下层预载下一页（静态），上层当前页翻起
+    // 下一页：目标页在下层先就位，当前页在上层向左翻走
     leaves.push({ key: 'u-' + animTarget.value.id, point: animTarget.value, cls: 'under-leaf' })
     leaves.push({ key: 'o-' + cp.id, point: cp, cls: 'over-leaf over-away' })
   } else if (flip.value === 'prev' && animTarget.value) {
-    // 上一页：当前页不动，下层上一页翻下覆盖
-    leaves.push({ key: 'u-' + animTarget.value.id, point: animTarget.value, cls: 'under-leaf under-down' })
-    leaves.push({ key: 'o-' + cp.id, point: cp, cls: 'over-leaf' })
+    // 上一页：当前页留在下层，目标页在上层从左侧翻回来盖住它
+    // （此前方向反了：目标页在下层，被当前页完全挡住，看不见翻页）
+    leaves.push({ key: 'u-' + cp.id, point: cp, cls: 'under-leaf' })
+    leaves.push({ key: 'o-' + animTarget.value.id, point: animTarget.value, cls: 'over-leaf over-in' })
   } else {
     leaves.push({ key: 'o-' + cp.id, point: cp, cls: 'over-leaf' })
   }
@@ -627,6 +751,11 @@ function onKeydown(e) {
   const t = e.target
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
   const k = e.key
+  // 目录抽屉：Esc 关闭
+  if (k === 'Escape' && tocOpen.value) {
+    tocOpen.value = false
+    return
+  }
   // 振假名快捷键（与全站一致）
   if (k === 'l' || k === 'L') {
     e.preventDefault()
@@ -680,6 +809,7 @@ function onTocBackdropWheel(e) {
 // ===== 顺序阅读：滚动定位当前点 =====
 let scTicking = false
 function onScroll() {
+  scrolled.value = window.scrollY > 8
   if (mode.value !== 'sequential' || scTicking) return
   scTicking = true
   requestAnimationFrame(() => {
@@ -765,383 +895,871 @@ watch(currentPointId, () => {
 </script>
 
 <style scoped>
+/* ===== 阅读页骨架 ===== */
 .reader-page {
-  max-width: 960px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 16px 20px 48px;
+  padding: 16px 20px 56px;
   position: relative;
-  z-index: 1;
-}
-.reader-bar {
-  position: sticky;
-  top: 60px;
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: rgba(255, 250, 245, 0.94);
-  backdrop-filter: blur(10px);
-  border: 2px solid var(--sakura-100);
-  border-radius: 14px;
-}
-.reader-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--sakura-600);
-  margin-right: auto;
-}
-.reader-sub { font-size: 12px; color: var(--text-light); font-weight: 400; margin-left: 6px; }
-.reader-actions { display: flex; align-items: center; gap: 8px; }
-.mode-toggle {
-  padding: 7px 14px;
-  border-radius: 18px;
-  border: 2px solid var(--border-strong);
-  background: var(--card-hover);
-  color: var(--text-light);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-.mode-toggle:hover { border-color: var(--sakura-300); color: var(--sakura-600); }
-.mode-toggle.active {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  color: #fff;
-  border-color: var(--sakura-400);
-  box-shadow: 0 4px 12px rgba(255, 125, 160, 0.3);
-}
-.toc-btn {
-  position: relative;
-  padding: 7px 14px;
-  border-radius: 18px;
-  border: 2px solid var(--border-strong);
-  background: var(--card-hover);
-  color: var(--sakura-600);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-.toc-btn:hover { border-color: var(--sakura-300); background: var(--sakura-100); }
-.marked-badge {
-  display: inline-block;
-  background: #e08a00;
-  color: #fff;
-  font-size: 11px;
-  min-width: 17px;
-  height: 17px;
-  line-height: 17px;
-  border-radius: 9px;
-  margin-left: 4px;
-  padding: 0 4px;
 }
 
-/* 分页工具栏 */
-.pager-bar {
+/* ===== 顶部粘性玻璃工具条 ===== */
+.reader-bar {
+  position: sticky;
+  top: 62px;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 10px 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  transition:
+    box-shadow var(--dur-3) var(--ease-soft),
+    border-color var(--dur-3) var(--ease-soft),
+    background var(--dur-3) var(--ease-soft);
 }
-.page-btn {
-  padding: 8px 16px;
-  border-radius: 18px;
-  border: 2px solid var(--border-strong);
-  background: var(--card-hover);
-  color: var(--sakura-600);
-  font-size: 13px;
+.reader-bar.is-stuck {
+  border-color: var(--border);
+  box-shadow: 0 16px 34px -26px rgba(0, 0, 0, 0.5);
+}
+.rb-main { display: flex; align-items: center; gap: 12px; flex: 1 1 300px; min-width: 0; }
+.rb-back { min-height: 40px; padding: 8px 13px; font-size: 13px; flex-shrink: 0; }
+.rb-back-arrow { font-size: 14px; line-height: 1; transition: transform var(--dur-2) var(--ease-out-expo); }
+.rb-back:hover .rb-back-arrow { transform: translateX(-2px); }
+.rb-titles { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.reader-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reader-sub {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 11.5px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  line-height: 1.6;
 }
-.page-btn:hover:not(:disabled) { border-color: var(--sakura-300); background: var(--sakura-100); }
-.page-btn:disabled { opacity: 0.4; cursor: default; }
-.page-indicator { font-size: 13px; color: var(--text-light); }
-.kbd {
-  display: inline-block;
-  background: var(--card-grad);
-  border: 1px solid #ffc9d9;
-  border-bottom-width: 2px;
-  border-radius: 5px;
-  padding: 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--sakura-600);
-  font-family: inherit;
-}
-
-/* 阅读内容区 */
-.reader-content { position: relative; }
-.reader-content.paged { cursor: default; perspective: 1800px; }
-
-/* 分页翻书特效：下一页翻起露出预载页，上一页翻下覆盖当前页 */
-.book { position: relative; perspective: 1800px; height: calc(100vh - 205px); min-height: 340px; }
-.book-leaf { backface-visibility: hidden; transform-style: preserve-3d; transform-origin: left center; will-change: transform; height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-.over-leaf { position: relative; z-index: 2; }
-.under-leaf { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }
-.over-leaf.over-away { animation: over-away 0.3s ease forwards; }
-@keyframes over-away { from { transform: rotateY(0deg); } to { transform: rotateY(-90deg); } }
-.under-leaf.under-down { animation: under-down 0.3s ease; }
-@keyframes under-down { from { transform: rotateY(-90deg); } to { transform: rotateY(0deg); } }
-
-/* 顺序阅读：单元 */
-.unit-block { margin-bottom: 26px; }
-.unit-head {
+.rb-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+.rb-state {
+  padding: 1px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-100);
+  color: var(--sakura-700);
   font-weight: 700;
-  color: var(--sakura-600);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--border-strong);
+  font-size: 11px;
 }
-.unit-dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(145deg, #ff9dbd, #ff7da0); flex-shrink: 0; }
+.rb-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
+.rb-pos b { color: var(--sakura-600); font-size: 13px; font-variant-numeric: tabular-nums; }
+.rb-marked {
+  padding: 1px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-weight: 700;
+  font-size: 11px;
+}
 
-/* 文法点卡片 */
-.gp-card {
-  background: var(--card-hover);
-  border: 2px solid var(--sakura-100);
-  border-radius: 16px;
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  scroll-margin-top: 90px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+.reader-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mode-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
 }
-.gp-card.current { border-color: var(--sakura-300); box-shadow: 0 4px 16px rgba(255, 125, 160, 0.15); }
-.gp-card.marked { border-left: 5px solid #ffb347; }
+.mode-toggle {
+  min-height: 40px;
+  padding: 0 15px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-light);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    background var(--dur-3) var(--ease-out-expo),
+    box-shadow var(--dur-3) var(--ease-out-expo);
+}
+.mode-toggle:hover { color: var(--sakura-600); }
+.mode-toggle.active {
+  background: var(--grad-sakura);
+  color: rgba(255, 255, 255, 0.97);
+  box-shadow: var(--shadow);
+}
+.toc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    box-shadow var(--dur-3) var(--ease-out-expo);
+}
+.toc-btn:hover {
+  color: var(--sakura-600);
+  border-color: var(--sakura-300);
+  background: var(--card-hover);
+  box-shadow: var(--shadow-card);
+}
+.toc-btn-icon { font-size: 13px; line-height: 1; }
+.marked-badge {
+  display: inline-block;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--grad-amber);
+  color: rgba(255, 255, 255, 0.97);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* 工具条底部阅读进度 */
+.rb-progress {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  pointer-events: none;
+}
+.rb-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-4) var(--ease-out-expo);
+}
+
+/* ===== 阅读内容区 ===== */
+.reader-content { position: relative; }
+.reader-content.paged { cursor: default; perspective: 2000px; }
+.reader-content.sequential { max-width: 820px; margin: 0 auto; }
+
+/* 顺序阅读：单元标题 */
+.unit-block { margin-bottom: 30px; }
+.unit-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 4px 0 14px;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15.5px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: var(--text);
+}
+.unit-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--grad-sakura);
+  box-shadow: 0 0 0 4px var(--sakura-100);
+}
+.unit-name { min-width: 0; }
+.unit-count {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ===== 文法点卡片 ===== */
+.gp-card {
+  position: relative;
+  margin-bottom: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card-grad);
+  box-shadow: var(--shadow-card);
+  scroll-margin-top: 148px;
+  transition:
+    border-color var(--dur-3) var(--ease-soft),
+    box-shadow var(--dur-3) var(--ease-out-expo),
+    transform var(--dur-3) var(--ease-out-expo);
+}
+/* 当前阅读点：左侧渐变竖条 */
+.gp-card::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--grad-sakura);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transform-origin: 50% 0;
+  transition: opacity var(--dur-3) var(--ease-soft), transform var(--dur-4) var(--ease-out-expo);
+}
+@media (hover: hover) and (pointer: fine) {
+  .gp-card:hover { border-color: var(--sakura-200); box-shadow: var(--card-float); }
+}
+.gp-card.current {
+  border-color: var(--sakura-300);
+  box-shadow: var(--shadow);
+}
+.gp-card.current::before { opacity: 1; transform: none; }
+.gp-card.marked {
+  border-color: var(--border-strong);
+  box-shadow: inset 3px 0 0 var(--amber), var(--shadow-card);
+}
+.gp-card.marked.current { box-shadow: inset 3px 0 0 var(--amber), var(--shadow); }
+
 .gp-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--line);
 }
-.gp-title { font-size: 16.5px; font-weight: 700; color: var(--sakura-600); line-height: 1.5; flex: 1; }
+.gp-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.55;
+  letter-spacing: 0.2px;
+  color: var(--sakura-600);
+  overflow-wrap: anywhere;
+}
 .mark-btn {
   flex-shrink: 0;
-  font-size: 20px;
-  color: var(--text-light);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: var(--sakura-50);
+  color: var(--text-faint);
+  font-size: 19px;
   line-height: 1;
-  padding: 2px;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2) var(--ease-soft),
+    transform var(--dur-3) var(--ease-spring);
 }
-.mark-btn:hover { transform: scale(1.2); }
-.mark-btn.active { color: #ffb347; text-shadow: 0 0 6px rgba(255, 179, 71, 0.4); }
-.gp-body { display: flex; flex-direction: column; gap: 6px; }
-.gp-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.mark-btn:hover {
+  color: var(--amber);
+  background: var(--amber-soft);
+  transform: rotate(-8deg) scale(1.06);
+}
+.mark-btn:active { transform: scale(0.88); }
+.mark-btn.active {
+  color: var(--amber);
+  background: var(--amber-soft);
+  border-color: var(--border);
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* 正文排版：对齐 .reader-prose（16px / 行高 2） */
+.gp-body { display: flex; flex-direction: column; gap: 10px; }
+.gp-body.reader-prose { font-size: 16px; line-height: 2; }
+.gp-body > * + * { margin-top: 0; }
+.gp-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .gp-label {
   flex-shrink: 0;
-  background: #ffe9f0;
-  color: var(--sakura-600);
-  font-size: 14px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
   padding: 2px 10px;
-  border-radius: 10px;
+  border-radius: 8px;
+  background: var(--sakura-100);
+  color: var(--sakura-700);
+  font-size: 13px;
+  font-weight: 800;
   line-height: 1.7;
+  letter-spacing: 0.5px;
 }
-/* 用法分组：同一用法（说明①+例文①…）框进同一个大粉框，隔离不同用法 */
-.gp-usage { display: flex; flex-direction: column; gap: 6px; }
-.gp-usage--boxed {
-  border: 2px solid #f79ab4;
-  border-radius: 14px;
-  padding: 10px 12px;
-  background: #fffafd;
-}
-.gp-text { font-size: 16px; color: #5c3b47; line-height: 1.8; }
+.gp-text { font-size: 16px; line-height: 2; color: var(--text); }
 .gp-sub {
-  margin-top: 4px;
+  margin-top: 2px;
+  padding: 6px 12px;
+  border-left: 3px solid var(--sakura-400);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--sakura-50);
+  color: var(--text);
   font-size: 15px;
   font-weight: 700;
-  color: #b36a5e;
-  background: #fff3f6;
-  border-left: 3px solid #f79ab4;
-  padding: 4px 10px;
-  border-radius: 0 8px 8px 0;
+  line-height: 1.8;
+}
+.gp-usage { display: flex; flex-direction: column; gap: 8px; }
+.gp-usage--boxed {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sakura-300);
+  border-radius: var(--radius-sm);
+  background: var(--sakura-50);
 }
 .gp-line {
   font-size: 16px;
-  color: #4a3a44;
-  line-height: 1.9;
-  padding-left: 4px;
+  line-height: 2;
+  color: var(--text);
+  padding-left: 2px;
 }
-/* 例句之间用粉色虚线隔开（最后一条不显示） */
-.gp-line--ex-dash { border-bottom: 1.5px dashed #f2a6bf; padding-bottom: 6px; margin-bottom: 2px; }
-/* 【xx年真题】等标记置灰（v-html 注入，需 :deep） */
-/* 【xx年真题】等标记置灰（v-html 注入，需 :deep） */
-:deep(.gp-tag) { color: #a0a0a6; }
-/* 接续：斜杠选项竖排 + 纵跨多行的超大花括号（v-html 注入，需 :deep） */
+/* 例句之间用虚线分隔（最后一条不显示） */
+.gp-line--ex-dash {
+  border-bottom: 1px dashed var(--border-strong);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+/* 中文译文：独立一行，弱化并加缩进标记 */
+.gp-tr {
+  position: relative;
+  padding-left: 16px;
+  color: var(--text-light);
+  font-size: 14.5px;
+  line-height: 1.9;
+}
+.gp-tr::before {
+  content: '↳';
+  position: absolute;
+  left: 0;
+  color: var(--sakura-300);
+}
+
+/* v-html 注入内容（真题标记 / 高亮 / 接续 / 术语提示） */
+:deep(.gp-tag) { color: var(--text-faint); font-size: 0.92em; }
+:deep(.gp-hl) {
+  padding: 0 4px;
+  border-radius: 5px;
+  background: var(--sakura-100);
+  color: var(--sakura-600);
+  font-weight: 700;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
 :deep(.cont) { display: inline-flex; align-items: center; vertical-align: middle; }
-:deep(.cont-prefix), :deep(.cont-suffix), :deep(.cont-plus) { display: inline-flex; align-items: center; }
+:deep(.cont-prefix),
+:deep(.cont-suffix),
+:deep(.cont-plus) { display: inline-flex; align-items: center; }
 :deep(.cont-opts) { display: inline-flex; flex-direction: column; }
 :deep(.cont-opts .opt) { display: block; white-space: nowrap; line-height: 1.5; padding: 0 1px; }
 :deep(.cont-brace-wrap) { position: relative; display: inline-flex; align-self: stretch; width: 16px; flex: 0 0 auto; }
-:deep(.cont-brace) { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; width: 100%; color: #d06a86; }
+:deep(.cont-brace) {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--sakura-400);
+}
 /* 接续专业术语悬停提示 */
-:deep(.cont-term) { position: relative; cursor: help; border-bottom: 1px dashed #d06a86; }
+:deep(.cont-term) {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dashed var(--sakura-400);
+}
 :deep(.cont-term .term-tip) {
-  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  z-index: 300; display: none;
-  width: 240px; padding: 8px 10px;
-  background: #fffdfd; border: 1px solid var(--border-strong); border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(244, 92, 142, 0.18);
-  font-size: 12px; line-height: 1.6; color: #5a4a54; text-align: left; white-space: normal; font-weight: 400;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: none;
+  width: 248px;
+  padding: 9px 11px;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+  text-align: left;
+  white-space: normal;
 }
 :deep(.cont-term:hover .term-tip) { display: block; }
 
-/* 例句中的中文译文：独占一行 + 略不同颜色 */
-.gp-tr { color: #9a6240; }
-/* 例句中体现该语法点的核心词汇：高亮 */
-:deep(.gp-hl) { color: #d0457a; font-weight: 700; }
-.gp-line:lang(ja), .gp-text:lang(ja), .gp-title:lang(ja) { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', serif; }
-.gp-table { overflow-x: auto; margin: 2px 0 6px; }
+/* 振假名：与全局 reader-prose 一致的柔和注音色 */
+:deep(rt) { color: var(--sakura-500); font-size: 0.52em; font-weight: 500; line-height: 1; }
+:deep(rp) { display: none; }
+
+/* 表格 */
+.gp-table { overflow-x: auto; margin: 2px 0 6px; border-radius: var(--radius-sm); }
 .gp-table table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14.5px;
-  line-height: 1.6;
-  background: var(--card-grad);
-  border: 1px solid #f3d3dd;
-  border-radius: 8px;
   overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font-size: 14px;
+  line-height: 1.7;
 }
-.gp-table th, .gp-table td {
-  border: 1px solid #f3d3dd;
-  padding: 5px 9px;
+.gp-table th,
+.gp-table td {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
   text-align: center;
   white-space: nowrap;
 }
-.gp-table th {
-  background: var(--sakura-100);
-  color: #a04a63;
-  font-weight: 700;
-}
-.gp-table td { color: #4a3a44; }
-.gp-table tbody tr:nth-child(even) { background: #fff7fa; }
+.gp-table th { background: var(--sakura-50); color: var(--sakura-700); font-weight: 800; }
+.gp-table td { color: var(--text); }
+.gp-table tbody tr:nth-child(even) { background: var(--card-hover); }
 
-/* 分页阅读：单页 */
-.page-wrap {
-  background: var(--card-hover);
-  border: 2px solid var(--sakura-100);
-  border-radius: 18px;
-  padding: 26px 30px;
-  min-height: 46vh;
-  box-shadow: 0 8px 26px rgba(255, 125, 160, 0.12);
+/* ===== 分页阅读：单页纸张 ===== */
+.book {
+  position: relative;
+  max-width: 800px;
   margin: 0 auto;
-  max-width: 780px;
-  transition: border-color 0.2s;
+  perspective: 2000px;
+  height: calc(100vh - 270px);
+  height: clamp(380px, calc(100dvh - 270px), 760px);
+  min-height: 340px;
 }
-.page-wrap.marked { border-color: #ffd59a; }
+.book-leaf {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  will-change: transform;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* 关键：两张纸必须叠在同一位置。
+   这里用 .page-wrap.book-leaf 双类名提高权重 —— 下面的 .page-wrap 也声明了
+   position: relative，权重相同且更靠后，会把 .under-leaf 的 absolute 覆盖掉，
+   导致"目标页被排到当前页下面"而不是盖在同一处。 */
+.page-wrap.book-leaf {
+  position: absolute;
+  inset: 0;
+  max-width: 760px;
+  margin: 0 auto;
+  height: auto;
+}
+.book-leaf.over-leaf { z-index: 2; }
+.book-leaf.under-leaf { z-index: 1; }
+/* 翻书：上层纸绕左边缘转走 / 转回来 */
+.book-leaf.over-away { animation: over-away 300ms var(--ease-out-expo) both; }
+@keyframes over-away {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-88deg); box-shadow: -18px 8px 40px rgba(60, 20, 40, 0.2); }
+}
+.book-leaf.over-in { animation: over-in 300ms var(--ease-out-expo) both; }
+@keyframes over-in {
+  from { transform: rotateY(-88deg); box-shadow: -18px 8px 40px rgba(60, 20, 40, 0.2); }
+  to { transform: rotateY(0deg); }
+}
+
+.page-wrap {
+  position: relative;
+  max-width: 760px;
+  min-height: 46vh;
+  margin: 0 auto;
+  padding: 30px 34px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card-grad);
+  box-shadow: var(--card-float);
+  transition: border-color var(--dur-3) var(--ease-soft), box-shadow var(--dur-3) var(--ease-out-expo);
+}
+.page-wrap.marked { border-color: var(--border-strong); box-shadow: inset 3px 0 0 var(--amber), var(--card-float); }
+.page-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 0 var(--radius-xl) 0 18px;
+  background: linear-gradient(225deg, var(--sakura-50), transparent 70%);
+  pointer-events: none;
+}
 .page-meta {
-  font-size: 12px;
-  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
   margin-bottom: 8px;
+  color: var(--text-faint);
+  font-size: 12px;
   letter-spacing: 0.5px;
 }
+.page-wrap .gp-head { margin-bottom: 14px; }
+.page-wrap .gp-title { font-size: 20px; }
 
-/* 侧边目录 */
+/* ===== 底部翻页操作条 ===== */
+.pager-bar {
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 17px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    transform var(--dur-2) var(--ease-spring),
+    box-shadow var(--dur-3) var(--ease-out-expo);
+}
+.page-btn:hover:not(:disabled) {
+  color: var(--sakura-600);
+  border-color: var(--sakura-300);
+  background: var(--card-hover);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
+}
+.page-btn:active:not(:disabled) { transform: scale(0.96); }
+.page-btn:disabled { opacity: 0.38; cursor: default; }
+.kbd {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--card-grad);
+  color: var(--sakura-600);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.55;
+  font-family: inherit;
+}
+.pager-mid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 120px;
+}
+.page-indicator {
+  color: var(--text-light);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.page-indicator b { color: var(--sakura-600); font-size: 14px; }
+.pager-rail {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sakura-100);
+  overflow: hidden;
+}
+.pager-rail-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-4) var(--ease-out-expo);
+}
+
+/* ===== 目录抽屉 ===== */
 .toc-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(74, 58, 68, 0.35);
-  z-index: 94;
+  z-index: calc(var(--z-nav) + 19);
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: toc-mask-in var(--dur-2) var(--ease-soft);
 }
+@keyframes toc-mask-in { from { opacity: 0; } to { opacity: 1; } }
 .toc {
   position: fixed;
   top: 0;
   right: 0;
+  z-index: calc(var(--z-nav) + 20);
   height: 100%;
-  width: min(340px, 88vw);
-  background: var(--card-hover);
-  border-left: 2px solid var(--border-strong);
-  z-index: 95;
+  width: min(384px, 92vw);
   display: flex;
   flex-direction: column;
-  box-shadow: -8px 0 28px rgba(74, 58, 68, 0.15);
-  animation: slideIn 0.22s ease;
+  padding-top: env(safe-area-inset-top);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-left: 1px solid var(--border);
+  box-shadow: -18px 0 48px -24px rgba(0, 0, 0, 0.4);
+  animation: slideIn var(--dur-3) var(--ease-out-expo);
 }
 @keyframes slideIn {
-  from { transform: translateX(40px); opacity: 0; }
+  from { transform: translateX(36px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 .toc-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px 12px;
-  border-bottom: 2px solid var(--sakura-100);
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--line);
 }
-.toc-title { font-size: 16px; font-weight: 700; color: var(--sakura-600); }
+.toc-title { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: 0.4px; }
+.toc-sub { margin-top: 3px; font-size: 12px; color: var(--text-light); }
 .toc-close {
-  font-size: 16px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sakura-50);
   color: var(--text-light);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
+  font-size: 15px;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    transform var(--dur-3) var(--ease-spring);
 }
-.toc-close:hover { background: #ffe9f0; color: var(--sakura-600); }
-.toc-list { flex: 1; overflow-y: auto; padding: 10px 12px 24px; }
-.toc-unit { margin-bottom: 8px; }
+.toc-close:hover { color: var(--sakura-600); background: var(--sakura-100); transform: rotate(90deg); }
+.toc-close:active { transform: scale(0.9); }
+
+.toc-progress { padding: 14px 18px 4px; }
+.toc-progress-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: var(--text-light);
+  font-size: 12px;
+}
+.toc-progress-label b { color: var(--sakura-600); font-size: 15px; font-variant-numeric: tabular-nums; }
+.toc-progress-rail {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sakura-100);
+  overflow: hidden;
+}
+.toc-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-4) var(--ease-out-expo);
+}
+.toc-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.toc-list { flex: 1; overflow-y: auto; padding: 10px 12px 18px; }
+.toc-unit { margin-bottom: 10px; }
 .toc-unit-title {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #b36a5e;
-  padding: 6px 8px;
-  background: #fff3f6;
-  border-radius: 8px;
-  margin-bottom: 2px;
-}
-.toc-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  border-left: 3px solid transparent;
+  gap: 8px;
+  padding: 7px 9px;
+  margin-bottom: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--sakura-50);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.5;
 }
-.toc-item:hover { background: var(--sakura-100); }
-.toc-item.current { background: #ffe9f0; border-left-color: #ff7da0; }
-.toc-item.marked .toc-label { color: #b06a10; }
+.toc-unit-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--grad-iris);
+}
+.toc-unit-name { flex: 1; min-width: 0; }
+.toc-unit-count {
+  flex-shrink: 0;
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 600;
+}
+.toc-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  transition: background var(--dur-2) var(--ease-soft);
+}
+.toc-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--grad-sakura);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transform-origin: 50% 0;
+  transition: opacity var(--dur-2) var(--ease-soft), transform var(--dur-3) var(--ease-out-expo);
+}
+.toc-item:hover { background: var(--card-hover); }
+.toc-item.current { background: var(--sakura-50); }
+.toc-item.current::before { opacity: 1; transform: none; }
+.toc-item.marked .toc-label { color: var(--amber); }
 .toc-mark {
   flex-shrink: 0;
-  background: none;
-  border: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-faint);
   font-size: 15px;
-  color: var(--text-light);
-  cursor: pointer;
-  padding: 2px;
   line-height: 1;
+  transition: color var(--dur-2), background var(--dur-2), transform var(--dur-2) var(--ease-spring);
 }
-.toc-mark:hover { color: #ffb347; }
-.toc-mark.active { color: #ffb347; }
+.toc-mark:hover { color: var(--amber); background: var(--amber-soft); }
+.toc-mark:active { transform: scale(0.88); }
+.toc-mark.active { color: var(--amber); }
 .toc-label {
   flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 7px 2px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
   font-size: 13px;
-  color: #6b4a52;
-  line-height: 1.5;
-  word-break: break-all;
+  font-weight: 500;
+  line-height: 1.55;
+  text-align: left;
+  overflow-wrap: anywhere;
+  transition: color var(--dur-2) var(--ease-soft);
 }
-.toc-item.current .toc-label { font-weight: 700; color: var(--sakura-600); }
+.toc-label:hover { color: var(--sakura-600); }
+.toc-item.current .toc-label { color: var(--sakura-600); font-weight: 800; }
+.toc-foot {
+  padding: 10px 18px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: 11.5px;
+  text-align: center;
+}
 
+/* ===== 响应式：平板 / 手机 ===== */
+@media (max-width: 820px) {
+  .reader-page { padding: 14px 14px 48px; }
+  .reader-content.sequential { max-width: 100%; }
+  .page-wrap { padding: 24px 22px 32px; }
+  .book { height: calc(100vh - 290px); height: clamp(360px, calc(100dvh - 290px), 720px); }
+}
 @media (max-width: 640px) {
-  .reader-page { padding: 12px 12px 40px; }
-  .reader-actions { flex-wrap: wrap; }
-  .mode-toggle { padding: 6px 10px; font-size: 12px; }
-  .page-wrap { padding: 18px 16px; }
-  .book { height: calc(100vh - 160px); }
+  .reader-page { padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); }
+  .reader-bar {
+    top: 58px;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+  }
+  .rb-main { flex-basis: 100%; gap: 10px; }
+  .rb-titles { flex: 1; }
+  .reader-title { font-size: 16px; }
+  .rb-meta { gap: 6px; }
+  .rb-sep { display: none; }
+  .reader-actions { width: 100%; flex-wrap: nowrap; gap: 8px; }
+  .mode-switch { flex: 1; min-width: 0; }
+  .mode-toggle { flex: 1; padding: 0 8px; font-size: 12.5px; }
+  .toc-btn { flex-shrink: 0; padding: 0 12px; }
+  .book { height: calc(100vh - 330px); height: clamp(300px, calc(100dvh - 330px), 680px); }
+  .page-wrap {
+    padding: 20px 16px 28px;
+    border-radius: var(--radius-lg);
+  }
+  .page-wrap .gp-title { font-size: 17px; }
+  .gp-card { padding: 16px 14px; border-radius: var(--radius); scroll-margin-top: 182px; }
+  .gp-title { font-size: 16px; }
+  .gp-label { font-size: 12.5px; }
+  .pager-bar { gap: 8px; }
+  .page-btn { padding: 0 12px; font-size: 12.5px; }
+  .pager-mid { min-width: 84px; }
+  .pager-rail { max-width: 120px; }
+  .kbd { display: none; }
+  .toc { width: min(360px, 94vw); }
+}
+/* 手机底部 Tab 栏（Dock）：为底部操作条让位 */
+@media (max-width: 760px) {
+  .reader-page { padding-bottom: calc(160px + env(safe-area-inset-bottom)); }
+  .reader-bar { top: 58px; }
+  .pager-bar { bottom: calc(78px + env(safe-area-inset-bottom)); }
+}
+
+/* 减少动态效果：翻书动画直接取消，避免长时间空白 */
+@media (prefers-reduced-motion: reduce) {
+  .book-leaf.over-away,
+  .book-leaf.over-in { animation: none; }
 }
 </style>

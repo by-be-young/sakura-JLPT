@@ -1,7 +1,10 @@
 <template>
   <div class="container">
     <div class="list-header">
-      <h2>📖 {{ level }} · 读解</h2>
+      <div class="list-title">
+        <img class="hero-cover" src="./covers/reading-orange.svg" alt="橙宝书 · 读解" />
+        <h2>📖 {{ level }} · 读解</h2>
+      </div>
       <button class="btn btn-ghost btn-sm" @click="$router.push('/learn')">← 练习</button>
     </div>
     <p class="list-desc">
@@ -20,7 +23,7 @@
         <span class="unit-title">Unit{{ g.unit }} · {{ g.unitTitle }}</span>
         <span class="unit-count">{{ g.items.length }} 篇</span>
       </div>
-      <div class="reading-grid">
+      <div class="reading-grid stagger">
         <div v-for="r in g.items" :key="r.id" class="reading-card" @click="router.push('/reading/' + r.id)">
           <div class="r-num">読み物{{ r.num }}</div>
           <div class="r-meta">{{ r.questions.length }} 题</div>

@@ -2,9 +2,12 @@
   <div class="container study-page">
     <!-- 页头 -->
     <div class="study-hero">
-      <div>
-        <div class="hero-title">🌸 文法 · 蓝宝书</div>
-        <div class="hero-sub">{{ currentTitle }} · 系统语法体系 · 详解例句</div>
+      <div class="hero-lead">
+        <img class="hero-cover" src="./covers/grammar-blue.svg" alt="蓝宝书 · 文法详解" />
+        <div>
+          <div class="hero-title">📘 文法 · 蓝宝书</div>
+          <div class="hero-sub">{{ currentTitle }} · 系统语法体系 · 详解例句</div>
+        </div>
       </div>
       <span class="hero-badge">{{ level }}</span>
     </div>

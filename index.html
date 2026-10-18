@@ -21,11 +21,28 @@
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
   <script>
-    // Service Worker 注册（PWA 离线；Electron/Capacitor 环境自动跳过）
+    // Service Worker（PWA 离线）。注意：
+    // 1) Electron / Capacitor 内不使用 SW；
+    // 2) 本地开发（localhost / 127.0.0.1）必须禁用：dev 下模块 URL 不带 hash，
+    //    SW 的 cache-first 会喂回旧模块，导致改完代码后页面空白/行为诡异；
+    //    同时主动清理历史遗留的 SW 与缓存，避免旧会话残留。
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js').catch(function () {});
-      });
+      var host = location.hostname;
+      var isLocalDev = host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1';
+      if (isLocalDev) {
+        navigator.serviceWorker.getRegistrations()
+          .then(function (regs) { regs.forEach(function (r) { r.unregister(); }); })
+          .catch(function () {});
+        if (window.caches && caches.keys) {
+          caches.keys()
+            .then(function (keys) { keys.forEach(function (k) { caches.delete(k); }); })
+            .catch(function () {});
+        }
+      } else {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('./sw.js').catch(function () {});
+        });
+      }
     }
   </script>
 </body>

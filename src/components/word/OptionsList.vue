@@ -1,12 +1,20 @@
 <template>
-  <div class="options-list">
+  <div class="options-list" role="radiogroup" aria-label="选项">
     <div v-for="(opt, i) in question.options" :key="i" class="option-item"
-      :class="optClass(i)" @click="select(i)">
+      :class="optClass(i)"
+      :style="{ '--i': i }"
+      role="radio"
+      :aria-checked="selected === i"
+      :aria-disabled="answered"
+      :tabindex="answered ? -1 : 0"
+      @click="select(i)"
+      @keydown.enter.prevent="select(i)"
+      @keydown.space.prevent="select(i)">
       <span class="option-num">{{ i + 1 }}</span>
       <span class="option-text" v-html="optText(opt)"></span>
       <span v-if="optPitch(opt, i)" class="opt-pitch">{{ optPitch(opt, i) }}</span>
-      <span v-if="answered && i === question.correctIndex" class="mark">✓</span>
-      <span v-if="answered && selected === i && i !== question.correctIndex" class="mark">✗</span>
+      <span v-if="answered && i === question.correctIndex" class="mark" aria-label="正确答案">✓</span>
+      <span v-if="answered && selected === i && i !== question.correctIndex" class="mark" aria-label="你的选择">✗</span>
     </div>
   </div>
 </template>
@@ -77,73 +85,101 @@ function select(i) {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
+  min-height: 54px;
+  padding: 13px 18px;
   background: var(--card);
-  border: 2px solid var(--border-strong);
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 15px;
   color: var(--text);
+  font-size: 16px;
   font-family: inherit;
-  animation: optionIn 0.25s ease both;
+  animation: opt-in 420ms var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    box-shadow var(--dur-2) var(--ease-soft);
 }
-@keyframes optionIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes opt-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
-.option-item:hover:not(.disabled) {
-  border-color: #f79ab4;
-  background: var(--sakura-50);
+@media (hover: hover) and (pointer: fine) {
+  .option-item:hover:not(.disabled) {
+    transform: translateX(3px);
+    border-color: var(--sakura-300);
+    background: var(--card-hover);
+    box-shadow: var(--shadow);
+  }
 }
 .option-item.selected {
-  border-color: #f79ab4;
-  background: #ffe9f0;
+  border-color: var(--sakura-400);
+  background: var(--sakura-100);
+  box-shadow: 0 0 0 3px var(--sakura-100), var(--shadow-card);
 }
 .option-item.correct {
-  border-color: #7ed58a;
-  background: #e8f7ef;
-  animation: popCorrect 0.4s ease;
+  border-color: var(--green);
+  background: var(--green-soft);
+  animation: opt-correct 520ms var(--ease-spring);
 }
-@keyframes popCorrect {
+@keyframes opt-correct {
   0% { transform: scale(1); }
-  40% { transform: scale(1.03); }
+  38% { transform: scale(1.022); }
   100% { transform: scale(1); }
 }
 .option-item.wrong {
-  border-color: #f79b9b;
-  background: #fdecee;
-  animation: shake 0.4s ease;
+  border-color: var(--red);
+  background: var(--red-soft);
+  animation: opt-wrong 380ms var(--ease-soft);
 }
-@keyframes shake {
+@keyframes opt-wrong {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  22% { transform: translateX(-6px); }
+  55% { transform: translateX(5px); }
+  80% { transform: translateX(-2px); }
 }
 .option-item.disabled { cursor: default; }
 .option-num {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: #ffe9f0;
-  color: var(--sakura-600);
+  background: var(--sakura-100);
+  color: var(--sakura-700);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
   flex-shrink: 0;
+  transition: transform var(--dur-2) var(--ease-spring), background var(--dur-2), color var(--dur-2);
 }
-.option-item.correct .option-num { background: #7ed58a; color: #fff; }
-.option-item.wrong .option-num { background: #f79b9b; color: #fff; }
-.option-text { flex: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .option-item:hover:not(.disabled) .option-num { transform: scale(1.08); }
+}
+.option-item.correct .option-num {
+  background: var(--green);
+  color: var(--card);
+}
+.option-item.wrong .option-num {
+  background: var(--red);
+  color: var(--card);
+}
+.option-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
 .option-text :deep(ruby) {
   ruby-position: over;
 }
 .option-text :deep(rt) {
   font-size: 0.55em;
-  color: #e884a0;
-  font-weight: 500;
+  color: var(--sakura-600);
+  font-weight: 600;
   letter-spacing: 0.02em;
 }
 .option-text :deep(rp) {
@@ -151,15 +187,25 @@ function select(i) {
 }
 .opt-pitch {
   font-size: 13px;
-  color: #e884a0;
-  font-weight: 700;
+  color: var(--sakura-700);
+  font-weight: 800;
   flex-shrink: 0;
 }
 .mark {
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 19px;
   flex-shrink: 0;
 }
 .option-item.correct .mark { color: var(--green); }
-.option-item.wrong .mark { color: #c0392b; }
+.option-item.wrong .mark { color: var(--red); }
+
+@media (max-width: 480px) {
+  .option-item {
+    min-height: 52px;
+    padding: 12px 14px;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .option-num { width: 28px; height: 28px; font-size: 13px; }
+}
 </style>

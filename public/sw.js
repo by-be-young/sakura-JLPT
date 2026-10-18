@@ -1,8 +1,9 @@
 /* 樱花日语 - Service Worker（PWA 离线支持）
  * 策略：核心页面 network-first（保证拿到新版本），静态资源 cache-first。
- * 仅对同源 GET 请求生效；Electron / Capacitor 不使用本 SW。
+ * 仅对同源 GET 请求生效；Electron / Capacitor / 本地开发（localhost）不使用本 SW。
+ * 改动缓存策略或修复线上白屏问题时，务必上调 CACHE_NAME 版本号以清掉旧缓存。
  */
-const CACHE_NAME = 'sakura-japanese-v1';
+const CACHE_NAME = 'sakura-japanese-v2';
 const CORE_ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

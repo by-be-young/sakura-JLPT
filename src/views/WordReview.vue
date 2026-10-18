@@ -1,55 +1,90 @@
 <template>
   <div class="container words-page">
     <!-- 顶部导航 -->
-    <div class="words-header">
-      <button class="btn btn-ghost btn-sm" @click="$router.push('/words')">← 返回</button>
-      <h2 class="page-title">🌸 复习</h2>
-      <div class="header-spacer"></div>
-      <span class="level-tag">{{ levelName }}</span>
-    </div>
+    <header class="page-head">
+      <div class="page-head-main">
+        <button class="back-btn" @click="$router.push('/words')" title="返回背词" aria-label="返回背词">← 返回</button>
+        <span class="icon-tile review-tile" aria-hidden="true">🔁</span>
+        <div class="page-head-text">
+          <h2 class="page-title">复习</h2>
+          <p class="page-sub">三档自评 · 记得 / 模糊 / 不记得 · 快捷键 1 / 2 / 3</p>
+        </div>
+      </div>
+      <div class="page-actions">
+        <span class="chip-pill accent">{{ levelName }}</span>
+        <span v-if="queue.length" class="chip-pill">剩余 {{ queue.length }} 词</span>
+      </div>
+    </header>
 
     <!-- 复习进度 -->
-    <div class="learn-progress" v-if="queue.length">
-      <span>剩余 {{ queue.length }} 个单词</span>
-      <div class="progress-bar-wrap"><div class="progress-bar-inner" :style="{ width: doneCount / totalCount * 100 + '%' }"></div></div>
-    </div>
+    <section class="review-progress-row" v-if="queue.length" aria-label="复习进度">
+      <span class="rp-label">复习进度</span>
+      <span class="rp-count">{{ doneCount }}<i>/</i>{{ totalCount }}</span>
+      <div class="progress-bar-wrap" role="progressbar" :aria-valuenow="doneCount" aria-valuemin="0" :aria-valuemax="totalCount">
+        <div class="progress-bar-inner" :style="{ width: doneCount / totalCount * 100 + '%' }"></div>
+      </div>
+      <span class="rp-pct">{{ totalCount ? Math.round(doneCount / totalCount * 100) : 0 }}%</span>
+    </section>
 
     <!-- 无待复习词 -->
-    <div v-if="!queue.length && !reviewFinished" class="empty-state">
-      <div class="empty-icon">🌸</div>
-      <p>暂无需要复习的单词</p>
-      <button class="btn btn-ghost" @click="$router.push('/words')">返回</button>
+    <div v-if="!queue.length && !reviewFinished" class="empty-card status-card">
+      <div class="empty-emoji" aria-hidden="true">🌸</div>
+      <div class="empty-title">暂无需要复习的单词</div>
+      <p class="empty-desc">先学几个新词，或明天再来巩固记忆。</p>
+      <button class="btn btn-primary" @click="$router.push('/words')">返回背词</button>
     </div>
 
-    <!-- 复习卡片流程 -->
-    <div v-if="queue.length" class="review-section">
+    <!-- 复习卡片流程（完成态也要保留容器，才能显示“复习完成”） -->
+    <div v-if="queue.length || reviewFinished" class="review-section">
       <!-- 阶段1：自评 -->
-      <div v-if="reviewStage === 'eval'" class="review-card">
+      <div v-if="reviewStage === 'eval'" v-reveal class="review-card">
+        <div class="eval-eyebrow"><span class="eval-dot" aria-hidden="true"></span>回忆一下这个单词</div>
         <div class="word-main center">
           <span class="word-kanji" v-html="kanjiHtml"></span>
-          <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">{{ pitchStr }}</span>
+          <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">
+            <span class="pitch-label">音调</span>{{ pitchStr }}
+          </span>
         </div>
-        <div class="eval-hint">你想起来了吗？</div>
+        <div class="eval-hint">你想起来了吗？先在心中回想释义，再选择熟悉程度。</div>
         <div class="eval-actions">
-          <button class="btn btn-remember" title="记得 (1)" @click="selfEval('remember')">😄 记得 (1)</button>
-          <button class="btn btn-blur" title="模糊 (2)" @click="selfEval('blur')">🤔 模糊 (2)</button>
-          <button class="btn btn-forget" title="不记得 (3)" @click="selfEval('forget')">😵 不记得 (3)</button>
+          <button class="eval-btn btn-remember" title="记得 (1)" aria-label="记得，快捷键 1" @click="selfEval('remember')">
+            <span class="eval-emoji" aria-hidden="true">😄</span>
+            <span class="eval-label">记得</span>
+            <span class="eval-key" aria-hidden="true">按 1</span>
+          </button>
+          <button class="eval-btn btn-blur" title="模糊 (2)" aria-label="模糊，快捷键 2" @click="selfEval('blur')">
+            <span class="eval-emoji" aria-hidden="true">🤔</span>
+            <span class="eval-label">模糊</span>
+            <span class="eval-key" aria-hidden="true">按 2</span>
+          </button>
+          <button class="eval-btn btn-forget" title="不记得 (3)" aria-label="不记得，快捷键 3" @click="selfEval('forget')">
+            <span class="eval-emoji" aria-hidden="true">😵</span>
+            <span class="eval-label">不记得</span>
+            <span class="eval-key" aria-hidden="true">按 3</span>
+          </button>
         </div>
         <div class="familiar-row">
-          <button class="btn-familiar" title="标记为熟词，不再进入学习与复习 (F)" @click="markFamiliar">⭐ 标记为熟词</button>
+          <button class="btn-familiar" title="标记为熟词，不再进入学习与复习 (F)" aria-label="把当前单词标记为熟词" @click="markFamiliar">⭐ 标记为熟词</button>
         </div>
       </div>
 
       <!-- 阶段2：翻开详情 -->
-      <div v-else-if="reviewStage === 'reveal'" class="review-reveal">
+      <div v-else-if="reviewStage === 'reveal'" v-reveal class="review-reveal">
+        <div class="reveal-tag">释义与例句</div>
         <div class="reveal-word">
           <span class="word-kanji" v-html="kanjiHtml"></span>
-          <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">{{ pitchStr }}</span>
-          <div class="reveal-kana">{{ currentWord.kana }}<span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">{{ pitchStr }}</span></div>
+          <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag">
+            <span class="pitch-label">音调</span>{{ pitchStr }}
+          </span>
+          <div class="reveal-kana">
+            {{ currentWord.kana }}
+            <span v-if="currentWord.pitch && currentWord.pitch.length" class="pitch-tag pitch-tag-sm">{{ pitchStr }}</span>
+          </div>
         </div>
         <div v-if="currentWord.pos" class="word-pos">{{ currentWord.pos }}</div>
         <div class="word-meaning">{{ currentWord.meaning }}</div>
         <div v-if="currentWord.examples && currentWord.examples.length" class="word-examples">
+          <div class="ex-head">例句</div>
           <div v-for="(ex, i) in currentWord.examples" :key="i" class="ex-item">
             <div class="ex-jp" v-html="exJpHtml(ex)"></div>
             <div class="ex-zh">{{ ex.zh }}</div>
@@ -71,22 +106,34 @@
         </div>
         <div class="reveal-notes">
           <div v-if="noteText" class="reveal-note-text">{{ noteText }}</div>
-          <button class="btn btn-ghost btn-sm" :title="noteText ? '编辑笔记 (N)' : '添加笔记 (N)'" @click="openNote">{{ noteText ? '📝 编辑笔记' : '📝 添加笔记' }}</button>
+          <button class="btn btn-ghost btn-sm" :title="noteText ? '编辑笔记 (N)' : '添加笔记 (N)'"
+            :aria-label="noteText ? '编辑当前单词笔记' : '为当前单词添加笔记'" @click="openNote">
+            📝 {{ noteText ? '编辑笔记' : '添加笔记' }}
+          </button>
         </div>
         <div class="reveal-actions">
-          <button class="btn btn-correct" title="没问题 (1)" @click="confirmEval(true)">😄 没问题 (1)</button>
-          <button class="btn btn-wrong" title="记错了 (2)" @click="confirmEval(false)">😵 记错了 (2)</button>
+          <button class="eval-btn btn-correct" title="没问题 (1)" aria-label="没问题，快捷键 1" @click="confirmEval(true)">
+            <span class="eval-emoji" aria-hidden="true">😄</span>
+            <span class="eval-label">没问题</span>
+            <span class="eval-key" aria-hidden="true">按 1</span>
+          </button>
+          <button class="eval-btn btn-wrong" title="记错了 (2)" aria-label="记错了，快捷键 2" @click="confirmEval(false)">
+            <span class="eval-emoji" aria-hidden="true">😵</span>
+            <span class="eval-label">记错了</span>
+            <span class="eval-key" aria-hidden="true">按 2</span>
+          </button>
         </div>
         <div class="familiar-row">
-          <button class="btn-familiar" title="标记为熟词，不再进入学习与复习 (F)" @click="markFamiliar">⭐ 标记为熟词</button>
+          <button class="btn-familiar" title="标记为熟词，不再进入学习与复习 (F)" aria-label="把当前单词标记为熟词" @click="markFamiliar">⭐ 标记为熟词</button>
         </div>
       </div>
 
       <!-- 阶段3：完成提示 -->
-      <div v-else class="review-finished">
-        <div class="empty-icon">🌸</div>
+      <div v-else class="review-finished empty-card">
+        <div class="empty-emoji" aria-hidden="true">🌸</div>
         <div class="result-score">复习完成！</div>
         <div class="result-rate">本批共 {{ totalCount }} 个</div>
+        <p class="empty-desc">这一批单词已经过了一遍，记得常回来复习。</p>
         <div class="result-actions">
           <button class="btn btn-ghost" @click="$router.push('/words')">返回背词</button>
           <button class="btn btn-primary" @click="restartReview">再来一轮</button>
@@ -130,6 +177,9 @@ const totalCount = ref(0)
 const doneCount = ref(0)
 const reviewStage = ref('eval') // 'eval' | 'reveal' | 'done'
 const editingWord = ref(null)
+// 本批复习是否已走完（模板里的 .review-finished 与空状态都依赖它；
+// 之前模板引用了未定义的 reviewFinished，导致"复习完成"页永远不出现）
+const reviewFinished = computed(() => reviewStage.value === 'done')
 
 const currentWord = computed(() => queue.value[0] || null)
 const pitchStr = computed(() => (currentWord.value && currentWord.value.pitch) ? currentWord.value.pitch.map(pitchToCircle).join('') : '')
@@ -253,152 +303,430 @@ function restartReview() {
 
 <style scoped>
 .words-page { max-width: 960px; }
-.words-header {
+
+/* ---------- 页头 ---------- */
+.page-head { align-items: center; }
+.review-tile { background: var(--iris-soft); }
+.back-btn { min-height: 40px; }
+
+/* ---------- 进度条 ---------- */
+.review-progress-row {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
+  padding: 11px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  font-size: 12.5px;
+  color: var(--text-light);
 }
-.page-title { margin: 0; font-size: 22px; color: var(--sakura-600); }
-.header-spacer { flex: 1; }
-.level-tag {
-  background: #ffe9f0;
-  color: var(--sakura-600);
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 13px;
+.rp-label { flex-shrink: 0; }
+.rp-count {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.rp-count i {
+  font-style: normal;
+  margin: 0 2px;
+  color: var(--text-faint);
   font-weight: 600;
 }
-.learn-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  color: var(--text);
-  margin-bottom: 18px;
+.rp-pct {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--sakura-700);
+  font-variant-numeric: tabular-nums;
 }
 .progress-bar-wrap {
   flex: 1;
-  height: 8px;
+  min-width: 56px;
+  height: 7px;
+  border-radius: var(--radius-pill);
   background: var(--sakura-100);
-  border-radius: 8px;
   overflow: hidden;
 }
 .progress-bar-inner {
+  position: relative;
   height: 100%;
-  background: linear-gradient(90deg, #ff9dbd, #ff7da0);
-  border-radius: 8px;
-  transition: width 0.3s;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  overflow: hidden;
+  transition: width var(--dur-4) var(--ease-out-expo);
 }
-.empty-state {
+.progress-bar-inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: bar-shine 2.4s var(--ease-soft) infinite;
+}
+@keyframes bar-shine {
+  0% { transform: translateX(-100%); }
+  55%, 100% { transform: translateX(200%); }
+}
+
+/* ---------- 统一空态 / 结束态卡片 ---------- */
+.empty-card {
+  position: relative;
+  overflow: hidden;
+  padding: 32px 22px;
   text-align: center;
-  padding: 60px 20px;
+  background: var(--card-grad);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-float);
+  animation: rise-in var(--dur-4) var(--ease-out-expo) both;
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.empty-emoji {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.empty-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.empty-desc {
+  font-size: 13px;
+  line-height: 1.7;
   color: var(--text-light);
+  max-width: 420px;
+  margin: 10px auto 18px;
 }
-.empty-icon { font-size: 60px; margin-bottom: 12px; }
+.status-card { max-width: 560px; margin: 22px auto; }
+.status-card .btn { min-height: 44px; }
+
+/* ---------- 阶段1：自评 ---------- */
+.review-section { min-height: 260px; }
 .review-card {
-  background: linear-gradient(145deg, var(--sakura-50), #ffe9f0);
-  border: 2px solid var(--border-strong);
-  border-radius: 20px;
-  padding: 40px 24px;
-  text-align: center;
-  min-height: 260px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 300px;
+  padding: 34px 26px 26px;
+  text-align: center;
+  background: radial-gradient(120% 100% at 50% 0%, var(--sakura-50) 0%, var(--card) 66%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-float);
 }
-.word-main { display: flex; align-items: baseline; gap: 10px; }
+.review-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 64px;
+  height: 3px;
+  transform: translateX(-50%);
+  border-radius: 0 0 3px 3px;
+  background: var(--grad-sakura);
+  opacity: 0.85;
+}
+.eval-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 5px 13px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-100);
+  color: var(--sakura-700);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.eval-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sakura-500);
+}
+.word-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  max-width: 100%;
+}
 .center { justify-content: center; }
 .word-kanji {
-  font-size: 52px;
-  font-weight: 700;
+  max-width: 100%;
+  font-size: clamp(42px, 11vw, 72px);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: 0.04em;
   color: var(--sakura-600);
-  letter-spacing: 0.05em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .word-kanji :deep(ruby), .ex-jp :deep(ruby) {
   ruby-position: over;
 }
 .word-kanji :deep(rt), .ex-jp :deep(rt) {
   font-size: 0.5em;
-  color: #e884a0;
+  color: var(--sakura-600);
+  font-weight: 600;
+}
+.word-kanji :deep(rp), .ex-jp :deep(rp) {
+  display: none;
 }
 .pitch-tag {
-  font-size: 18px;
-  color: #e884a0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-100);
+  color: var(--sakura-700);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.pitch-tag-sm { font-size: 13px; padding: 2px 9px; }
+.pitch-label {
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  color: var(--sakura-600);
+  opacity: 0.85;
 }
-.eval-hint { font-size: 14px; color: var(--text-light); margin: 18px 0; }
+.eval-hint {
+  max-width: 400px;
+  margin: 18px auto 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-light);
+}
+
+/* 三档自评 / 判定按钮 */
 .eval-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 540px;
 }
-.btn-remember { background: #eefbf0; color: #2d8a3e; border: 2px solid #7ed58a; border-radius: 14px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
-.btn-blur { background: #fff8e6; color: #b8860b; border: 2px solid #e8c76a; border-radius: 14px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
-.btn-forget { background: #fff0f0; color: #c0392b; border: 2px solid #f79b9b; border-radius: 14px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
+.eval-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 112px;
+  padding: 14px 8px;
+  border-radius: var(--radius-lg);
+  border: 1px solid;
+  background: var(--card);
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    box-shadow var(--dur-3) var(--ease-out-expo),
+    background var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2);
+}
+.eval-btn:active { transform: scale(0.955); }
+.eval-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  font-size: 21px;
+  line-height: 1;
+}
+.eval-label {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.eval-key {
+  padding: 1px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-light);
+}
+.btn-remember {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn-blur {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.btn-forget {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: var(--red);
+}
+.btn-correct {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn-wrong {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: var(--red);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-remember:hover,
+  .btn-correct:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 4px var(--green-soft), 0 16px 30px -20px var(--green);
+  }
+  .btn-blur:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 4px var(--amber-soft), 0 16px 30px -20px var(--amber);
+  }
+  .btn-forget:hover,
+  .btn-wrong:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 4px var(--red-soft), 0 16px 30px -20px var(--red);
+  }
+}
 .familiar-row {
+  margin-top: 20px;
   text-align: center;
-  margin-top: 18px;
 }
 .btn-familiar {
-  background: var(--card-grad);
-  border: 2px solid var(--border-strong);
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 13px;
-  color: var(--sakura-600);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--amber-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-2),
+    box-shadow var(--dur-2),
+    color var(--dur-2);
 }
-.btn-familiar:hover {
-  background: #fff3e6;
-  border-color: #f5b06a;
-  color: #b8860b;
+@media (hover: hover) and (pointer: fine) {
+  .btn-familiar:hover {
+    transform: translateY(-1px);
+    border-color: var(--amber);
+    color: var(--sakura-700);
+    box-shadow: 0 8px 18px -12px var(--amber);
+  }
 }
-.btn-correct { background: #eefbf0; color: #2d8a3e; border: 2px solid #7ed58a; border-radius: 14px; padding: 12px 24px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
-.btn-wrong { background: #fff0f0; color: #c0392b; border: 2px solid #f79b9b; border-radius: 14px; padding: 12px 24px; font-weight: 700; cursor: pointer; font-size: 15px; font-family: inherit; }
+.btn-familiar:active { transform: scale(0.96); }
+
+/* ---------- 阶段2：翻开详情 ---------- */
 .review-reveal {
-  background: linear-gradient(145deg, #fffdf9, #fff3e6);
-  border: 2px solid var(--border-strong);
-  border-radius: 20px;
-  padding: 32px 28px;
+  padding: 28px 26px;
+  background: var(--card-grad);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-float);
+  animation: rise-in var(--dur-4) var(--ease-out-expo) both;
 }
-.reveal-word { text-align: center; margin-bottom: 10px; }
-.reveal-kana { font-size: 28px; color: #d9773e; font-weight: 700; margin-top: 6px; }
-.word-pos {
-  display: inline-block;
-  font-size: 13px;
+.reveal-tag {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 14px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
   color: var(--text-light);
-  background: #ffeef3;
-  padding: 2px 10px;
-  border-radius: 20px;
-  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.reveal-word { text-align: center; }
+.reveal-kana {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: clamp(24px, 6.5vw, 36px);
+  font-weight: 800;
+  color: var(--sakura-600);
+  overflow-wrap: anywhere;
+}
+.word-pos {
+  display: block;
+  width: fit-content;
+  margin: 12px auto 0;
+  padding: 2px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 700;
 }
 .word-meaning {
-  font-size: 22px;
-  color: #6b4a52;
-  font-weight: 600;
+  margin: 14px auto 18px;
+  max-width: 620px;
   text-align: center;
-  margin-bottom: 14px;
+  font-size: clamp(20px, 5vw, 25px);
+  font-weight: 700;
+  line-height: 1.55;
+  color: var(--text);
 }
 .word-examples {
   width: 100%;
   text-align: left;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sakura-300);
+  border-radius: var(--radius-sm);
   padding: 12px 14px;
-  box-sizing: border-box;
 }
+.ex-head {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.ex-item { margin-bottom: 10px; }
+.ex-item:last-child { margin-bottom: 0; }
+.ex-jp { font-size: 16px; line-height: 1.8; color: var(--text); }
+.ex-zh { font-size: 12.5px; line-height: 1.6; color: var(--text-light); margin-top: 2px; }
 .word-relations {
   width: 100%;
   margin-top: 10px;
-  background: #f3f0ff;
-  border-radius: 12px;
-  padding: 10px 14px;
+  background: var(--iris-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
   box-sizing: border-box;
   text-align: left;
 }
@@ -411,13 +739,13 @@ function restartReview() {
 }
 .rel-group:last-child { margin-bottom: 0; }
 .rel-label {
-  font-size: 12px;
-  color: #7a5c9e;
-  background: #e7ddf7;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 11px;
+  color: var(--iris);
+  background: var(--card);
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 700;
 }
 .rel-items {
   display: flex;
@@ -426,48 +754,78 @@ function restartReview() {
 }
 .rel-item {
   font-size: 15px;
-  color: #5d3f8a;
+  color: var(--text);
   font-weight: 600;
 }
 .rel-kana {
   font-size: 12px;
-  color: #9a7ec2;
+  color: var(--text-light);
   margin-left: 4px;
   font-weight: 400;
 }
-.ex-item { margin-bottom: 8px; }
-.ex-item:last-child { margin-bottom: 0; }
-.ex-jp { font-size: 16px; color: #8a5a45; }
-.ex-zh { font-size: 13px; color: #b8a091; margin-top: 2px; }
 .reveal-notes {
   margin-top: 14px;
   text-align: center;
 }
 .reveal-note-text {
-  background: var(--sakura-50);
-  border-radius: 10px;
+  margin-bottom: 10px;
   padding: 10px 14px;
-  font-size: 14px;
-  color: #6b4a52;
-  white-space: pre-wrap;
-  margin-bottom: 8px;
   text-align: left;
+  background: var(--sakura-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.reveal-notes .btn {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
 }
 .reveal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 20px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+  margin: 22px auto 0;
 }
-.review-finished {
-  text-align: center;
-  padding: 40px 20px;
-  background: var(--sakura-50);
-  border-radius: 20px;
-}
-.result-score { font-size: 18px; color: var(--text); margin-bottom: 6px; }
-.result-rate { font-size: 22px; font-weight: 700; color: var(--sakura-600); margin-bottom: 16px; }
-.result-actions { display: flex; gap: 12px; justify-content: center; }
-</style>
+.reveal-actions .eval-btn { min-height: 96px; }
 
+/* ---------- 阶段3：完成 ---------- */
+.review-finished { max-width: 620px; margin: 0 auto; }
+.result-score {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.result-rate {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.result-actions .btn { min-height: 44px; }
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 480px) {
+  .review-progress-row { gap: 9px; padding: 10px 12px; }
+  .rp-label { font-size: 11.5px; }
+  .review-card { padding: 28px 16px 22px; min-height: 280px; }
+  .review-reveal { padding: 22px 16px; }
+  .eval-btn { min-height: 102px; padding: 12px 6px; }
+  .eval-emoji { width: 36px; height: 36px; font-size: 19px; }
+  .eval-label { font-size: 14px; }
+  .eval-actions { gap: 8px; }
+  .reveal-actions .eval-btn { min-height: 88px; }
+}
+</style>

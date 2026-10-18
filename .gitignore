@@ -5,6 +5,10 @@ node_modules/
 dist/
 dist-ssr/
 
+# 本地临时构建 / 截图验证产物
+.tmp-build/
+.tmp-shot/
+
 # Electron builder output (electron-builder 打包产物，勿提交)
 release/
 release_*/

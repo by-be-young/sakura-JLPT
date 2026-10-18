@@ -87,6 +87,8 @@ async function checkElectron() {
     api.on('update-available', (info) => {
       state.phase = 'available'
       state.latest = normalizeVersion(info && (info.version || info.name))
+      // 清单缺失时的兜底模式：直接给发布页下载链接，跳浏览器下载
+      if (info && info.manualDownloadUrl) state.releaseUrl = info.manualDownloadUrl
     }),
     api.on('update-not-available', () => { state.phase = 'none' }),
     api.on('download-progress', (p) => {
@@ -154,8 +156,13 @@ async function checkWeb() {
 // ---------- 对外动作 ----------
 function startDownload() {
   if (state.platform === 'electron') {
-    window.sakuraUpdater.download()
-    state.phase = 'downloading'
+    if (state.releaseUrl) {
+      // 兜底模式：清单缺失，无法增量下载，改为跳转浏览器打开发布页
+      window.open(state.releaseUrl, '_blank', 'noopener')
+    } else {
+      window.sakuraUpdater.download()
+      state.phase = 'downloading'
+    }
   } else {
     // Android: _system 打开系统浏览器下载 APK；PWA: 打开 Releases 页面
     if (state.releaseUrl) {

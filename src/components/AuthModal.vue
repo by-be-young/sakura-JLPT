@@ -1,63 +1,90 @@
 <template>
-  <Transition name="auth-fade">
-    <div v-if="visible" class="auth-mask" @click.self="close">
-      <div class="auth-card">
-        <button class="auth-close" @click="close">✕</button>
-        <div class="auth-title">🌸 {{ mode === 'login' ? '登录' : mode === 'register' ? '注册账号' : '找回密码' }}</div>
-
-        <!-- 未配置云端 -->
-        <div v-if="!configured" class="auth-notice">
-          <p>尚未配置云端服务。</p>
-          <p>请按 README「Supabase 账号接入」章节创建项目并建表，将 Project URL / anon key 填入
-            <code>src/supabase/config.js</code> 后重新构建即可启用登录与云同步。</p>
-        </div>
-
-        <template v-else>
-          <!-- 表单 -->
-          <form @submit.prevent="submit">
-            <label class="auth-label">邮箱</label>
-            <input v-model.trim="email" class="auth-input" type="email" placeholder="you@example.com"
-              autocomplete="email" required />
-
-            <template v-if="mode !== 'reset'">
-              <label class="auth-label">密码</label>
-              <input v-model="password" class="auth-input" type="password" placeholder="至少 6 位"
-                :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required />
-              <template v-if="mode === 'register'">
-                <label class="auth-label">确认密码</label>
-                <input v-model="password2" class="auth-input" type="password" placeholder="再次输入密码" required />
-              </template>
-            </template>
-
-            <p v-if="error" class="auth-error">{{ error }}</p>
-            <p v-if="success" class="auth-success">{{ success }}</p>
-
-            <button class="auth-btn" type="submit" :disabled="busy">
-              {{ busy ? '请稍候…' : (mode === 'login' ? '登录' : mode === 'register' ? '注册' : '发送重置邮件') }}
-            </button>
-          </form>
-
-          <!-- 切换 -->
-          <div class="auth-switch">
-            <template v-if="mode === 'login'">
-              <a @click="mode = 'register'">没有账号？去注册</a>
-              <a @click="mode = 'reset'">忘记密码？</a>
-            </template>
-            <template v-else-if="mode === 'register'">
-              <a @click="mode = 'login'">已有账号？去登录</a>
-            </template>
-            <template v-else>
-              <a @click="mode = 'login'">返回登录</a>
-            </template>
+  <Teleport to="body">
+    <Transition name="auth-fade">
+      <div v-if="visible" class="modal-mask auth-mask" @click.self="close">
+        <div class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+          <div class="modal-head auth-head">
+            <div class="auth-head-main">
+              <span class="icon-tile sm auth-icon" aria-hidden="true">🌸</span>
+              <div class="auth-head-text">
+                <h2 id="auth-title" class="modal-title">{{ title }}</h2>
+                <p class="auth-sub">{{ subtitle }}</p>
+              </div>
+            </div>
+            <button class="modal-close auth-close" type="button" aria-label="关闭登录窗口" @click="close">✕</button>
           </div>
-        </template>
+
+          <!-- 未配置云端：柔和提示条 -->
+          <div v-if="!configured" class="auth-notice">
+            <div class="auth-notice-head">
+              <span aria-hidden="true">☁️</span>
+              <span>尚未配置云端服务</span>
+            </div>
+            <p class="auth-notice-text">
+              请按 README「Supabase 账号接入」章节创建项目并建表，将 Project URL / anon key 填入
+              <code>src/supabase/config.js</code> 后重新构建即可启用登录与云同步。
+            </p>
+          </div>
+
+          <template v-else>
+            <!-- 表单 -->
+            <form class="auth-form" @submit.prevent="submit">
+              <label class="auth-label" for="auth-email">邮箱</label>
+              <input id="auth-email" v-model.trim="email" class="auth-input" type="email" placeholder="you@example.com"
+                autocomplete="email" required />
+
+              <template v-if="mode !== 'reset'">
+                <label class="auth-label" for="auth-password">密码</label>
+                <input id="auth-password" v-model="password" class="auth-input" type="password" placeholder="至少 6 位"
+                  :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required />
+                <template v-if="mode === 'register'">
+                  <label class="auth-label" for="auth-password2">确认密码</label>
+                  <input id="auth-password2" v-model="password2" class="auth-input" type="password"
+                    placeholder="再次输入密码" autocomplete="new-password" required />
+                </template>
+              </template>
+
+              <Transition name="auth-msg">
+                <div v-if="error" class="auth-msg error" role="alert">
+                  <span class="auth-msg-icon" aria-hidden="true">!</span>
+                  <span>{{ error }}</span>
+                </div>
+              </Transition>
+              <Transition name="auth-msg">
+                <div v-if="success" class="auth-msg success" role="status">
+                  <span class="auth-msg-icon" aria-hidden="true">✓</span>
+                  <span>{{ success }}</span>
+                </div>
+              </Transition>
+
+              <button class="btn btn-primary auth-submit" type="submit" :disabled="busy" :aria-busy="busy">
+                <span v-if="busy" class="auth-spinner" aria-hidden="true"></span>
+                <span>{{ submitLabel }}</span>
+              </button>
+            </form>
+
+            <!-- 切换 -->
+            <div class="auth-switch" :class="{ 'is-single': mode !== 'login' }">
+              <template v-if="mode === 'login'">
+                <button type="button" class="auth-link" @click="mode = 'register'">没有账号？<b>去注册</b></button>
+                <button type="button" class="auth-link" @click="mode = 'reset'">忘记密码？</button>
+              </template>
+              <template v-else-if="mode === 'register'">
+                <button type="button" class="auth-link" @click="mode = 'login'">已有账号？<b>去登录</b></button>
+              </template>
+              <template v-else>
+                <button type="button" class="auth-link" @click="mode = 'login'">← <b>返回登录</b></button>
+              </template>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 
@@ -76,6 +103,20 @@ const password2 = ref('')
 const error = ref('')
 const success = ref('')
 const busy = ref(false)
+
+const title = computed(() =>
+  mode.value === 'login' ? '登录' : mode.value === 'register' ? '注册账号' : '找回密码'
+)
+const subtitle = computed(() =>
+  mode.value === 'login'
+    ? '登录后可在多台设备间同步学习进度'
+    : mode.value === 'register'
+      ? '创建账号，备份你的错题、收藏与学习记录'
+      : '输入注册邮箱，我们会发送一封重置链接邮件'
+)
+const submitLabel = computed(() =>
+  busy.value ? '请稍候…' : mode.value === 'login' ? '登录' : mode.value === 'register' ? '注册' : '发送重置邮件'
+)
 
 function close() {
   emit('update:visible', false)
@@ -139,43 +180,211 @@ async function submit() {
 </script>
 
 <style scoped>
-.auth-mask {
-  position: fixed; inset: 0; z-index: 10000;
-  background: rgba(60, 20, 35, 0.45);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-}
 .auth-card {
-  position: relative; width: 100%; max-width: 360px;
-  background: var(--card); border-radius: 16px; padding: 28px 26px 22px;
-  box-shadow: 0 12px 40px rgba(179, 74, 111, 0.25);
+  width: min(400px, 100%);
+  padding: 24px 24px 20px;
+}
+.auth-head {
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.auth-head-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.auth-icon {
+  background: var(--sakura-100);
+  font-size: 18px;
+}
+.auth-head-text { min-width: 0; }
+.auth-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-light);
 }
 .auth-close {
-  position: absolute; top: 10px; right: 12px;
-  border: none; background: none; font-size: 16px; color: #b98a9c; cursor: pointer;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin: -6px -6px 0 0;
+  font-size: 14px;
 }
-.auth-title {
-  font-size: 18px; font-weight: 700; color: var(--sakura-600); margin-bottom: 18px; text-align: center;
+
+/* ---------- 表单 ---------- */
+.auth-form { display: flex; flex-direction: column; }
+.auth-label {
+  margin: 12px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-light);
 }
-.auth-label { display: block; font-size: 12px; color: var(--text-light); margin: 10px 0 4px; }
+.auth-label:first-child { margin-top: 0; }
 .auth-input {
-  width: 100%; box-sizing: border-box;
-  padding: 9px 12px; border: 1px solid #ffd0e0; border-radius: 8px;
-  font-size: 14px; color: var(--text); background: var(--card);
+  width: 100%;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 13px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    box-shadow var(--dur-2) var(--ease-soft);
 }
-.auth-input:focus { outline: none; border-color: #ff8fbf; }
-.auth-error { color: var(--sakura-600); font-size: 12px; margin: 8px 0 0; }
-.auth-success { color: var(--green); font-size: 12px; margin: 8px 0 0; }
-.auth-btn {
-  width: 100%; margin-top: 16px; padding: 10px 0;
-  border: none; border-radius: 10px; background: linear-gradient(90deg, #ff9ec6, #ff6fa8);
-  color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+.auth-input::placeholder { color: var(--text-faint); }
+@media (hover: hover) and (pointer: fine) {
+  .auth-input:hover { border-color: var(--sakura-300); }
 }
-.auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.auth-switch { display: flex; justify-content: space-between; margin-top: 14px; font-size: 13px; }
-.auth-switch a { color: var(--sakura-600); cursor: pointer; text-decoration: none; }
-.auth-notice { font-size: 13px; color: var(--text-light); line-height: 1.7; }
-.auth-notice code { background: var(--sakura-100); padding: 1px 5px; border-radius: 4px; color: var(--sakura-600); }
-.auth-fade-enter-active, .auth-fade-leave-active { transition: opacity 0.2s; }
-.auth-fade-enter-from, .auth-fade-leave-to { opacity: 0; }
+
+/* ---------- 提示条 ---------- */
+.auth-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  line-height: 1.55;
+  background: var(--red-soft);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.auth-msg.success {
+  background: var(--green-soft);
+}
+.auth-msg.error .auth-msg-icon { color: var(--red); }
+.auth-msg.success .auth-msg-icon { color: var(--green); }
+.auth-msg-icon {
+  flex-shrink: 0;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+/* ---------- 主按钮 ---------- */
+.auth-submit {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 18px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+}
+.auth-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: auth-spin 700ms linear infinite;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+
+/* ---------- 模式切换 ---------- */
+.auth-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+.auth-switch.is-single { justify-content: center; }
+.auth-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 2px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-light);
+  transition: color var(--dur-2) var(--ease-soft);
+}
+.auth-link b {
+  margin-left: 2px;
+  color: var(--sakura-600);
+  font-weight: 700;
+}
+@media (hover: hover) and (pointer: fine) {
+  .auth-link:hover { color: var(--sakura-600); }
+}
+
+/* ---------- 未配置云端 ---------- */
+.auth-notice {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 16px 15px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: var(--amber-soft);
+}
+.auth-notice::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--grad-amber);
+}
+.auth-notice-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+.auth-notice-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--text-light);
+}
+.auth-notice-text code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--sakura-700);
+  font-size: 11.5px;
+  word-break: break-all;
+}
+
+/* ---------- 进出场 ---------- */
+.auth-fade-enter-active,
+.auth-fade-leave-active { transition: opacity var(--dur-2) var(--ease-soft); }
+.auth-fade-enter-from,
+.auth-fade-leave-to { opacity: 0; }
+.auth-fade-leave-active .auth-card {
+  transition: transform var(--dur-2) var(--ease-soft), opacity var(--dur-2) var(--ease-soft);
+  transform: translateY(12px) scale(0.99);
+  opacity: 0;
+}
+.auth-msg-enter-active,
+.auth-msg-leave-active {
+  transition: opacity var(--dur-2) var(--ease-soft), transform var(--dur-2) var(--ease-soft);
+}
+.auth-msg-enter-from,
+.auth-msg-leave-to { opacity: 0; transform: translateY(-4px); }
+
+@media (max-width: 640px) {
+  .auth-card {
+    width: 100%;
+    max-width: none;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  }
+  .auth-head { margin-bottom: 16px; }
+  .auth-input { font-size: 16px; }
+  .auth-submit { min-height: 48px; }
+}
 </style>

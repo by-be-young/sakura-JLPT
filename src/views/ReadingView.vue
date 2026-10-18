@@ -1,66 +1,128 @@
 <template>
-  <div v-if="reading" class="container article-mode">
-    <!-- 顶部：返回 + 标题（振假名由导航栏统一开关控制） -->
-    <div class="rv-header">
-      <button class="btn btn-ghost btn-sm" @click="$router.push('/reading')">← 读解列表</button>
-      <h2 class="rv-title">読み物{{ reading.num }} · {{ reading.unitTitle }}</h2>
-    </div>
-    <div class="rv-sub">
-      <span class="part-tag">{{ reading.part }}</span>
-      <span class="unit-tag">Unit{{ reading.unit }}</span>
-      <span class="progress-text">已完成 {{ answeredCount }}/{{ reading.questions.length }} 题</span>
-    </div>
-
-    <!-- 文章（内部滚动，单屏适配） -->
-    <div ref="passageRef" class="passage-box" :class="{ 'has-overflow': articleOverflow }">
-      <div class="passage-title">📖 文章</div>
-      <div class="passage-content" v-html="articleHtml" @scroll="updateArticleOverflow"></div>
-    </div>
-
-    <!-- 答题卡 -->
-    <div class="quiz-area">
-      <button class="side-arrow" @click="go(-1)" :disabled="qi === 0" aria-label="上一题">‹</button>
-      <div class="card quiz-card">
-        <div class="quiz-meta">
-          <span class="q-tag">第 {{ qi + 1 }} 题 / 共 {{ reading.questions.length }} 题</span>
-          <span class="q-type">{{ current.options.length === 2 ? '判断' : '选择' }}</span>
-          <span class="q-dots">
-            <button v-for="(_, i) in reading.questions" :key="i" class="q-dot"
-              :class="{ active: i === qi, answered: rec.answers[i] !== null }"
-              @click="qi = i" :aria-label="'第' + (i + 1) + '题'">{{ i + 1 }}</button>
-          </span>
+  <div v-if="reading" class="container article-mode rv-page">
+    <!-- 顶部粘性玻璃工具条 -->
+    <header class="rv-topbar glass-bar" :class="{ 'is-stuck': scrolled }">
+      <button class="back-btn rv-back" @click="$router.push('/reading')" title="返回读解列表" aria-label="返回读解列表">
+        <span aria-hidden="true">←</span> 读解
+      </button>
+      <div class="rv-head">
+        <h2 class="rv-title">読み物{{ reading.num }} · {{ reading.unitTitle }}</h2>
+        <div class="rv-sub">
+          <span class="part-tag">{{ reading.part }}</span>
+          <span class="unit-tag">Unit{{ reading.unit }}</span>
+          <span class="progress-text">已完成 {{ answeredCount }}/{{ reading.questions.length }} 题</span>
         </div>
-        <div class="question-sentence" v-html="stemHtml"></div>
-        <div class="options-list">
-          <div v-for="(opt, i) in current.options" :key="i" class="option-item" :class="optionClass(i)" @click="select(i)">
-            <span class="option-num">{{ NUM[i] }}</span>
-            <span class="option-text" v-html="optionHtml(i)"></span>
+      </div>
+      <div class="rv-meter" aria-hidden="true">
+        <span class="rv-meter-num">{{ answeredPercent }}<small>%</small></span>
+        <span class="rv-meter-label">答题进度</span>
+      </div>
+      <div
+        class="rv-progress"
+        role="progressbar"
+        :aria-valuenow="answeredPercent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        :aria-label="'答题进度 ' + answeredPercent + '%'"
+      >
+        <span class="rv-progress-fill" :style="{ transform: 'scaleX(' + (answeredPercent / 100) + ')' }"></span>
+      </div>
+    </header>
+
+    <div class="rv-layout">
+      <!-- 文章（内部滚动，单屏适配） -->
+      <section ref="passageRef" class="passage-box surface" :class="{ 'has-overflow': articleOverflow }" v-reveal>
+        <div class="passage-head">
+          <span class="icon-tile sm amber" aria-hidden="true">📖</span>
+          <div class="passage-head-text">
+            <div class="passage-title">文章</div>
+            <div class="passage-hint">上下滑动阅读全文</div>
+          </div>
+          <span class="passage-count">{{ reading.questions.length }} 题</span>
+        </div>
+        <div class="passage-content reader-prose" v-html="articleHtml" @scroll="updateArticleOverflow"></div>
+      </section>
+
+      <!-- 答题卡 -->
+      <section class="quiz-area">
+        <button class="side-arrow" @click="go(-1)" :disabled="qi === 0" aria-label="上一题" title="上一题">‹</button>
+        <div class="card quiz-card" v-reveal="{ delay: 80 }">
+          <div class="quiz-meta">
+            <span class="q-tag">第 {{ qi + 1 }} 题 / 共 {{ reading.questions.length }} 题</span>
+            <span class="q-type">{{ current.options.length === 2 ? '判断' : '选择' }}</span>
+            <span class="q-dots">
+              <button v-for="(_, i) in reading.questions" :key="i" class="q-dot"
+                :class="{ active: i === qi, answered: rec.answers[i] !== null }"
+                @click="qi = i" :aria-label="'第' + (i + 1) + '题'" :aria-current="i === qi ? 'true' : undefined">{{ i + 1 }}</button>
+            </span>
+          </div>
+          <div class="question-sentence" v-html="stemHtml"></div>
+          <div class="options-list">
+            <div
+              v-for="(opt, i) in current.options"
+              :key="i"
+              class="option-item"
+              :class="optionClass(i)"
+              role="button"
+              tabindex="0"
+              :aria-disabled="answered ? 'true' : 'false'"
+              @click="select(i)"
+              @keydown.enter.prevent="select(i)"
+              @keydown.space.prevent="select(i)"
+            >
+              <span class="option-num">{{ NUM[i] }}</span>
+              <span class="option-text" v-html="optionHtml(i)"></span>
+              <span v-if="answered && i + 1 === current.answer" class="option-mark" aria-hidden="true">✓</span>
+              <span v-else-if="answered && i + 1 === rec.answers[qi]" class="option-mark wrong" aria-hidden="true">✕</span>
+            </div>
+          </div>
+          <div v-if="answered" class="explanation-box" aria-live="polite">
+            <div class="explanation-title"><span aria-hidden="true">💡</span> 解析</div>
+            <div class="detail">{{ current.explanation || '本题暂无文字解析。' }}</div>
           </div>
         </div>
-        <div v-if="answered" class="explanation-box">
-          <div class="explanation-title">💡 解析</div>
-          <div class="detail">{{ current.explanation || '本题暂无文字解析。' }}</div>
+        <button class="side-arrow" @click="go(1)" :disabled="qi === reading.questions.length - 1" aria-label="下一题" title="下一题">›</button>
+      </section>
+
+      <!-- 译文与难句分析：特殊入口（答完全部题目后解锁） -->
+      <div class="tr-area surface">
+        <div class="tr-copy">
+          <div class="tr-title">全文翻译与难句分析</div>
+          <div class="tr-hint" :class="{ ok: allAnswered }">
+            {{ allAnswered ? '已解锁，点击查看译文与逐句拆解' : '答完本篇文章全部 ' + reading.questions.length + ' 题后解锁' }}
+          </div>
         </div>
+        <button class="btn tr-btn" :class="{ locked: !allAnswered }" :disabled="!allAnswered" @click="showTr = true">
+          <span aria-hidden="true">{{ allAnswered ? '📖' : '🔒' }}</span>
+          {{ allAnswered ? '查看译文' : '答完解锁' }}
+        </button>
       </div>
-      <button class="side-arrow" @click="go(1)" :disabled="qi === reading.questions.length - 1" aria-label="下一题">›</button>
     </div>
 
-    <!-- 译文与难句分析：特殊入口（答完全部题目后解锁） -->
-    <div class="tr-area">
-      <button class="btn tr-btn" :class="{ locked: !allAnswered }" :disabled="!allAnswered" @click="showTr = true">
-        📖 全文翻译与难句分析
-      </button>
-      <div class="tr-hint" :class="{ ok: allAnswered }">
-        {{ allAnswered ? '已解锁，点击查看' : '答完本篇文章全部 ' + reading.questions.length + ' 题后解锁' }}
+    <!-- 底部答题操作条 -->
+    <div class="sticky-actions rv-actions">
+      <button class="btn btn-secondary rv-nav-btn" @click="go(-1)" :disabled="qi === 0" aria-label="上一题">← 上一题</button>
+      <div class="rv-actions-mid">
+        <span class="rv-actions-text">第 {{ qi + 1 }} / {{ reading.questions.length }} 题 · 已答 {{ answeredCount }} 题</span>
+        <span class="rv-actions-rail" aria-hidden="true">
+          <span class="rv-actions-fill" :style="{ transform: 'scaleX(' + (answeredPercent / 100) + ')' }"></span>
+        </span>
       </div>
+      <button class="btn btn-primary rv-nav-btn" @click="go(1)" :disabled="qi === reading.questions.length - 1" aria-label="下一题">下一题 →</button>
     </div>
 
     <!-- 全文翻译 / 难句分析弹窗 -->
     <div v-if="showTr" class="modal-mask" @click.self="showTr = false">
-      <div class="modal-panel">
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title">
         <div class="modal-head">
-          <h3>📖 全文翻译与难句分析</h3>
-          <button class="btn btn-ghost btn-sm" @click="showTr = false">✕ 关闭</button>
+          <div class="modal-head-main">
+            <span class="icon-tile sm iris" aria-hidden="true">📖</span>
+            <div class="modal-head-text">
+              <h3 id="tr-modal-title">全文翻译与难句分析</h3>
+              <div class="modal-sub">読み物{{ reading.num }} · {{ reading.unitTitle }}</div>
+            </div>
+          </div>
+          <button class="modal-close" @click="showTr = false" title="关闭" aria-label="关闭">✕</button>
         </div>
         <div class="modal-body">
           <div v-if="reading.translation" class="tr-section">
@@ -71,7 +133,7 @@
             <h4>难句分析</h4>
             <div v-for="(a, i) in reading.analysis" :key="i" class="an-item">
               <p class="an-sentence" v-html="furigana.isEnabled.value ? (a.sentenceFurigana || a.sentence) : a.sentence"></p>
-              <p class="an-note">→ {{ a.note }}</p>
+              <p class="an-note"><span class="an-arrow" aria-hidden="true">→</span>{{ a.note }}</p>
             </div>
           </div>
           <p v-if="!reading.translation && (!reading.analysis || !reading.analysis.length)" class="tr-empty">本篇暂无全文翻译与难句分析内容。</p>
@@ -120,10 +182,16 @@ watch(rec, (v) => {
 
 const qi = ref(0)
 const showTr = ref(false)
+const scrolled = ref(false)
 const current = computed(() => reading.questions[qi.value])
 const answered = computed(() => rec.value.answers[qi.value] !== null)
 const answeredCount = computed(() => rec.value.answers.filter(a => a !== null).length)
 const allAnswered = computed(() => answeredCount.value === reading.questions.length)
+const answeredPercent = computed(() => {
+  const total = reading.questions.length
+  if (!total) return 0
+  return Math.round((answeredCount.value / total) * 100)
+})
 
 function select(i) {
   if (answered.value) return
@@ -159,92 +227,176 @@ function updateArticleOverflow() {
   const el = passageRef.value && passageRef.value.querySelector('.passage-content')
   articleOverflow.value = !!(el && el.scrollHeight - el.scrollTop > el.clientHeight + 2)
 }
+// 顶栏滚动阴影 + Esc 关闭译解弹窗
+function onScroll() {
+  scrolled.value = window.scrollY > 8
+}
+function onKeydown(e) {
+  if (e.key === 'Escape' && showTr.value) showTr.value = false
+}
 watch(() => furigana.isEnabled.value, () => nextTick(updateArticleOverflow))
 onMounted(() => {
   window.addEventListener('resize', updateArticleOverflow)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('keydown', onKeydown)
+  onScroll()
   nextTick(updateArticleOverflow)
 })
 onUnmounted(() => {
   window.removeEventListener('resize', updateArticleOverflow)
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('keydown', onKeydown)
 })
 </script>
 
 <style scoped>
-.rv-header {
+/* ===== 页面骨架 ===== */
+.rv-page { max-width: 1000px; z-index: auto; }
+
+/* ===== 顶部粘性玻璃工具条 ===== */
+.rv-topbar {
+  position: sticky;
+  top: 62px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  transition:
+    box-shadow var(--dur-3) var(--ease-soft),
+    border-color var(--dur-3) var(--ease-soft),
+    background var(--dur-3) var(--ease-soft);
+}
+.rv-topbar.is-stuck {
+  border-color: var(--border);
+  box-shadow: 0 16px 34px -26px rgba(0, 0, 0, 0.5);
+}
+.rv-back { min-height: 40px; padding: 8px 13px; font-size: 13px; flex-shrink: 0; }
+.rv-head { flex: 1 1 260px; min-width: 0; }
+.rv-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.2px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rv-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.part-tag,
+.unit-tag {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.part-tag { background: var(--sakura-100); color: var(--sakura-700); }
+.unit-tag { background: var(--iris-soft); color: var(--iris); }
+.progress-text { font-size: 12px; color: var(--text-light); }
+.rv-meter {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--sakura-50);
+}
+.rv-meter-num {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--sakura-600);
+  font-variant-numeric: tabular-nums;
+}
+.rv-meter-num small { font-size: 11px; margin-left: 1px; }
+.rv-meter-label { font-size: 10.5px; color: var(--text-light); }
+.rv-progress {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  pointer-events: none;
+}
+.rv-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-4) var(--ease-out-expo);
+}
+
+/* ===== 阅读列 ===== */
+.rv-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+/* ===== 文章面板（内部滚动，单屏适配） ===== */
+.passage-box {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+.passage-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card-hover);
 }
-.rv-title {
-  flex: 1;
-  font-size: 17px;
-  margin: 0;
-  color: var(--sakura-600, var(--sakura-600));
-}
-.rv-sub {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.part-tag, .unit-tag {
-  font-size: 12px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: rgba(255, 157, 189, 0.14);
-  color: var(--sakura-600, var(--sakura-600));
-  font-weight: 600;
-}
-.unit-tag {
-  background: rgba(124, 161, 255, 0.12);
-  color: #5a7bd6;
-}
-.progress-text {
-  font-size: 12.5px;
-  color: var(--ink-2, #888);
-}
-
-/* 文章面板（单屏适配） */
-.passage-box {
-  position: relative;
-  background: #fffdf9;
-  border: 2px solid var(--sakura-100, var(--sakura-100));
-  border-radius: var(--radius, 16px);
-  padding: 10px 16px 12px;
-  margin-bottom: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(233, 120, 150, 0.08);
-}
-.passage-title {
+.passage-head-text { flex: 1; min-width: 0; }
+.passage-title { font-size: 14px; font-weight: 800; line-height: 1.35; color: var(--text); }
+.passage-hint { margin-top: 2px; font-size: 11px; color: var(--text-faint); }
+.passage-count {
+  flex-shrink: 0;
+  padding: 1px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--sakura-50);
+  color: var(--sakura-600);
+  font-size: 11px;
   font-weight: 700;
-  color: var(--sakura-600, var(--sakura-600));
-  font-size: 13px;
-  margin-bottom: 6px;
 }
 .passage-content {
-  font-size: 15px;
-  line-height: 1.85;
-  color: var(--ink, #333);
-  height: calc(100vh - 690px);
-  height: calc(100dvh - 690px);
-  min-height: 120px;
-  max-height: 460px;
+  height: 320px;
+  height: clamp(220px, 36dvh, 420px);
   overflow-y: auto;
-  padding-right: 6px;
+  padding: 16px 20px 28px;
+  font-size: 16px;
+  line-height: 2;
+  color: var(--text);
 }
+.passage-content > * + * { margin-top: 0; }
+.passage-content :deep(.article-para) { margin: 0 0 12px; text-indent: 2em; }
+.passage-content :deep(.article-para:last-child) { margin-bottom: 0; }
 .passage-content :deep(.s-no) {
-  font-size: 10px;
-  color: var(--sakura-500, #ff7da0);
-  font-weight: 700;
   margin-right: 1px;
-}
-.passage-content :deep(.article-para) {
-  text-indent: 2em;
-  margin: 0 0 10px 0;
-}
-.passage-content :deep(.article-para:last-child) {
-  margin-bottom: 0;
+  color: var(--sakura-500);
+  font-size: 10px;
+  font-weight: 700;
 }
 .passage-box.has-overflow::after {
   content: '';
@@ -252,277 +404,365 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 26px;
-  background: linear-gradient(to bottom, rgba(255, 253, 249, 0), #fffdf9);
+  z-index: 2;
+  height: 30px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: linear-gradient(to bottom, transparent, var(--card));
   pointer-events: none;
-  border-radius: 0 0 var(--radius, 16px) var(--radius, 16px);
 }
 
-/* 答题卡（紧凑） */
-.quiz-area {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* ===== 答题卡 ===== */
+.quiz-area { display: flex; align-items: center; gap: 10px; }
 .side-arrow {
   flex-shrink: 0;
   width: 44px;
   height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
   border-radius: 50%;
-  border: 2px solid var(--sakura-200, #ffd0dd);
-  background: var(--card-grad);
-  color: var(--sakura-500, #ff7da0);
+  background: var(--card);
+  color: var(--sakura-600);
   font-size: 24px;
   line-height: 1;
-  cursor: pointer;
-  transition: all .2s;
+  box-shadow: var(--shadow-card);
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    transform var(--dur-2) var(--ease-spring);
 }
 .side-arrow:hover:not(:disabled) {
-  background: var(--sakura-100, #ffe9f0);
-  border-color: var(--sakura-400, #ff9dbe);
+  background: var(--sakura-50);
+  border-color: var(--sakura-300);
+  transform: translateX(-1px);
 }
-.side-arrow:disabled {
-  opacity: .3;
-  cursor: not-allowed;
-}
-.quiz-card {
-  flex: 1;
-  padding: 14px 16px;
-}
-.quiz-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.q-tag {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--sakura-600, var(--sakura-600));
-}
+.side-arrow:active:not(:disabled) { transform: scale(0.92); }
+.side-arrow:disabled { opacity: 0.32; cursor: not-allowed; }
+.quiz-card { flex: 1; min-width: 0; padding: 18px 20px 20px; }
+.quiz-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.q-tag { color: var(--sakura-600); font-size: 12.5px; font-weight: 800; }
 .q-type {
-  font-size: 11.5px;
   padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(255, 157, 189, 0.14);
-  color: var(--sakura-600, var(--sakura-600));
+  border-radius: var(--radius-pill);
+  background: var(--sakura-100);
+  color: var(--sakura-700);
+  font-size: 11px;
+  font-weight: 600;
 }
-.q-dots {
-  margin-left: auto;
-  display: flex;
-  gap: 5px;
-}
+.q-dots { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
 .q-dot {
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
   border-radius: 50%;
-  border: 1.5px solid var(--sakura-200, #ffd0dd);
-  background: var(--card-grad);
-  color: var(--ink-2, #888);
-  font-size: 11.5px;
-  cursor: pointer;
-  line-height: 1;
+  background: var(--card);
+  color: var(--text-light);
+  font-size: 12px;
+  font-family: inherit;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    transform var(--dur-2) var(--ease-spring);
 }
+.q-dot:hover { border-color: var(--sakura-300); color: var(--sakura-600); }
+.q-dot:active { transform: scale(0.9); }
 .q-dot.active {
-  background: var(--sakura-500, #ff7da0);
-  border-color: var(--sakura-500, #ff7da0);
-  color: #fff;
-  font-weight: 700;
+  border-color: transparent;
+  background: var(--grad-sakura);
+  color: rgba(255, 255, 255, 0.97);
+  font-weight: 800;
+  box-shadow: var(--shadow);
 }
 .q-dot.answered:not(.active) {
-  border-color: #7bc47f;
-  color: #4a9a4f;
-  background: #eef8ee;
+  border-color: var(--green);
+  background: var(--green-soft);
+  color: var(--green);
+  font-weight: 700;
 }
 .question-sentence {
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--sakura-400);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--sakura-50);
+  color: var(--text);
   font-size: 16px;
-  line-height: 1.7;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  background: #fdf7fb;
-  border-left: 4px solid var(--sakura-300, #ffb9cf);
-  border-radius: 8px;
-  color: var(--ink, #333);
+  line-height: 1.95;
 }
-.options-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.question-sentence :deep(.article-para) { margin: 0; text-indent: 0; }
+.options-list { display: flex; flex-direction: column; gap: 9px; }
 .option-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 9px 14px;
-  border: 2px solid var(--line, #eee);
-  border-radius: 12px;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
   cursor: pointer;
-  transition: all .15s;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--ink, #333);
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    box-shadow var(--dur-2) var(--ease-soft);
 }
-.option-item:hover:not(.correct):not(.wrong) {
-  border-color: var(--sakura-300, #ffb9cf);
-  background: #fff8fb;
+@media (hover: hover) and (pointer: fine) {
+  .option-item:hover:not(.correct):not(.wrong) {
+    border-color: var(--sakura-300);
+    background: var(--sakura-50);
+    box-shadow: var(--shadow-card);
+    transform: translateX(3px);
+  }
+}
+.option-item:focus-visible { box-shadow: var(--focus-ring); }
+.option-item[aria-disabled="true"] { cursor: default; }
+.option-item[aria-disabled="true"]:not(.correct):not(.wrong):hover {
+  transform: none;
+  border-color: var(--border);
+  background: var(--card);
+  box-shadow: none;
 }
 .option-num {
   flex-shrink: 0;
-  font-weight: 700;
-  color: var(--sakura-500, #ff7da0);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sakura-100);
+  color: var(--sakura-700);
+  font-size: 13px;
+  font-weight: 800;
+  transition: background var(--dur-2) var(--ease-soft), color var(--dur-2) var(--ease-soft);
 }
-.option-item.correct {
-  border-color: #7bc47f;
-  background: #f0faf0;
-}
-.option-item.correct .option-num { color: #4a9a4f; }
-.option-item.wrong {
-  border-color: #ff8a8a;
-  background: #fff3f3;
-}
-.option-item.wrong .option-num { color: #e05555; }
+.option-text { flex: 1; min-width: 0; }
+.option-mark { flex-shrink: 0; align-self: center; color: var(--green); font-size: 16px; font-weight: 800; }
+.option-mark.wrong { color: var(--red); }
+.option-item.correct { border-color: var(--green); background: var(--green-soft); }
+.option-item.correct .option-num { background: var(--green); color: rgba(255, 255, 255, 0.96); }
+.option-item.wrong { border-color: var(--red); background: var(--red-soft); }
+.option-item.wrong .option-num { background: var(--red); color: rgba(255, 255, 255, 0.96); }
+
 .explanation-box {
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #fffbea;
-  border-left: 4px solid #f5c76b;
-  border-radius: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--amber);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--amber-soft);
 }
 .explanation-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  color: var(--amber);
   font-size: 12.5px;
-  font-weight: 700;
-  color: #c99a3a;
-  margin-bottom: 4px;
+  font-weight: 800;
 }
-.explanation-box .detail {
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--ink, #333);
-}
+.explanation-box .detail { color: var(--text); font-size: 14.5px; line-height: 2; white-space: pre-wrap; }
 
-/* 译文与难句入口 */
+/* ===== 译文入口 ===== */
 .tr-area {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 10px;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
 }
+.tr-copy { flex: 1 1 240px; min-width: 0; }
+.tr-title { color: var(--text); font-size: 15px; font-weight: 800; }
+.tr-hint { margin-top: 4px; color: var(--text-light); font-size: 12px; line-height: 1.6; }
+.tr-hint.ok { color: var(--green); font-weight: 600; }
 .tr-btn {
-  background: linear-gradient(135deg, #ff9dbe, #ff7da0);
-  color: #fff;
-  border: none;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  background: var(--grad-sakura);
+  color: rgba(255, 255, 255, 0.97);
+  font-size: 14px;
   font-weight: 700;
-  padding: 9px 18px;
-  border-radius: 999px;
-  box-shadow: 0 3px 10px rgba(255, 125, 160, .3);
-  transition: all .2s;
+  box-shadow: var(--shadow);
 }
 .tr-btn:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 5px 14px rgba(255, 125, 160, .4);
+  box-shadow: var(--shadow-lg);
 }
 .tr-btn.locked {
-  background: #e8e3dd;
-  color: #b0a9a0;
+  background: var(--card-hover);
+  color: var(--text-faint);
   box-shadow: none;
   cursor: not-allowed;
-}
-.tr-hint {
-  font-size: 12px;
-  color: var(--ink-2, #999);
-}
-.tr-hint.ok {
-  color: #4a9a4f;
-  font-weight: 600;
+  opacity: 1;
 }
 
-/* 弹窗 */
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .45);
+/* ===== 底部答题操作条 ===== */
+.rv-actions { margin-top: 6px; padding-top: 10px; gap: 10px; }
+.rv-nav-btn { min-height: 44px; padding: 0 18px; font-size: 13.5px; }
+.rv-actions-mid {
+  flex: 1;
+  min-width: 140px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 20px;
+  gap: 5px;
 }
+.rv-actions-text { color: var(--text-light); font-size: 12px; font-variant-numeric: tabular-nums; }
+.rv-actions-rail {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sakura-100);
+  overflow: hidden;
+}
+.rv-actions-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-sakura);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-4) var(--ease-out-expo);
+}
+
+/* ===== 译解弹窗 ===== */
 .modal-panel {
   width: min(760px, 100%);
-  max-height: 84vh;
-  background: var(--card-grad);
-  border-radius: 18px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, .22);
+  max-height: 86vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card-grad);
+  box-shadow: var(--shadow-lg);
+  animation: modal-in var(--dur-4) var(--ease-spring);
 }
 .modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 2px solid var(--sakura-100, var(--sakura-100));
+  gap: 12px;
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
 }
-.modal-head h3 {
-  margin: 0;
-  font-size: 16px;
-  color: var(--sakura-600, var(--sakura-600));
+.modal-head-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.modal-head-text { min-width: 0; }
+.modal-head h3 { margin: 0; color: var(--text); font-size: 16.5px; font-weight: 800; }
+.modal-sub { margin-top: 2px; color: var(--text-light); font-size: 11.5px; }
+.modal-close {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sakura-50);
+  color: var(--text-light);
+  font-size: 15px;
+  transition:
+    color var(--dur-2) var(--ease-soft),
+    background var(--dur-2) var(--ease-soft),
+    transform var(--dur-3) var(--ease-spring);
 }
-.modal-body {
-  padding: 16px 20px 22px;
-  overflow-y: auto;
-}
-.tr-section { margin-bottom: 18px; }
+.modal-close:hover { color: var(--sakura-600); background: var(--sakura-100); transform: rotate(90deg); }
+.modal-close:active { transform: scale(0.9); }
+.modal-body { padding: 18px 20px calc(22px + env(safe-area-inset-bottom)); overflow-y: auto; }
+.tr-section { margin-bottom: 20px; }
 .tr-section h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: var(--sakura-600, var(--sakura-600));
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
 }
-.tr-text {
-  font-size: 14.5px;
-  line-height: 2;
-  color: var(--ink, #333);
-  margin: 0;
+.tr-section h4::before {
+  content: '';
+  width: 4px;
+  height: 15px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: var(--grad-sakura);
 }
+.tr-text { margin: 0; color: var(--text); font-size: 15px; line-height: 2; white-space: pre-wrap; }
 .an-item {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card-hover);
 }
-.tr-empty {
-  font-size: 14px;
-  color: var(--sakura-500, #b8898f);
-  text-align: center;
-  padding: 24px 0;
-  margin: 0;
-}
-.an-sentence {
-  font-size: 14.5px;
-  line-height: 1.9;
-  color: var(--ink, #333);
-  margin: 0 0 4px;
-  font-weight: 500;
-}
-.an-note {
-  font-size: 13.5px;
-  line-height: 1.9;
-  color: #666;
-  margin: 0;
-}
+.an-sentence { margin: 0 0 6px; color: var(--text); font-size: 15px; font-weight: 500; line-height: 1.95; }
+.an-note { display: flex; gap: 6px; margin: 0; color: var(--text-light); font-size: 13.5px; line-height: 1.9; }
+.an-arrow { flex-shrink: 0; color: var(--sakura-400); }
+.tr-empty { margin: 0; padding: 28px 0; color: var(--text-faint); font-size: 14px; text-align: center; }
 
+/* 振假名注音 */
+:deep(rt) { color: var(--sakura-500); font-size: 0.52em; font-weight: 500; line-height: 1; }
+:deep(rp) { display: none; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 820px) {
+  .rv-layout { max-width: 100%; }
+  .quiz-card { padding: 16px 16px 18px; }
+  .rv-page { padding-bottom: 40px; }
+}
 @media (max-width: 640px) {
-  .passage-content {
-    font-size: 14px;
-    height: calc(100vh - 660px);
-    height: calc(100dvh - 660px);
-    min-height: 90px;
+  .rv-topbar {
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
   }
-  .side-arrow {
-    width: 34px;
-    height: 44px;
-  }
-  .rv-title {
-    font-size: 15px;
-  }
+  .rv-back { padding: 8px 10px; }
+  .rv-head { flex-basis: calc(100% - 112px); }
+  .rv-title { font-size: 15.5px; }
+  .rv-sub { gap: 6px; }
+  .rv-meter { display: none; }
+  .passage-head { padding: 11px 14px; }
+  .passage-hint { display: none; }
+  .passage-content { height: 240px; height: clamp(180px, 32dvh, 340px); padding: 14px 16px 24px; }
+  .side-arrow { display: none; }
+  .quiz-card { padding: 14px 14px 16px; }
   .q-dots { display: none; }
+  .quiz-meta { gap: 6px; }
+  .option-item { padding: 11px 12px; font-size: 14.5px; }
+  .tr-area { padding: 14px; }
+  .tr-btn { width: 100%; justify-content: center; }
+  .rv-nav-btn { flex: 1; padding: 0 10px; font-size: 12.5px; }
+  .rv-actions-mid { flex-basis: 100%; order: -1; }
+  .rv-actions-rail { max-width: 100%; }
+  .modal-panel {
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 22px 22px 0 0;
+    animation: sheet-in var(--dur-4) var(--ease-out-expo);
+  }
+  .modal-head { padding: 14px 16px; }
+  .modal-body { padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: none; }
+}
+/* 手机底部 Tab 栏（Dock）：为底部操作条让位 */
+@media (max-width: 760px) {
+  .rv-page { padding-bottom: calc(200px + env(safe-area-inset-bottom)); }
+  .rv-topbar { top: 58px; }
+  .rv-actions { bottom: calc(78px + env(safe-area-inset-bottom)); }
 }
 </style>

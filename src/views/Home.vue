@@ -1,169 +1,189 @@
 <template>
-  <div class="container">
-    <!-- 今日学习卡片（居中布局） -->
-    <div class="today-card">
+  <div class="container home">
+    <!-- ==================== 今日 ==================== -->
+    <section class="today-hero" v-reveal="'zoom'">
       <div class="today-head">
-        <div class="today-greet">{{ greet() }}</div>
-        <div class="today-streak" v-if="daily.streak.value > 0">
-          <span>🔥</span><span>连续学习 {{ daily.streak.value }} 天</span>
+        <div class="greet">{{ greet() }}</div>
+        <div class="streak" v-if="daily.streak.value > 0">
+          <span class="streak-flame">🔥</span>
+          <span>连续 {{ daily.streak.value }} 天</span>
         </div>
-        <div v-else class="today-streak today-first">
-          <span>🌱</span><span>今天开始第一个学习日</span>
-        </div>
-      </div>
-
-      <div class="ring-wrap">
-        <svg width="124" height="124" viewBox="0 0 124 124">
-          <defs>
-            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ff7aa2" />
-              <stop offset="100%" stop-color="#e03e74" />
-            </linearGradient>
-          </defs>
-          <circle class="ring-bg" cx="62" cy="62" r="50" fill="none" stroke-width="11" />
-          <circle class="ring-fg" cx="62" cy="62" r="50" fill="none" stroke-width="11"
-            :stroke-dasharray="C" :stroke-dashoffset="ringOffset" />
-        </svg>
-        <div class="ring-center">
-          <span class="ring-num">{{ totalPercent }}<small>%</small></span>
-          <span class="ring-label">今日目标</span>
+        <div class="streak first" v-else>
+          <span class="streak-flame">🌱</span>
+          <span>今天开始第一个学习日</span>
         </div>
       </div>
 
-      <div class="today-chips">
-        <span class="today-label">📝 答题 <b>{{ daily.todayQuiz.value }}</b>/{{ daily.state.settings.quizTarget }}</span>
-        <span class="today-label">🌸 背词 <b>{{ daily.todayWord.value }}</b>/{{ daily.state.settings.wordTarget }}</span>
-      </div>
-
-      <div class="today-bars">
-        <div class="today-bar-item">
-          <div class="bar-track"><div class="bar-fill" :style="{ width: quizPercent + '%' }"></div></div>
-        </div>
-        <div class="today-bar-item">
-          <div class="bar-track"><div class="bar-fill word" :style="{ width: wordPercent + '%' }"></div></div>
-        </div>
-      </div>
-
-      <div class="today-week">
-        <span class="week-title">近 7 天</span>
-        <span class="week-dots">
-          <span v-for="(d, i) in daily.weekActive.value" :key="d.date" class="week-dot"
-            :class="{ on: d.active, today: i === 6 }" :title="d.date + (d.active ? ' · 已学习' : '')"></span>
-        </span>
-      </div>
-    </div>
-
-    <!-- 学习板块 -->
-    <div class="section-title">学习</div>
-    <div class="primary-card words-card" @click="$router.push('/words')">
-      <div class="pc-left">
-        <span class="pc-icon">🌸</span>
-        <div class="pc-text">
-          <div class="pc-title">背词</div>
-          <div class="pc-sub">词汇卡片 · 复习 · 笔记</div>
-          <div class="pc-tags">
-            <span class="pc-tag" v-if="wordStats.total">共 <b>{{ wordStats.total }}</b> 词</span>
-            <span class="pc-tag hot" v-if="wordStats.due">复习 <b>{{ wordStats.due }}</b></span>
-            <span class="pc-tag" v-if="wordStats.notes">笔记 <b>{{ wordStats.notes }}</b></span>
-          </div>
-        </div>
-      </div>
-      <div class="pc-right">
-        <div class="pc-ring">
-          <svg width="72" height="72" viewBox="0 0 72 72">
-            <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="7" />
-            <circle cx="36" cy="36" r="30" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"
-              :stroke-dasharray="wordRingC" :stroke-dashoffset="wordRingOffset" transform="rotate(-90 36 36)" />
+      <div class="today-main">
+        <!-- 环形进度 -->
+        <div class="ring-wrap">
+          <div class="ring-halo" aria-hidden="true"></div>
+          <svg width="140" height="140" viewBox="0 0 124 124">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff9ec3" />
+                <stop offset="55%" stop-color="#ff7aa2" />
+                <stop offset="100%" stop-color="#e03e74" />
+              </linearGradient>
+              <linearGradient id="ringTrack" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--sakura-100)" />
+                <stop offset="100%" stop-color="var(--sakura-50)" />
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="62" cy="62" r="50" fill="none" stroke="url(#ringTrack)" stroke-width="11" />
+            <circle class="ring-fg" cx="62" cy="62" r="50" fill="none" stroke="url(#ringGrad)" stroke-width="11"
+              :stroke-dasharray="C" :stroke-dashoffset="ringOffset" />
           </svg>
-          <div class="pc-ring-num">{{ wordStats.pct }}%</div>
+          <div class="ring-center">
+            <span class="ring-num">{{ displayPercent }}<small>%</small></span>
+            <span class="ring-label">今日目标</span>
+          </div>
         </div>
-        <div class="pc-ring-label">已学 {{ wordStats.learned }}/{{ wordStats.total }}</div>
+
+        <div class="today-side">
+          <div class="today-chips">
+            <span class="chip chip-quiz">
+              <span class="chip-icon">📝</span>
+              <span class="chip-text">答题 <b>{{ daily.todayQuiz.value }}</b>/{{ daily.state.settings.quizTarget }}</span>
+            </span>
+            <span class="chip chip-word">
+              <span class="chip-icon">🌸</span>
+              <span class="chip-text">背词 <b>{{ daily.todayWord.value }}</b>/{{ daily.state.settings.wordTarget }}</span>
+            </span>
+          </div>
+
+          <div class="today-bars">
+            <div class="bar-row">
+              <span class="bar-tag">答题</span>
+              <div class="bar-track"><div class="bar-fill" :style="{ width: quizPercent + '%' }"></div></div>
+              <span class="bar-pct">{{ quizPercent }}%</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-tag">背词</span>
+              <div class="bar-track"><div class="bar-fill word" :style="{ width: wordPercent + '%' }"></div></div>
+              <span class="bar-pct">{{ wordPercent }}%</span>
+            </div>
+          </div>
+
+          <div class="week">
+            <span class="week-title">近 7 天</span>
+            <div class="week-bars">
+              <span v-for="(d, i) in daily.weekActive.value" :key="d.date"
+                class="week-bar" :class="{ on: d.active, today: i === 6 }"
+                :style="{ height: weekHeight(d) + 'px' }"
+                :title="d.date + (d.active ? ` · 答题 ${d.quiz} / 背词 ${d.word}` : ' · 未学习')"></span>
+            </div>
+          </div>
+        </div>
       </div>
+    </section>
+
+    <!-- ==================== 学习 ==================== -->
+    <div class="section-title" v-reveal>学习</div>
+    <div class="study-grid">
+      <router-link to="/words" class="study-card sc-words" v-reveal="{ delay: 40 }">
+        <div class="sc-body">
+          <div class="sc-head">
+            <span class="sc-icon">🌸</span>
+            <div>
+              <div class="sc-title">背词</div>
+              <div class="sc-sub">红宝书 · 文字词汇</div>
+            </div>
+          </div>
+          <div class="sc-tags">
+            <span class="sc-tag">共 <b>{{ wordStats.total }}</b> 词</span>
+            <span class="sc-tag hot" v-if="wordStats.due">待复习 <b>{{ wordStats.due }}</b></span>
+            <span class="sc-tag" v-if="wordStats.notes">笔记 <b>{{ wordStats.notes }}</b></span>
+          </div>
+          <div class="sc-bar"><div class="sc-fill" :style="{ width: wordStats.pct + '%' }"></div></div>
+          <div class="sc-foot">已学 {{ wordStats.learned }}/{{ wordStats.total }} · {{ wordStats.pct }}%</div>
+        </div>
+        <div class="sc-cover">
+          <img src="./covers/vocabulary-red.svg" alt="红宝书 · 文字词汇" loading="lazy" />
+        </div>
+      </router-link>
+
+      <router-link to="/study" class="study-card sc-grammar" v-reveal="{ delay: 110 }">
+        <div class="sc-body">
+          <div class="sc-head">
+            <span class="sc-icon">📘</span>
+            <div>
+              <div class="sc-title">文法</div>
+              <div class="sc-sub">蓝宝书 · 文法详解</div>
+            </div>
+          </div>
+          <div class="sc-tags">
+            <span class="sc-tag">{{ grammarStats.units }} 单元</span>
+            <span class="sc-tag">共 {{ grammarStats.points }} 点</span>
+            <span class="sc-tag hot" v-if="grammarStats.learned">已学 <b>{{ grammarStats.learned }}</b></span>
+          </div>
+          <div class="sc-bar iris"><div class="sc-fill" :style="{ width: grammarStats.pct + '%' }"></div></div>
+          <div class="sc-foot">进度 {{ grammarStats.pct }}%</div>
+        </div>
+        <div class="sc-cover">
+          <img src="./covers/grammar-blue.svg" alt="蓝宝书 · 文法详解" loading="lazy" />
+        </div>
+      </router-link>
     </div>
 
-    <div class="primary-card grammar-card" @click="$router.push('/study')">
-      <div class="pc-left">
-        <span class="pc-icon">📘</span>
-        <div class="pc-text">
-          <div class="pc-title">文法</div>
-          <div class="pc-sub">文法详解 · 例句学习</div>
-          <div class="pc-tags">
-            <span class="pc-tag">{{ grammarStats.units }} 单元</span>
-            <span class="pc-tag" v-if="grammarStats.learned">已学 <b>{{ grammarStats.learned }}</b></span>
-          </div>
+    <!-- ==================== 练习 ==================== -->
+    <div class="section-title" v-reveal>练习</div>
+    <div class="practice-grid">
+      <router-link to="/learn?mode=bank" class="prac-card pc-quiz" v-reveal="{ delay: 40 }">
+        <div class="pc-head">
+          <span class="pc-icon">📝</span>
+          <span class="pc-name">题库练习</span>
+          <span class="pc-go">›</span>
         </div>
-      </div>
-      <div class="pc-right">
-        <div class="pc-big-num">{{ grammarStats.points }}</div>
-        <div class="pc-big-label">语法点</div>
-        <div class="pc-mini-bar"><div class="pc-mini-fill" :style="{ width: grammarStats.pct + '%' }"></div></div>
-      </div>
+        <div class="pc-num">{{ quizStats.total || '—' }}<small>题</small></div>
+        <div class="pc-foot" v-if="quizStats.total">
+          <span v-if="quizStats.answered">已答 <b>{{ quizStats.answered }}</b> · 正确率 {{ quizStats.correctRate }}%</span>
+          <span v-else>单元 / 顺序 / 随机</span>
+        </div>
+        <div class="pc-foot muted" v-else>题库补充中</div>
+        <div class="pc-glow" aria-hidden="true"></div>
+      </router-link>
+
+      <router-link to="/learn?mode=mock" class="prac-card pc-mock" v-reveal="{ delay: 110 }">
+        <div class="pc-head">
+          <span class="pc-icon">🧪</span>
+          <span class="pc-name">模拟测试</span>
+          <span class="pc-go">›</span>
+        </div>
+        <div class="pc-num">{{ mockStats.count || '—' }}<small>套卷</small></div>
+        <div class="pc-foot" v-if="mockStats.count && mockStats.done">已完成 <b>{{ mockStats.done }}</b> · 均分 {{ mockStats.avg }}</div>
+        <div class="pc-foot" v-else-if="mockStats.count">全真模拟 · 成绩记录</div>
+        <div class="pc-foot muted" v-else>即将上线</div>
+        <div class="pc-glow" aria-hidden="true"></div>
+      </router-link>
     </div>
 
-    <!-- 练习板块 -->
-    <div class="section-title">练习</div>
-    <div class="practice-zone">
-      <div class="num-card quiz-card" @click="$router.push({ path: '/learn', query: { mode: 'bank' } })">
-        <div class="nc-head">
-          <span class="nc-icon">📝</span>
-          <span class="nc-name">题库练习</span>
-          <span class="nc-go">›</span>
+    <div class="mini-grid">
+      <router-link to="/reading" class="mini-card mc-reading" v-reveal="{ delay: 40 }">
+        <img class="mini-cover" src="./covers/reading-orange.svg" alt="橙宝书 · 读解" loading="lazy" />
+        <div class="mini-body">
+          <b>读解</b>
+          <span>橙宝书 · 阅读文章 + 解析</span>
         </div>
-        <div class="nc-body">
-          <div class="nc-num">{{ quizStats.total || '—' }}</div>
-          <div class="nc-unit">道题</div>
-          <div class="nc-foot" v-if="quizStats.total">
-            <span v-if="quizStats.answered">已答 <b>{{ quizStats.answered }}</b> · 正确率 {{ quizStats.correctRate }}%</span>
-            <span v-else>单元 / 顺序 / 随机</span>
-          </div>
-          <div class="nc-foot" v-else>题库补充中</div>
-        </div>
-      </div>
+        <div class="mini-num">{{ readingCount }}<small>篇</small></div>
+        <span class="mini-go">›</span>
+      </router-link>
 
-      <div class="num-card mock-card" @click="$router.push({ path: '/learn', query: { mode: 'mock' } })">
-        <div class="nc-head">
-          <span class="nc-icon">🧪</span>
-          <span class="nc-name">模拟测试</span>
-          <span class="nc-go">›</span>
+      <router-link to="/listening" class="mini-card mc-listening" v-reveal="{ delay: 110 }">
+        <img class="mini-cover" src="./covers/listening-green.svg" alt="绿宝书 · 听解" loading="lazy" />
+        <div class="mini-body">
+          <b>听解</b>
+          <span>绿宝书 · 单元练习 + 音频</span>
         </div>
-        <div class="nc-body">
-          <div class="nc-num">{{ mockStats.count || '—' }}</div>
-          <div class="nc-unit">套模拟卷</div>
-          <div class="nc-foot">
-            <span v-if="mockStats.count && mockStats.done">已完成 <b>{{ mockStats.done }}</b> · 均分 {{ mockStats.avg }}</span>
-            <span v-else-if="mockStats.count">全真模拟 · 成绩记录</span>
-            <span v-else>即将上线</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="split-row">
-        <div class="split-item reading-split" @click="$router.push('/reading')">
-          <span class="si-icon">📖</span>
-          <div class="si-text">
-            <b>读解</b>
-            <span>阅读文章 · 答题解析</span>
-          </div>
-          <div class="si-num">{{ readingCount }}<small>篇</small></div>
-          <span class="si-go">›</span>
-        </div>
-        <div class="split-item listening-split" @click="$router.push('/listening')">
-          <span class="si-icon">🎧</span>
-          <div class="si-text">
-            <b>听解</b>
-            <span>听力练习 · 音频播放</span>
-          </div>
-          <div class="si-num">{{ listeningCount }}<small>单元</small></div>
-          <span class="si-go">›</span>
-        </div>
-      </div>
+        <div class="mini-num">{{ listeningCount }}<small>单元</small></div>
+        <span class="mini-go">›</span>
+      </router-link>
     </div>
-
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useDaily } from '../store/dailyStore'
 import { useStore } from '../store/useStore'
 import { useWordStore } from '../store/wordStore'
@@ -176,6 +196,8 @@ import { readingN1 } from '../data/reading-n1'
 import { readingN2 } from '../data/reading-n2'
 import { listeningUnits as n2Listening } from '../data/listening'
 import { listeningUnits as n1Listening } from '../data/listening-n1'
+import { availableTypes } from '../composables/wordQuiz'
+import { useCountUp } from '../composables/useMotion'
 
 const daily = useDaily()
 const store = useStore()
@@ -187,7 +209,10 @@ const { level } = useLevel()
 const wordStats = computed(() => {
   const pool = wordsByLevel(level.value)
   const learned = pool.filter(w => wordStore.isLearned(w.id)).length
-  const due = pool.filter(w => wordStore.isLearned(w.id) && !wordStore.isMastered(w.id, wordStore.doneTypes(w.id)) && !wordStore.isFamiliar(w.id)).length
+  // 与「背词」页同一套判定：待复习 = 已学 && 未背完(所有可用题型都做过) && 非熟词
+  // 注意 isMastered 的第二个参数必须是「可用题型数组」（availableTypes 的返回值），
+  // 早期这里误传了 doneTypes() 返回的 Set，会导致 Set.every 报错并让首页白屏。
+  const due = pool.filter(w => wordStore.isLearned(w.id) && !wordStore.isMastered(w.id, availableTypes(w)) && !wordStore.isFamiliar(w.id)).length
   const notes = pool.filter(w => wordStore.hasNote(w.id)).length
   return {
     total: pool.length,
@@ -246,13 +271,8 @@ const mockStats = computed(() => {
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
 const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
 
-// 环周长：2 * π * 46
-const C = 2 * Math.PI * 46
-
-// 背词主卡迷你进度环
-const wordRingC = 2 * Math.PI * 30
-
-const wordRingOffset = computed(() => wordRingC - (wordRingC * wordStats.value.pct) / 100)
+// 环周长：2 * π * 50
+const C = 2 * Math.PI * 50
 
 const totalPercent = computed(() => {
   const q = Math.min(1, daily.todayQuiz.value / (daily.state.settings.quizTarget || 1))
@@ -260,10 +280,26 @@ const totalPercent = computed(() => {
   return Math.round(((q + w) / 2) * 100)
 })
 
-const ringOffset = computed(() => C - (C * totalPercent.value) / 100)
+// 首帧从 0 画到目标值（CSS transition 负责补间）
+const ringDrawn = ref(false)
+onMounted(() => {
+  requestAnimationFrame(() => { ringDrawn.value = true })
+})
+const ringOffset = computed(() => C - (C * (ringDrawn.value ? totalPercent.value : 0)) / 100)
+
+// 数字滚动
+const { display: displayPercent } = useCountUp(totalPercent, { duration: 1100, delay: 240 })
 
 const quizPercent = computed(() => Math.min(100, Math.round(daily.todayQuiz.value / (daily.state.settings.quizTarget || 1) * 100)))
 const wordPercent = computed(() => Math.min(100, Math.round(daily.todayWord.value / (daily.state.settings.wordTarget || 1) * 100)))
+
+// 近 7 天柱高：按当天活动量归一化
+function weekHeight(d) {
+  const items = daily.weekActive.value || []
+  const max = Math.max(1, ...items.map(x => (x.quiz || 0) + (x.word || 0)))
+  const v = (d.quiz || 0) + (d.word || 0)
+  return Math.round(6 + (v / max) * 30)
+}
 
 function greet() {
   const h = new Date().getHours()
@@ -276,283 +312,405 @@ function greet() {
 </script>
 
 <style scoped>
-.level-sel { margin-bottom: 18px; }
+.home { max-width: 960px; }
 
-/* 今日卡片：居中信息层级 */
-.today-card {
+/* ==================== 今日 ==================== */
+.today-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  padding: 22px 26px 24px;
+  margin-bottom: 8px;
+  background:
+    radial-gradient(120% 120% at 12% 0%, rgba(255, 255, 255, 0.68), transparent 58%),
+    linear-gradient(135deg, rgba(255, 205, 224, 0.42), rgba(255, 240, 246, 0.14) 55%, rgba(214, 205, 255, 0.2));
+  border: 1px solid var(--border);
+  box-shadow: var(--card-float);
+}
+[data-theme="dark"] .today-hero {
+  background:
+    radial-gradient(120% 120% at 12% 0%, rgba(255, 255, 255, 0.06), transparent 58%),
+    linear-gradient(135deg, rgba(224, 94, 142, 0.2), rgba(42, 26, 34, 0.1) 55%, rgba(124, 108, 240, 0.14));
+}
+.today-hero::after {
+  content: '';
+  position: absolute;
+  right: -80px;
+  top: -120px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 122, 162, 0.28), transparent 68%);
+  pointer-events: none;
+}
+.today-head {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 12px;
-  padding: 6px 2px 16px;
+  gap: 8px;
   margin-bottom: 16px;
 }
-.today-head { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.today-week { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
-.week-title { font-size: 11px; color: var(--text-faint); letter-spacing: 1px; }
-.week-dots { display: flex; gap: 6px; }
-.week-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--sakura-100);
-  transition: all 0.2s;
-}
-.week-dot.on { background: linear-gradient(145deg, var(--sakura-400), var(--sakura-600)); }
-.week-dot.today { box-shadow: 0 0 0 3.5px var(--sakura-300); }
-.today-chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.today-bars { display: flex; flex-direction: column; gap: 8px; width: min(420px, 88%); }
-.today-bar-item .bar-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-light);
-  margin-bottom: 4px;
-}
-.today-bar-item .bar-head b { color: var(--sakura-600); }
-.bar-track { height: 6px; background: var(--sakura-100); border-radius: 3px; overflow: hidden; }
-.bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
-  border-radius: 3px;
-  transition: width 0.5s;
-}
-.bar-fill.word { background: linear-gradient(90deg, #e8b86d, #d99a3d); }
-.today-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 2px; }
-
-/* ===== 学习区：全宽主卡（排版差异化） ===== */
-.primary-card {
-  display: flex;
+.greet { font-size: 21px; font-weight: 800; color: var(--text); letter-spacing: 0.3px; text-align: center; }
+.streak {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-radius: 22px;
-  padding: 20px 22px;
-  margin-bottom: 14px;
-  cursor: pointer;
-  transition: all 0.25s;
-  position: relative;
-  overflow: hidden;
-}
-.primary-card:hover { transform: translateY(-2px); }
-.words-card {
-  background: linear-gradient(135deg, rgba(255, 205, 224, 0.42), rgba(255, 240, 246, 0.18));
-}
-.words-card::after {
-  content: '🌸';
-  position: absolute;
-  right: -14px;
-  bottom: -20px;
-  font-size: 96px;
-  opacity: 0.1;
-  transform: rotate(-12deg);
-}
-.grammar-card {
-  background: linear-gradient(135deg, rgba(209, 222, 250, 0.4), rgba(238, 243, 255, 0.14));
-}
-[data-theme="dark"] .words-card {
-  background: linear-gradient(135deg, rgba(224, 94, 142, 0.2), rgba(42, 26, 34, 0.12));
-}
-[data-theme="dark"] .grammar-card {
-  background: linear-gradient(135deg, rgba(106, 128, 221, 0.18), rgba(42, 29, 56, 0.12));
-}
-.pc-left { display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; min-width: 0; }
-.pc-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 14px rgba(244, 92, 142, 0.14);
-}
-.grammar-card .pc-icon {
-  background: rgba(255, 255, 255, 0.65);
-  box-shadow: 0 6px 16px rgba(70, 100, 200, 0.12);
-}
-[data-theme="dark"] .pc-icon { background: rgba(255, 255, 255, 0.07); box-shadow: none; }
-.pc-text { min-width: 0; }
-.pc-title { font-size: 19px; font-weight: 800; letter-spacing: 0.5px; }
-.pc-sub { font-size: 12px; opacity: 0.8; margin-top: 3px; color: var(--text-light); }
-.pc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.pc-tag {
-  font-size: 11px;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(232, 184, 109, 0.2);
+  color: #c8860f;
+  font-size: 13px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--text-light);
-  border-radius: 20px;
-  padding: 3px 11px;
 }
-.pc-tag.hot { background: #fff; color: var(--sakura-600); }
-[data-theme="dark"] .pc-tag { background: rgba(255, 255, 255, 0.06); color: var(--text-light); }
-[data-theme="dark"] .pc-tag.hot { background: rgba(255, 255, 255, 0.1); color: var(--sakura-500); }
-.pc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; position: relative; z-index: 1; flex-shrink: 0; }
-.pc-ring { position: relative; width: 72px; height: 72px; }
-.pc-ring-num {
+[data-theme="dark"] .streak { color: #e8b86d; }
+.streak-flame { animation: flame 2.4s ease-in-out infinite; display: inline-block; }
+@keyframes flame {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.14) rotate(4deg); }
+}
+
+.today-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+/* 环形进度 */
+.ring-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+.ring-wrap svg { transform: rotate(-90deg); display: block; }
+/* 轨道在粉色底上要能被看见：用半透明白而不是浅粉 */
+.ring-bg { stroke: rgba(255, 255, 255, 0.72); }
+[data-theme="dark"] .ring-bg { stroke: rgba(255, 255, 255, 0.14); }
+.ring-fg {
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.15s var(--ease-out-expo);
+  filter: drop-shadow(0 4px 10px rgba(224, 62, 116, 0.35));
+}
+.ring-halo {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 122, 162, 0.22), transparent 70%);
+  animation: halo-pulse 3.6s var(--ease-soft) infinite;
+}
+@keyframes halo-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+.ring-center {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--sakura-600);
 }
-[data-theme="dark"] .pc-ring-num { color: var(--sakura-500); }
-.pc-ring-label { font-size: 11px; color: var(--text-light); }
-.pc-big-num {
-  font-size: 42px;
+.ring-num {
+  font-size: 34px;
   font-weight: 800;
   line-height: 1;
-  background: linear-gradient(120deg, #6a86d6, #4a5fc0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--sakura-600);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
 }
-[data-theme="dark"] .pc-big-num {
-  background: linear-gradient(120deg, #93a8ec, #6a80dd);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.ring-num small { font-size: 16px; margin-left: 1px; }
+.ring-label { font-size: 11.5px; color: var(--text-light); margin-top: 4px; letter-spacing: 1px; }
+
+.today-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.today-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  color: var(--text-light);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  transition: transform var(--dur-2) var(--ease-spring);
 }
-.pc-big-label { font-size: 11px; color: var(--text-light); }
-.pc-mini-bar { width: 92px; height: 6px; border-radius: 3px; background: rgba(122, 138, 190, 0.18); overflow: hidden; margin-top: 3px; }
-.pc-mini-fill {
+[data-theme="dark"] .chip { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.08); }
+.chip:hover { transform: translateY(-1px); }
+.chip b { color: var(--sakura-600); font-size: 15px; font-variant-numeric: tabular-nums; }
+.chip-icon { font-size: 14px; }
+
+.today-bars { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-tag { font-size: 11.5px; color: var(--text-faint); width: 30px; flex-shrink: 0; }
+.bar-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+}
+[data-theme="dark"] .bar-track { background: rgba(255, 255, 255, 0.09); }
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--grad-sakura);
+  transition: width var(--dur-4) var(--ease-out-expo);
+}
+.bar-fill.word { background: var(--grad-amber); }
+.bar-pct { font-size: 11px; color: var(--text-faint); width: 32px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.week { display: flex; align-items: center; gap: 10px; }
+.week-title { font-size: 11px; color: var(--text-faint); letter-spacing: 0.5px; flex-shrink: 0; }
+.week-bars { display: flex; align-items: flex-end; gap: 6px; height: 38px; }
+.week-bar {
+  width: 14px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  transition: background var(--dur-3), transform var(--dur-3) var(--ease-spring);
+  animation: week-in 700ms var(--ease-out-expo) backwards;
+}
+[data-theme="dark"] .week-bar { background: rgba(255, 255, 255, 0.1); }
+.week-bar:nth-child(2) { animation-delay: 40ms; }
+.week-bar:nth-child(3) { animation-delay: 80ms; }
+.week-bar:nth-child(4) { animation-delay: 120ms; }
+.week-bar:nth-child(5) { animation-delay: 160ms; }
+.week-bar:nth-child(6) { animation-delay: 200ms; }
+.week-bar:nth-child(7) { animation-delay: 240ms; }
+@keyframes week-in { from { transform: scaleY(0.2); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+.week-bar.on { background: var(--grad-sakura); box-shadow: 0 3px 8px -2px rgba(224, 62, 116, 0.5); }
+.week-bar.today { box-shadow: 0 0 0 2.5px var(--sakura-300); }
+
+/* ==================== 学习 ==================== */
+.study-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 6px;
+}
+.study-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: transform var(--dur-3) var(--ease-out-expo), box-shadow var(--dur-3) var(--ease-out-expo), border-color var(--dur-3);
+}
+.sc-words {
+  background: linear-gradient(135deg, rgba(255, 205, 224, 0.5), rgba(255, 240, 246, 0.22));
+}
+.sc-grammar {
+  background: linear-gradient(135deg, rgba(199, 214, 255, 0.5), rgba(238, 243, 255, 0.22));
+}
+[data-theme="dark"] .sc-words { background: linear-gradient(135deg, rgba(224, 94, 142, 0.22), rgba(42, 26, 34, 0.12)); }
+[data-theme="dark"] .sc-grammar { background: linear-gradient(135deg, rgba(106, 128, 221, 0.2), rgba(42, 29, 56, 0.12)); }
+@media (hover: hover) and (pointer: fine) {
+  .study-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--sakura-200); }
+  .study-card:hover .sc-cover img { transform: rotateY(0deg) rotateX(0deg) translateY(-4px) scale(1.04); }
+}
+.study-card:active { transform: scale(0.99); }
+.sc-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.sc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sc-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 12px rgba(244, 92, 142, 0.16);
+  flex-shrink: 0;
+}
+[data-theme="dark"] .sc-icon { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+.sc-title { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: 0.5px; }
+.sc-sub { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+.sc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.sc-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--text-light);
+}
+[data-theme="dark"] .sc-tag { background: rgba(255, 255, 255, 0.07); }
+.sc-tag b { color: var(--sakura-600); }
+.sc-tag.hot { background: #fff; color: var(--sakura-600); }
+[data-theme="dark"] .sc-tag.hot { background: rgba(255, 255, 255, 0.12); color: var(--sakura-500); }
+.sc-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.55); overflow: hidden; }
+[data-theme="dark"] .sc-bar { background: rgba(255, 255, 255, 0.09); }
+.sc-fill {
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, #7d97e8, #4a5fc0);
-  transition: width 0.5s;
+  background: var(--grad-sakura);
+  transition: width var(--dur-5) var(--ease-out-expo);
 }
-[data-theme="dark"] .pc-mini-bar { background: rgba(255, 255, 255, 0.1); }
+.sc-bar.iris .sc-fill { background: var(--grad-iris); }
+.sc-foot { font-size: 11px; color: var(--text-faint); margin-top: 7px; font-variant-numeric: tabular-nums; }
 
-/* ===== 练习区：大数字卡 + 横通分割条 ===== */
-.practice-zone { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.num-card {
-  border-radius: 20px;
-  padding: 18px;
-  cursor: pointer;
-  transition: all 0.22s;
-  display: flex;
-  flex-direction: column;
+.sc-cover { flex-shrink: 0; width: 74px; perspective: 500px; }
+.sc-cover img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  transform: rotateY(-16deg) rotateX(4deg);
+  transform-origin: left center;
+  transition: transform var(--dur-4) var(--ease-out-expo);
+  box-shadow: 0 10px 24px -8px rgba(60, 20, 40, 0.5);
 }
-.quiz-card {
-  background: linear-gradient(135deg, rgba(255, 216, 170, 0.5), rgba(255, 247, 230, 0.2));
+
+/* ==================== 练习 ==================== */
+.practice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
 }
-.mock-card {
-  background: linear-gradient(135deg, rgba(172, 230, 200, 0.5), rgba(234, 250, 240, 0.2));
+.prac-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  padding: 18px 20px 16px;
+  border: 1px solid var(--border);
+  transition: transform var(--dur-3) var(--ease-out-expo), box-shadow var(--dur-3) var(--ease-out-expo);
 }
-[data-theme="dark"] .quiz-card { background: linear-gradient(135deg, rgba(217, 152, 61, 0.2), rgba(42, 34, 26, 0.1)); }
-[data-theme="dark"] .mock-card { background: linear-gradient(135deg, rgba(79, 187, 135, 0.2), rgba(29, 42, 36, 0.1)); }
-.num-card:hover { transform: translateY(-3px); }
-.nc-head { display: flex; align-items: center; gap: 8px; }
-.nc-icon {
-  width: 34px;
-  height: 34px;
+.pc-quiz { background: linear-gradient(135deg, rgba(255, 216, 170, 0.52), rgba(255, 247, 230, 0.2)); }
+.pc-mock { background: linear-gradient(135deg, rgba(172, 230, 200, 0.52), rgba(234, 250, 240, 0.2)); }
+[data-theme="dark"] .pc-quiz { background: linear-gradient(135deg, rgba(217, 152, 61, 0.22), rgba(42, 34, 26, 0.1)); }
+[data-theme="dark"] .pc-mock { background: linear-gradient(135deg, rgba(79, 187, 135, 0.22), rgba(29, 42, 36, 0.1)); }
+@media (hover: hover) and (pointer: fine) {
+  .prac-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .prac-card:hover .pc-go { transform: translateX(4px); }
+  .prac-card:hover .pc-glow { opacity: 1; transform: scale(1.1); }
+}
+.prac-card:active { transform: scale(0.99); }
+.pc-head { display: flex; align-items: center; gap: 8px; }
+.pc-icon {
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.72);
 }
-.quiz-card .nc-icon { background: #fff3e0; }
-.mock-card .nc-icon { background: #e4f7ec; }
-[data-theme="dark"] .quiz-card .nc-icon { background: rgba(255, 255, 255, 0.08); }
-[data-theme="dark"] .mock-card .nc-icon { background: rgba(255, 255, 255, 0.08); }
-.nc-name { font-size: 14.5px; font-weight: 800; color: var(--text); flex: 1; }
-.nc-go { font-size: 18px; color: var(--text-faint); }
-.nc-body { margin-top: 12px; display: flex; flex-direction: column; align-items: flex-start; }
-.nc-num {
-  font-size: 40px;
+[data-theme="dark"] .pc-icon { background: rgba(255, 255, 255, 0.1); }
+.pc-name { font-size: 14.5px; font-weight: 800; color: var(--text); flex: 1; }
+.pc-go { font-size: 18px; color: var(--text-faint); transition: transform var(--dur-2) var(--ease-out-expo); }
+.pc-num {
+  font-size: 42px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.1;
+  margin-top: 8px;
+  letter-spacing: -1px;
   background: linear-gradient(120deg, #ff9db8, #e03e74);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  font-variant-numeric: tabular-nums;
 }
-.mock-card .nc-num {
+.pc-mock .pc-num {
   background: linear-gradient(120deg, #6fd3a0, #2ba66e);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-[data-theme="dark"] .nc-num {
-  background: linear-gradient(120deg, #ff87ae, #e05e8e);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+[data-theme="dark"] .pc-num { background: linear-gradient(120deg, #ff87ae, #e05e8e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-theme="dark"] .pc-mock .pc-num { background: linear-gradient(120deg, #7fe0b0, #4cbf8c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pc-num small { font-size: 12px; font-weight: 600; margin-left: 4px; color: var(--text-light); -webkit-text-fill-color: var(--text-light); }
+.pc-foot { font-size: 11.5px; color: var(--text-light); margin-top: 6px; }
+.pc-foot b { color: var(--sakura-600); }
+.pc-mock .pc-foot b { color: var(--green); }
+.pc-foot.muted { color: var(--text-faint); }
+.pc-glow {
+  position: absolute;
+  right: -40px;
+  bottom: -50px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7), transparent 70%);
+  opacity: 0.45;
+  transition: opacity var(--dur-3), transform var(--dur-4) var(--ease-out-expo);
+  pointer-events: none;
 }
-[data-theme="dark"] .mock-card .nc-num {
-  background: linear-gradient(120deg, #7fe0b0, #4cbf8c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.nc-unit { font-size: 11px; color: var(--text-light); margin-top: 3px; }
-.nc-foot { font-size: 11.5px; color: var(--text-light); margin-top: 10px; line-height: 1.5; }
-.nc-foot b { color: var(--sakura-600); }
-.mock-card .nc-foot b { color: var(--green); }
+[data-theme="dark"] .pc-glow { background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 70%); }
 
-.split-row {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-radius: 20px;
+/* ==================== 读解 / 听解 ==================== */
+.mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.mini-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
   overflow: hidden;
+  transition: transform var(--dur-3) var(--ease-out-expo), box-shadow var(--dur-3) var(--ease-out-expo);
 }
-.split-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 18px;
-  cursor: pointer;
-  transition: background 0.18s;
+.mc-reading { background: linear-gradient(135deg, rgba(199, 221, 255, 0.46), rgba(238, 245, 255, 0.2)); }
+.mc-listening { background: linear-gradient(135deg, rgba(222, 202, 255, 0.46), rgba(246, 239, 255, 0.2)); }
+[data-theme="dark"] .mc-reading { background: linear-gradient(135deg, rgba(106, 128, 221, 0.2), rgba(29, 36, 52, 0.1)); }
+[data-theme="dark"] .mc-listening { background: linear-gradient(135deg, rgba(150, 108, 220, 0.2), rgba(40, 30, 52, 0.1)); }
+@media (hover: hover) and (pointer: fine) {
+  .mini-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .mini-card:hover .mini-go { transform: translateX(4px); }
 }
-.reading-split {
-  background: linear-gradient(135deg, rgba(199, 221, 255, 0.5), rgba(238, 245, 255, 0.2));
-}
-.listening-split {
-  background: linear-gradient(135deg, rgba(222, 202, 255, 0.5), rgba(246, 239, 255, 0.2));
-}
-[data-theme="dark"] .reading-split { background: linear-gradient(135deg, rgba(106, 128, 221, 0.18), rgba(29, 36, 52, 0.1)); }
-[data-theme="dark"] .listening-split { background: linear-gradient(135deg, rgba(150, 108, 220, 0.18), rgba(40, 30, 52, 0.1)); }
-.split-item:hover { background: rgba(255, 255, 255, 0.45); }
-[data-theme="dark"] .split-item:hover { background: rgba(255, 255, 255, 0.05); }
-.split-item + .split-item { border-left: 1px solid var(--line); }
-.si-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
+.mini-card:active { transform: scale(0.99); }
+.mini-cover {
+  width: 38px;
+  height: auto;
+  border-radius: 5px;
   flex-shrink: 0;
+  transform: rotate(-4deg);
+  box-shadow: 0 6px 14px -6px rgba(60, 20, 40, 0.55);
+  transition: transform var(--dur-4) var(--ease-spring);
 }
-.reading-split .si-icon { background: linear-gradient(145deg, #eef5ff, #dcebff); }
-.listening-split .si-icon { background: linear-gradient(145deg, #f6efff, #e9dcff); }
-[data-theme="dark"] .si-icon { background: rgba(255, 255, 255, 0.08); }
-.si-text { flex: 1; min-width: 0; }
-.si-text b { font-size: 14.5px; font-weight: 800; color: var(--text); display: block; }
-.si-text span { font-size: 11px; color: var(--text-light); display: block; margin-top: 2px; }
-.si-num { font-size: 22px; font-weight: 800; color: var(--sakura-600); flex-shrink: 0; }
-.si-num small { font-size: 11px; font-weight: 600; color: var(--text-light); margin-left: 2px; }
-.si-go { font-size: 16px; color: var(--text-faint); flex-shrink: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .mini-card:hover .mini-cover { transform: rotate(0deg) scale(1.06); }
+}
+.mini-body { flex: 1; min-width: 0; }
+.mini-body b { display: block; font-size: 14.5px; font-weight: 800; color: var(--text); }
+.mini-body span { display: block; font-size: 11px; color: var(--text-light); margin-top: 2px; }
+.mini-num { font-size: 20px; font-weight: 800; color: var(--sakura-600); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.mini-num small { font-size: 11px; color: var(--text-light); margin-left: 2px; }
+.mini-go { font-size: 16px; color: var(--text-faint); flex-shrink: 0; transition: transform var(--dur-2) var(--ease-out-expo); }
 
+/* ==================== 响应式 ==================== */
+@media (max-width: 860px) {
+  .study-grid, .practice-grid, .mini-grid { gap: 12px; }
+  .today-main { gap: 18px; }
+  .ring-wrap { width: 124px; height: 124px; }
+  .ring-wrap svg { width: 124px; height: 124px; }
+  .ring-num { font-size: 30px; }
+}
 @media (max-width: 760px) {
-  .practice-zone { grid-template-columns: 1fr; gap: 12px; }
-  .split-row { grid-template-columns: 1fr 1fr; }
-  .primary-card { padding: 16px 18px; }
-  .pc-icon { width: 46px; height: 46px; font-size: 22px; border-radius: 14px; }
-  .pc-big-num { font-size: 34px; }
+  .today-hero { padding: 18px 18px 20px; }
+  .today-main { flex-direction: column; align-items: stretch; gap: 16px; }
+  .ring-wrap { align-self: center; }
+  .today-side { gap: 12px; }
+  .study-grid, .practice-grid, .mini-grid { grid-template-columns: 1fr; }
+  .greet { font-size: 19px; }
+  .sc-cover { width: 62px; }
+  .pc-num { font-size: 36px; }
 }
 @media (max-width: 420px) {
-  .split-row { grid-template-columns: 1fr; }
-  .split-item + .split-item { border-left: none; border-top: 1px solid var(--border); }
-  .pc-tag.hot { order: -1; }
+  .sc-cover { width: 54px; }
+  .week-bar { width: 12px; }
+}
+@media (max-width: 340px) {
+  .sc-cover { display: none; }
 }
 </style>

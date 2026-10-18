@@ -2,11 +2,18 @@
   <div class="container">
     <!-- 头部 -->
     <div class="list-header">
-      <h2>🎧 听解 · 绿宝书 {{ level }}</h2>
+      <div class="list-title">
+        <img class="hero-cover" src="./covers/listening-green.svg" alt="绿宝书 · 听解" />
+        <h2>🎧 {{ level }} · 听解</h2>
+      </div>
+      <button class="btn btn-ghost btn-sm" @click="$router.push('/learn')">← 练习</button>
     </div>
+    <p class="list-desc">
+      绿宝书《新日本语能力考试{{ level }}听解（详解+练习）》单元训练。每单元含词汇、题目与补充知识，可扫码播放对应音频。
+    </p>
 
     <!-- 单元列表 -->
-    <div class="unit-grid">
+    <div class="unit-grid stagger">
       <div v-for="u in units" :key="u.id" class="unit-card" @click="go(u.id)">
         <div class="unit-head">
           <span class="unit-badge">Unit {{ u.id }}</span>
@@ -41,6 +48,13 @@ function go(id) { router.push('/listening/' + id) }
 </script>
 
 <style scoped>
+/* 与读解列表页保持完全一致的页头说明 */
+.list-desc {
+  font-size: 13px;
+  color: var(--ink-2, #888);
+  margin: 0 0 16px;
+  line-height: 1.7;
+}
 .unit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

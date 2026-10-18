@@ -380,15 +380,20 @@ function toggleFav() {
 }
 
 function finishQuiz() {
+  const sessionCorrect = sessionResults.value.filter(r => r.correct).length
+  const sessionTotal = sessionResults.value.length || questionList.value.length
   if (mode.value === 'mock') {
-    const correct = sessionResults.value.filter(r => r.correct).length
     store.saveMockResult(level.value + ':' + mockId.value, {
-      correct,
+      correct: sessionCorrect,
       total: questionList.value.length,
-      score: Math.round(correct / questionList.value.length * 100),
+      score: Math.round(sessionCorrect / (questionList.value.length || 1) * 100),
     })
   }
-  router.push({ name: 'result', query: { from: mode.value, mock: mockId.value } })
+  // 把本次练习的真实题数/答对数带给结果页，避免结果页按整级题库统计
+  router.push({
+    name: 'result',
+    query: { from: mode.value, mock: mockId.value, correct: sessionCorrect, total: sessionTotal },
+  })
 }
 
 function goBack() {
@@ -423,27 +428,30 @@ function goBack() {
 .side-arrow {
   width: 44px;
   height: 80px;
-  border-radius: 12px;
-  background: var(--card-grad);
-  border: 2px solid var(--sakura-100);
-  color: var(--sakura-400);
+  border-radius: 14px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-strong);
+  color: var(--sakura-600);
   font-size: 28px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: transform var(--dur-2) var(--ease-spring), background var(--dur-2), border-color var(--dur-2), color var(--dur-2);
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-card);
 }
 .side-arrow:hover:not(:disabled) {
-  background: var(--sakura-500);
-  border-color: var(--sakura-500);
+  background: var(--grad-sakura);
+  border-color: transparent;
   color: #fff;
-  transform: scale(1.05);
+  transform: translateY(-2px) scale(1.04);
 }
+.side-arrow:active:not(:disabled) { transform: scale(0.94); }
 .side-arrow:disabled {
-  opacity: 0.25;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 .arrow-icon {

@@ -104,9 +104,17 @@ export function useWordStore() {
   }
 
   // 某词是否"背完"：所有可用题型都已完成
+  // 容错：availTypes 允许数组或 Set（doneTypes 返回 Set），畸形入参不再抛错导致整页白屏
   function isMastered(wordId, availTypes) {
-    if (!state.learned[wordId]) return false
-    return availTypes.every(t => state.learned[wordId].types[t])
+    const rec = state.learned[wordId]
+    if (!rec) return false
+    const types = rec.types && typeof rec.types === 'object' ? rec.types : {}
+    const list = Array.isArray(availTypes)
+      ? availTypes
+      : availTypes instanceof Set
+        ? [...availTypes]
+        : []
+    return list.every(t => types[t])
   }
 
   // 清除某词错误记录（复习自评"没问题"时调用）
