@@ -196,6 +196,8 @@ import { readingN1 } from '../data/reading-n1'
 import { readingN2 } from '../data/reading-n2'
 import { listeningUnits as n2Listening } from '../data/listening'
 import { listeningUnits as n1Listening } from '../data/listening-n1'
+import { listeningUnits as n5Listening } from '../data/listening-n5'
+import { listeningUnits as n4Listening } from '../data/listening-n4'
 import { availableTypes } from '../composables/wordQuiz'
 import { useCountUp } from '../composables/useMotion'
 
@@ -269,7 +271,12 @@ const mockStats = computed(() => {
 
 // ===== 读解 / 听解 =====
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
-const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
+const listeningCount = computed(() => ({
+  N1: n1Listening,
+  N2: n2Listening,
+  N5: n5Listening,
+  N4: n4Listening,
+}[level.value] || n2Listening).length)
 
 // 环周长：2 * π * 50
 const C = 2 * Math.PI * 50

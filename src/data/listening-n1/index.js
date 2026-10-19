@@ -1,9 +1,25 @@
 // 听解板块 N1 总索引：绿宝书《新日本语能力考试N1听解（详解+练习）》
 // Part1 基础编 Unit1-8（400問）+ Part2 攻略編（132問）+ Part3 実践編（模拟测试）
-// 分单元分批上线：当前已收录 Unit1
 import unit1 from './unit1/index.js'
+import unit2 from './unit2/index.js'
+import unit3 from './unit3/index.js'
+import unit4 from './unit4/index.js'
+import unit5 from './unit5/index.js'
+import unit6 from './unit6/index.js'
+import unit7 from './unit7/index.js'
+import unit8 from './unit8/index.js'
+import unit9 from './unit9/index.js'
+import unit10 from './unit10/index.js'
+import unit11 from './unit11/index.js'
+import unit12 from './unit12/index.js'
+import unit13 from './unit13/index.js'
+import unit14 from './unit14/index.js'
+import unit15 from './unit15/index.js'
 
-export const listeningUnits = [unit1]
+export const listeningUnits = [
+  unit1, unit2, unit3, unit4, unit5, unit6, unit7, unit8,
+  unit9, unit10, unit11, unit12, unit13, unit14, unit15,
+]
 
 // 按 id 取单元
 export function getListeningUnit(id) {

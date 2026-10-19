@@ -446,6 +446,8 @@ import { ref, computed, reactive, onMounted, onBeforeUnmount, nextTick } from 'v
 import { useRoute } from 'vue-router'
 import { getListeningUnit as getN2ListeningUnit } from '../data/listening'
 import { getListeningUnit as getN1ListeningUnit } from '../data/listening-n1'
+import { getListeningUnit as getN5ListeningUnit } from '../data/listening-n5'
+import { getListeningUnit as getN4ListeningUnit } from '../data/listening-n4'
 import { useFurigana } from '../composables/useFurigana'
 import { useLevel } from '../store/levelStore'
 
@@ -456,7 +458,8 @@ const furiOn = computed(() => furigana.isEnabled.value)
 
 const unit = computed(() => {
   const id = route.params.unit
-  return level.value === 'N1' ? getN1ListeningUnit(id) : getN2ListeningUnit(id)
+  const getter = { N1: getN1ListeningUnit, N2: getN2ListeningUnit, N5: getN5ListeningUnit, N4: getN4ListeningUnit }[level.value] || getN2ListeningUnit
+  return getter(id)
 })
 const wordsQrPage = computed(() => (unit.value?.words?.groups[0]?.qrPage) || 0)
 const questionsQrPage = computed(() => (unit.value?.questions?.sections[qIndex.value]?.qrPage) || 0)
@@ -581,10 +584,106 @@ import qrP273 from '../assets/listening/qr_p273.png'
 import qrN1_9 from '../assets/listening-n1/qr_p9.png'
 import qrN1_11 from '../assets/listening-n1/qr_p11.png'
 import qrN1_13 from '../assets/listening-n1/qr_p13.png'
+import qrN1_15 from '../assets/listening-n1/qr_p15.png'
+import qrN1_17 from '../assets/listening-n1/qr_p17.png'
+import qrN1_22 from '../assets/listening-n1/qr_p22.png'
+import qrN1_26 from '../assets/listening-n1/qr_p26.png'
+import qrN1_31 from '../assets/listening-n1/qr_p31.png'
+import qrN1_34 from '../assets/listening-n1/qr_p34.png'
+import qrN1_42 from '../assets/listening-n1/qr_p42.png'
+import qrN1_46 from '../assets/listening-n1/qr_p46.png'
+import qrN1_53 from '../assets/listening-n1/qr_p53.png'
+import qrN1_59 from '../assets/listening-n1/qr_p59.png'
+import qrN1_65 from '../assets/listening-n1/qr_p65.png'
+import qrN1_70 from '../assets/listening-n1/qr_p70.png'
+import qrN1_77 from '../assets/listening-n1/qr_p77.png'
+import qrN1_81 from '../assets/listening-n1/qr_p81.png'
+import qrN1_89 from '../assets/listening-n1/qr_p89.png'
+import qrN1_94 from '../assets/listening-n1/qr_p94.png'
+import qrN1_100 from '../assets/listening-n1/qr_p100.png'
+import qrN1_106 from '../assets/listening-n1/qr_p106.png'
+import qrN1_112 from '../assets/listening-n1/qr_p112.png'
+import qrN1_118 from '../assets/listening-n1/qr_p118.png'
+import qrN1_123 from '../assets/listening-n1/qr_p123.png'
+import qrN1_129 from '../assets/listening-n1/qr_p129.png'
+import qrN1_135 from '../assets/listening-n1/qr_p135.png'
+import qrN1_141 from '../assets/listening-n1/qr_p141.png'
+import qrN1_147 from '../assets/listening-n1/qr_p147.png'
+import qrN1_153 from '../assets/listening-n1/qr_p153.png'
+import qrN1_157 from '../assets/listening-n1/qr_p157.png'
+import qrN1_161 from '../assets/listening-n1/qr_p161.png'
+import qrN1_165 from '../assets/listening-n1/qr_p165.png'
+import qrN1_169 from '../assets/listening-n1/qr_p169.png'
+import qrN1_175 from '../assets/listening-n1/qr_p175.png'
+import qrN1_182 from '../assets/listening-n1/qr_p182.png'
+import qrN1_194 from '../assets/listening-n1/qr_p194.png'
+import qrN1_206 from '../assets/listening-n1/qr_p206.png'
+import qrN1_215 from '../assets/listening-n1/qr_p215.png'
+import qrN1_221 from '../assets/listening-n1/qr_p221.png'
+import qrN1_228 from '../assets/listening-n1/qr_p228.png'
+import qrN1_236 from '../assets/listening-n1/qr_p236.png'
+import qrN1_242 from '../assets/listening-n1/qr_p242.png'
+// N5 听解二维码（src/assets/listening-n5/，按 PDF 页号）
+import qrN5_11 from '../assets/listening-n5/qr_p11.png'
+import qrN5_13 from '../assets/listening-n5/qr_p13.png'
+import qrN5_16 from '../assets/listening-n5/qr_p16.png'
+import qrN5_18 from '../assets/listening-n5/qr_p18.png'
+import qrN5_21 from '../assets/listening-n5/qr_p21.png'
+import qrN5_23 from '../assets/listening-n5/qr_p23.png'
+import qrN5_26 from '../assets/listening-n5/qr_p26.png'
+import qrN5_28 from '../assets/listening-n5/qr_p28.png'
+import qrN5_31 from '../assets/listening-n5/qr_p31.png'
+import qrN5_33 from '../assets/listening-n5/qr_p33.png'
+import qrN5_36 from '../assets/listening-n5/qr_p36.png'
+import qrN5_38 from '../assets/listening-n5/qr_p38.png'
+import qrN5_43 from '../assets/listening-n5/qr_p43.png'
+import qrN5_45 from '../assets/listening-n5/qr_p45.png'
+import qrN5_50 from '../assets/listening-n5/qr_p50.png'
+import qrN5_60 from '../assets/listening-n5/qr_p60.png'
+import qrN5_62 from '../assets/listening-n5/qr_p62.png'
+import qrN5_66 from '../assets/listening-n5/qr_p66.png'
+import qrN5_75 from '../assets/listening-n5/qr_p75.png'
+import qrN5_77 from '../assets/listening-n5/qr_p77.png'
+import qrN5_81 from '../assets/listening-n5/qr_p81.png'
+import qrN5_98 from '../assets/listening-n5/qr_p98.png'
+import qrN5_100 from '../assets/listening-n5/qr_p100.png'
+import qrN5_104 from '../assets/listening-n5/qr_p104.png'
+import qrN5_119 from '../assets/listening-n5/qr_p119.png'
+import qrN5_130 from '../assets/listening-n5/qr_p130.png'
+// N4 听解二维码（src/assets/listening-n4/，按 PDF 页号）
+import qrN4_141 from '../assets/listening-n4/qr_p141.png'
+import qrN4_143 from '../assets/listening-n4/qr_p143.png'
+import qrN4_146 from '../assets/listening-n4/qr_p146.png'
+import qrN4_149 from '../assets/listening-n4/qr_p149.png'
+import qrN4_152 from '../assets/listening-n4/qr_p152.png'
+import qrN4_155 from '../assets/listening-n4/qr_p155.png'
+import qrN4_158 from '../assets/listening-n4/qr_p158.png'
+import qrN4_161 from '../assets/listening-n4/qr_p161.png'
+import qrN4_164 from '../assets/listening-n4/qr_p164.png'
+import qrN4_166 from '../assets/listening-n4/qr_p166.png'
+import qrN4_169 from '../assets/listening-n4/qr_p169.png'
+import qrN4_172 from '../assets/listening-n4/qr_p172.png'
+import qrN4_177 from '../assets/listening-n4/qr_p177.png'
+import qrN4_180 from '../assets/listening-n4/qr_p180.png'
+import qrN4_185 from '../assets/listening-n4/qr_p185.png'
+import qrN4_195 from '../assets/listening-n4/qr_p195.png'
+import qrN4_198 from '../assets/listening-n4/qr_p198.png'
+import qrN4_203 from '../assets/listening-n4/qr_p203.png'
+import qrN4_210 from '../assets/listening-n4/qr_p210.png'
+import qrN4_212 from '../assets/listening-n4/qr_p212.png'
+import qrN4_217 from '../assets/listening-n4/qr_p217.png'
+import qrN4_234 from '../assets/listening-n4/qr_p234.png'
+import qrN4_236 from '../assets/listening-n4/qr_p236.png'
+import qrN4_240 from '../assets/listening-n4/qr_p240.png'
+import qrN4_257 from '../assets/listening-n4/qr_p257.png'
+import qrN4_267 from '../assets/listening-n4/qr_p267.png'
 const qrImgsN2 = { 9: qrP009, 14: qrP014, 17: qrP017, 19: qrP019, 22: qrP022, 31: qrP031, 35: qrP035, 43: qrP043, 47: qrP047, 53: qrP053, 57: qrP057, 65: qrP065, 70: qrP070, 77: qrP077, 80: qrP080, 88: qrP088, 91: qrP091, 102: qrP102, 114: qrP114, 120: qrP120, 126: qrP126, 132: qrP132, 138: qrP138, 144: qrP144, 150: qrP150, 156: qrP156, 162: qrP162, 169: qrP169, 175: qrP175, 179: qrP179, 184: qrP184, 189: qrP189, 195: qrP195, 202: qrP202, 215: qrP215, 228: qrP228, 243: qrP243, 253: qrP253, 259: qrP259, 267: qrP267, 273: qrP273 }
-const qrImgsN1 = { 9: qrN1_9, 11: qrN1_11, 13: qrN1_13 }
+const qrImgsN1 = { 9: qrN1_9, 11: qrN1_11, 13: qrN1_13, 15: qrN1_15, 17: qrN1_17, 22: qrN1_22, 26: qrN1_26, 31: qrN1_31, 34: qrN1_34, 42: qrN1_42, 46: qrN1_46, 53: qrN1_53, 59: qrN1_59, 65: qrN1_65, 70: qrN1_70, 77: qrN1_77, 81: qrN1_81, 89: qrN1_89, 94: qrN1_94, 100: qrN1_100, 106: qrN1_106, 112: qrN1_112, 118: qrN1_118, 123: qrN1_123, 129: qrN1_129, 135: qrN1_135, 141: qrN1_141, 147: qrN1_147, 153: qrN1_153, 157: qrN1_157, 161: qrN1_161, 165: qrN1_165, 169: qrN1_169, 175: qrN1_175, 182: qrN1_182, 194: qrN1_194, 206: qrN1_206, 215: qrN1_215, 221: qrN1_221, 228: qrN1_228, 236: qrN1_236, 242: qrN1_242 }
+const qrImgsN5 = { 11: qrN5_11, 13: qrN5_13, 16: qrN5_16, 18: qrN5_18, 21: qrN5_21, 23: qrN5_23, 26: qrN5_26, 28: qrN5_28, 31: qrN5_31, 33: qrN5_33, 36: qrN5_36, 38: qrN5_38, 43: qrN5_43, 45: qrN5_45, 50: qrN5_50, 60: qrN5_60, 62: qrN5_62, 66: qrN5_66, 75: qrN5_75, 77: qrN5_77, 81: qrN5_81, 98: qrN5_98, 100: qrN5_100, 104: qrN5_104, 119: qrN5_119, 130: qrN5_130 }
+const qrImgsN4 = { 141: qrN4_141, 143: qrN4_143, 146: qrN4_146, 149: qrN4_149, 152: qrN4_152, 155: qrN4_155, 158: qrN4_158, 161: qrN4_161, 164: qrN4_164, 166: qrN4_166, 169: qrN4_169, 172: qrN4_172, 177: qrN4_177, 180: qrN4_180, 185: qrN4_185, 195: qrN4_195, 198: qrN4_198, 203: qrN4_203, 210: qrN4_210, 212: qrN4_212, 217: qrN4_217, 234: qrN4_234, 236: qrN4_236, 240: qrN4_240, 257: qrN4_257, 267: qrN4_267 }
+const qrMaps = { N1: qrImgsN1, N2: qrImgsN2, N5: qrImgsN5, N4: qrImgsN4 }
 function qrImg(page) {
-  const map = level.value === 'N1' ? qrImgsN1 : qrImgsN2
+  const map = qrMaps[level.value] || qrImgsN2
   return (page && map[page]) || ''
 }
 

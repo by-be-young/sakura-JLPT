@@ -37,13 +37,21 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { listeningUnits as n2Units, unitSummary as n2Summary } from '../data/listening'
 import { listeningUnits as n1Units, unitSummary as n1Summary } from '../data/listening-n1'
+import { listeningUnits as n5Units, unitSummary as n5Summary } from '../data/listening-n5'
+import { listeningUnits as n4Units, unitSummary as n4Summary } from '../data/listening-n4'
 import { useLevel } from '../store/levelStore'
 
 const router = useRouter()
 const { level } = useLevel()
-const isN1 = computed(() => level.value === 'N1')
-const units = computed(() => (isN1.value ? n1Units : n2Units))
-function stats(u) { return (isN1.value ? n1Summary : n2Summary)(u) }
+const unitMap = {
+  N1: { units: n1Units, summary: n1Summary },
+  N2: { units: n2Units, summary: n2Summary },
+  N5: { units: n5Units, summary: n5Summary },
+  N4: { units: n4Units, summary: n4Summary },
+}
+const cur = computed(() => unitMap[level.value] || unitMap.N2)
+const units = computed(() => cur.value.units)
+function stats(u) { return cur.value.summary(u) }
 function go(id) { router.push('/listening/' + id) }
 </script>
 
