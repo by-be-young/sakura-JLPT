@@ -134,7 +134,7 @@ export default {
         {
           "n": 111,
           "text": "みどり公園には____や滑り台などの遊具が設置されている。",
-          "answer": "プランコ",
+          "answer": "ブランコ",
           "textFuri": "みどり<ruby>公園<rp>(</rp><rt>こうえん</rt><rp>)</rp></ruby>には____や<ruby>滑<rp>(</rp><rt>すべ</rt><rp>)</rp></ruby>り<ruby>台<rp>(</rp><rt>だい</rt><rp>)</rp></ruby>などの<ruby>遊具<rp>(</rp><rt>ゆうぐ</rt><rp>)</rp></ruby>が<ruby>設置<rp>(</rp><rt>せっち</rt><rp>)</rp></ruby>されている。"
         },
         {
