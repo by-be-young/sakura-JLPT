@@ -40,8 +40,8 @@
   },
   "build": {
     "appId": "com.sakura.japanese",
-    "productName": "妯辫姳鏃ヨ",
-    "copyright": "Copyright 漏 2026 Sakura Japanese",
+    "productName": "樱花日语",
+    "copyright": "Copyright © 2026 Sakura Japanese",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -68,7 +68,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "妯辫姳鏃ヨ",
+      "shortcutName": "樱花日语",
       "artifactName": "sakura-japanese-setup-${version}.${ext}"
     },
     "publish": [
