@@ -8,7 +8,8 @@
         <div class="page-head-text">
           <h2 class="page-title">{{ phase === 'learn' ? '新学单词' : '学习测验' }}</h2>
           <p class="page-sub">
-            {{ phase === 'learn' ? '点击卡片翻面 · Enter 翻面 · A / D 切换 · F 熟词 · N 笔记' : '选出正确答案，答对后会自动进入下一题' }}
+            <template v-if="phase === 'learn'">点击卡片翻面<span class="kbd-hint"> · Enter 翻面 · A / D 切换 · F 熟词 · N 笔记</span></template>
+            <template v-else>选出正确答案，答对后会自动进入下一题</template>
           </p>
         </div>
       </div>
@@ -41,7 +42,8 @@
         <span class="learn-spacer"></span>
         <button class="btn btn-ghost" @click="skipToQuiz" title="跳过学习，直接测验 (S)" aria-label="跳过学习，直接测验">跳过学习，直接测验 →</button>
         <button class="btn btn-primary" @click="learnNext" :title="learnIndex < learnWords.length - 1 ? '下一个 (D)' : '完成学习'">
-          {{ learnIndex < learnWords.length - 1 ? '下一个 → (D)' : '完成学习 ✓' }}
+          <template v-if="learnIndex < learnWords.length - 1">下一个 → <span class="kbd-hint">(D)</span></template>
+          <template v-else>完成学习 ✓</template>
         </button>
       </div>
       <div v-if="learnIndex === learnWords.length - 1" class="learn-done empty-card">
@@ -835,5 +837,10 @@ onUnmounted(() => {
   .list-kana { display: none; }
   .list-mean { font-size: 11.5px; }
   .quiz-card-wrap { min-height: 280px; }
+}
+
+/* 触屏没有物理键盘：隐藏页头的快捷键说明 */
+@media (max-width: 760px) {
+  .kbd-hint { display: none; }
 }
 </style>

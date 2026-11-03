@@ -7,7 +7,7 @@
         <span class="icon-tile review-tile" aria-hidden="true">🔁</span>
         <div class="page-head-text">
           <h2 class="page-title">复习</h2>
-          <p class="page-sub">三档自评 · 记得 / 模糊 / 不记得 · 快捷键 1 / 2 / 3</p>
+          <p class="page-sub">三档自评 · 记得 / 模糊 / 不记得<span class="kbd-hint"> · 快捷键 1 / 2 / 3</span></p>
         </div>
       </div>
       <div class="page-actions">
@@ -827,5 +827,11 @@ function restartReview() {
   .eval-label { font-size: 14px; }
   .eval-actions { gap: 8px; }
   .reveal-actions .eval-btn { min-height: 88px; }
+}
+
+/* 触屏没有物理键盘：隐藏"按 1/2/3"与快捷键说明 */
+@media (max-width: 760px) {
+  .kbd-hint,
+  .eval-key { display: none; }
 }
 </style>

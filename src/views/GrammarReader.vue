@@ -47,7 +47,7 @@
           title="打开目录"
         >
           <span class="toc-btn-icon" aria-hidden="true">☰</span>
-          <span>目录</span>
+          <span class="toc-btn-text">目录</span>
           <span v-if="markedCount" class="marked-badge">{{ markedCount }}</span>
         </button>
       </div>
@@ -192,8 +192,8 @@
 
     <!-- 底部翻页操作条（分页模式） -->
     <div v-if="mode === 'paged'" class="pager-bar sticky-actions">
-      <button class="page-btn pressable" :disabled="currentIndex <= 0" @click="prevPage" title="上一页（快捷键 A）">
-        <span aria-hidden="true">←</span> 上一页 <span class="kbd">A</span>
+      <button class="page-btn pressable" :disabled="currentIndex <= 0" @click="prevPage" title="上一页（快捷键 A）" aria-label="上一页">
+        <span class="pb-ico" aria-hidden="true">←</span> <span class="pb-text">上一页</span> <span class="kbd">A</span>
       </button>
       <div class="pager-mid">
         <span class="page-indicator">第 <b>{{ currentIndex + 1 }}</b> / {{ points.length }} 点</span>
@@ -201,8 +201,8 @@
           <span class="pager-rail-fill" :style="{ transform: 'scaleX(' + (progressPercent / 100) + ')' }"></span>
         </span>
       </div>
-      <button class="page-btn pressable" :disabled="currentIndex >= points.length - 1" @click="nextPage" title="下一页（快捷键 D）">
-        下一页 <span class="kbd">D</span> <span aria-hidden="true">→</span>
+      <button class="page-btn pressable" :disabled="currentIndex >= points.length - 1" @click="nextPage" title="下一页（快捷键 D）" aria-label="下一页">
+        <span class="pb-text">下一页</span> <span class="kbd">D</span> <span class="pb-ico" aria-hidden="true">→</span>
       </button>
     </div>
 
@@ -255,7 +255,7 @@
           </div>
         </div>
       </div>
-      <div class="toc-foot">点击目录项跳转 · Esc 关闭</div>
+      <div class="toc-foot">点击目录项跳转<span class="kbd-hint"> · Esc 关闭</span></div>
     </aside>
   </div>
 </template>
@@ -1752,9 +1752,64 @@ watch(currentPointId, () => {
 }
 /* 手机底部 Tab 栏（Dock）：为底部操作条让位 */
 @media (max-width: 760px) {
-  .reader-page { padding-bottom: calc(160px + env(safe-area-inset-bottom)); }
-  .reader-bar { top: 58px; }
-  .pager-bar { bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .reader-page { padding: 10px 12px calc(72px + env(safe-area-inset-bottom)); }
+
+  /* 顶部条：一行装下「返回 / 标题+页码 / 阅读模式 / 目录」，高度压到 44px */
+  .reader-bar {
+    top: 46px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    margin-bottom: 10px;
+    padding: 6px 9px;
+    border-radius: 14px;
+  }
+  .rb-main { flex: 1 1 auto; gap: 7px; }
+  .rb-back { width: 32px; min-height: 32px; padding: 0; gap: 0; border-radius: 50%; justify-content: center; }
+  .rb-back-text { display: none; }
+  .rb-back-arrow { font-size: 14px; }
+  .rb-titles { gap: 0; }
+  .reader-title { font-size: 13.5px; gap: 0; line-height: 1.25; }
+  .reader-sub { display: none; }
+  .rb-meta { gap: 3px; font-size: 10.5px; line-height: 1.25; }
+  .rb-state,
+  .rb-sep,
+  .rb-marked { display: none; }
+  .rb-pos b { font-size: 11.5px; }
+  .reader-actions { width: auto; flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; }
+  .mode-switch { flex: 0 0 auto; min-width: 0; padding: 2px; }
+  .mode-toggle { flex: 0 0 auto; min-height: 28px; padding: 0 9px; font-size: 11.5px; }
+  .toc-btn { flex: 0 0 auto; min-height: 28px; padding: 0 9px; }
+  .toc-btn-text,
+  .toc-btn .marked-badge { display: none; }
+  .toc-btn-icon { font-size: 14px; }
+  .rb-progress { left: 9px; right: 9px; }
+
+  /* 纸面：内边距收紧，正文吃满整屏 */
+  .book { height: clamp(320px, calc(100dvh - 190px), 700px); }
+  .page-wrap { padding: 16px 14px 22px; border-radius: var(--radius); }
+  .page-wrap .gp-title { font-size: 16.5px; }
+  .page-corner { width: 40px; height: 40px; }
+  .gp-card { scroll-margin-top: 112px; }
+  .unit-block { margin-bottom: 22px; }
+
+  /* 底部翻页条：图标按钮 + 细进度，占高砍到 46px */
+  .pager-bar {
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    gap: 6px;
+    margin-top: 0;
+    padding: 6px 8px;
+    border-radius: 14px;
+  }
+  .page-btn { width: 34px; min-height: 34px; padding: 0; gap: 0; border-radius: 50%; font-size: 14px; }
+  /* 触屏没有物理键盘：隐藏全部快捷键提示 */
+  .pb-text,
+  .kbd,
+  .kbd-hint { display: none; }
+  .pb-ico { line-height: 1; }
+  .pager-mid { min-width: 0; flex-direction: row; gap: 5px; }
+  .page-indicator { font-size: 10.5px; white-space: nowrap; }
+  .page-indicator b { font-size: 12px; }
+  .pager-rail { width: 100%; max-width: 100%; height: 3px; }
 }
 
 /* 减少动态效果：翻书动画直接取消，避免长时间空白 */

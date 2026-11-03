@@ -1808,14 +1808,14 @@ function optClass(item, key, qi) {
 }
 
 @media (max-width: 640px) {
-  .unit-head { align-items: flex-start; margin-bottom: 14px; }
-  .unit-head .page-head-main { align-items: flex-start; gap: 10px; }
-  .unit-back { padding: 7px 12px; }
-  .unit-head .page-title { margin-top: 4px; font-size: 20px; }
-  .unit-kicker { font-size: 10px; letter-spacing: 1.1px; }
-  .unit-theme { font-size: 12.5px; }
-  .unit-meta { width: 100%; }
-  .unit-meta .chip-pill { flex: 0 1 auto; max-width: 100%; }
+  /* 移动端页头压成「返回 + 单元标题」：kicker 与芯片信息收起，高度让给正文 */
+  .unit-head { align-items: center; margin-bottom: 12px; }
+  .unit-head .page-head-main { align-items: center; gap: 10px; }
+  .unit-kicker,
+  .unit-meta { display: none; }
+  .unit-back { padding: 7px 11px; }
+  .unit-head .page-title { margin-top: 0; font-size: 18px; }
+  .unit-theme { margin-top: 3px; font-size: 12px; line-height: 1.5; }
   .unit-tabs { margin-bottom: 14px; }
   .unit-tab { padding: 9px 5px; gap: 5px; font-size: 13px; }
   .ut-emoji { font-size: 15px; }
@@ -1874,4 +1874,10 @@ function optClass(item, key, qi) {
   animation: float-soft 4.2s ease-in-out infinite;
 }
 .empty-tip p { font-size: 14px; line-height: 1.8; }
+
+/* 触屏没有物理键盘：翻页说明（A / D）整条隐藏 */
+@media (max-width: 760px) {
+  .page-hint,
+  .kbd { display: none; }
+}
 </style>

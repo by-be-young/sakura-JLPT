@@ -397,7 +397,7 @@ button {
   position: fixed;
   left: 12px;
   right: 12px;
-  bottom: calc(10px + env(safe-area-inset-bottom));
+  bottom: calc(8px + env(safe-area-inset-bottom));
   z-index: var(--z-nav);
   display: none;
   /* 悬浮 Dock 用实心底色：避免内容滚过时透字重影 */
@@ -411,8 +411,8 @@ button {
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  height: 58px;
-  padding: 4px;
+  height: 52px;
+  padding: 3px;
 }
 .tab-item {
   position: relative;
@@ -420,9 +420,9 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   color: var(--text-light);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   border-radius: 16px;
   transition: color var(--dur-2) var(--ease-soft);
@@ -440,7 +440,7 @@ button {
 }
 .tab-item .tab-emoji {
   position: relative;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   transition: transform var(--dur-4) var(--ease-spring), filter var(--dur-3);
   filter: grayscale(0.35);
@@ -469,10 +469,17 @@ button {
 }
 @media (max-width: 760px) {
   .nav-links { display: none; }
-  .nav-inner { height: 58px; }
+  /* 移动端顶栏收成一条细带：品牌名缩小，功能键只留图标，纵向空间让给正文 */
+  .nav { padding: 0 12px; }
+  .nav-inner { height: 46px; gap: 8px; }
+  .nav-logo { font-size: 15px; gap: 5px; }
+  .nav-logo .icon { font-size: 17px; filter: drop-shadow(0 2px 6px rgba(244, 92, 142, 0.25)); }
+  .nav-right { gap: 4px; }
+  .furigana-toggle { gap: 0; padding: 4px 9px; border-width: 1px; }
+  .furigana-toggle .furi-icon { font-size: 13px; }
   .tabbar { display: block; }
   /* 内容区为悬浮底栏留白 */
-  .container { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  .container { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
 }
 
 /* ===== 容器 ===== */
@@ -1600,9 +1607,10 @@ select:focus-visible {
 
 /* ---------- 移动端页头收敛 ---------- */
 @media (max-width: 640px) {
-  .page-head { align-items: center; margin-bottom: 16px; }
+  .page-head { align-items: center; margin-bottom: 12px; gap: 10px; }
   .page-title { font-size: 19px; }
-  .page-sub { font-size: 12px; }
+  .page-sub { font-size: 12px; margin-top: 3px; }
+  .back-btn { gap: 4px; padding: 6px 11px; font-size: 12.5px; }
   .surface { padding: 16px; }
 }
 

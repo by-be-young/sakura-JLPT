@@ -49,12 +49,12 @@ release/                  # Windows 打包产物输出目录
 - `package.json` → `build.publish`：把 `owner` / `repo` 改成你的 GitHub 用户名和仓库名。
 - `public/update-config.js`：把 `owner` / `repo` 改成同样的值（Android / PWA 端使用）。
 
-### 3. 发布一个新版本（以 v1.1.0 为例）
-1. 修改 `package.json` 的 `version` 为 `1.1.0`。
-2. 在 GitHub 上创建 Release，Tag 写 `v1.1.0`（**必须以 v 开头且符合语义化版本号**，如 `v1.1.0`；`v1.0` 这类不合法版本号会导致自动更新解析失败）。
+### 3. 发布一个新版本（以 v1.3.0 为例）
+1. 修改 `package.json` 的 `version` 为 `1.3.0`（Android 需同步 `android/app/build.gradle` 的 `versionCode` / `versionName`）。
+2. 在 GitHub 上创建 Release，Tag 写 `v1.3.0`（**必须以 v 开头且符合语义化版本号**，如 `v1.3.0`；`v1.0` 这类不合法版本号会导致自动更新解析失败）。
 3. 构建并上传以下文件到该 Release：
-   - Windows：`release/樱花日语-Setup-1.1.0.exe` 和 `release/latest.yml`（electron-builder 生成的更新清单，**必须一并上传**）
-   - Android：`android/app/build/outputs/apk/debug/app-debug.apk`（或 release 版 APK）
+   - Windows：`release/sakura-japanese-setup-1.3.0.exe` 和 `release/latest.yml`（electron-builder 生成的更新清单，**必须一并上传**）
+   - Android：`release/sakura-japanese-1.3.0-debug.apk`（由 `android/app/build/outputs/apk/debug/app-debug.apk` 复制而来，或 release 版 APK）
 
 > 也可以直接用 electron-builder 的 `--publish always` 自动上传（需配置 GH_TOKEN）。
 
@@ -245,7 +245,7 @@ npm run build:android  # Android APK
 - 反馈写入 `feedbacks` 表（未登录也可提交，可留联系方式）；
 - **审核方法（推荐，零成本）**：登录 Supabase 控制台 → 你的项目 → **Table Editor** → 打开 `feedbacks` 表 → 点 `status` 列筛选 `open`（待处理）→ 逐条查看 `content` / `question_id` / `created_at` → 处理完把该行 `status` 改为 `resolved`。
   - 想及时收到通知：控制台 **Database → Webhooks** 可在新反馈入库时推送（免费额度内可用），或每天顺手打开 Table Editor 看一眼即可；
-  - 需要按题目定位：反馈行的 `question_id` 形如 `N2-123`（等级-题号），`level` 列也可直接筛。
+  - 需要按题目定位：反馈行的 `question_id` 形如 `N2:123`（等级 + 英文冒号 + 题号），`level` 列也可直接筛。
 
 ## 九、注意事项
 
@@ -262,3 +262,17 @@ npm run build:android  # Android APK
   带 hash 的 `index-*.js`（文件被占用时 Vite 可能删不掉），安装包会同时带上新旧两份代码（白胖约 2MB）。
   清理失败会中断构建，不会打出夹带旧代码的包。
 - `release_*/`（如 `release_login/`、`release_v1.1.2/`）是打包输出目录，已在 `.gitignore` 中忽略，勿提交。
+
+## 十、项目文档
+
+产品与技术的说明文档放在 [`docs/`](docs/)：
+
+| 文档 | 内容 |
+| --- | --- |
+| [docs/README.md](docs/README.md) | 项目概览、快速开始、目录结构、路由表、功能地图、数据规模、移动端排版约定 |
+| [docs/SRS.md](docs/SRS.md) | 需求规格说明书：角色、功能需求 FR、非功能需求 NFR、界面/数据需求、验收标准、变更记录 |
+| [docs/业务对象清单.md](docs/业务对象清单.md) | 业务对象与数据字典：静态内容对象、用户状态对象、云端对象、字段明细、关系图、不变量 |
+| [docs/用户故事.md](docs/用户故事.md) | 按 Epic 的故事清单与 Given/When/Then 验收标准、优先级、迭代记录、待补故事 |
+| [docs/发布说明-1.3.0.md](docs/发布说明-1.3.0.md) | v1.3.0 发布说明：改动清单、下载列表、升级与上传注意事项 |
+
+移动端界面改动后的实拍截图见 `docs/screenshots/mobile-ux/`（含优化前/后对比与桌面回归）。

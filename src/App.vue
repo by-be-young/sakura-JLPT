@@ -224,4 +224,11 @@ if (document.fonts && document.fonts.ready) {
   transition: transform var(--dur-4) var(--ease-spring);
 }
 .icon-btn:hover .icon-emoji { transform: rotate(-18deg) scale(1.12); }
+
+/* 移动端：顶栏功能键收成纯图标小圆点，不再挤占正文高度 */
+@media (max-width: 760px) {
+  .icon-btn { width: 30px; height: 30px; font-size: 15px; }
+  .icon-btn:hover { background: transparent; transform: none; }
+  .icon-btn:active { transform: scale(0.92); background: var(--sakura-100); }
+}
 </style>

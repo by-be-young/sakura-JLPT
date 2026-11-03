@@ -3,7 +3,7 @@
     <!-- 顶部粘性玻璃工具条 -->
     <header class="rv-topbar glass-bar" :class="{ 'is-stuck': scrolled }">
       <button class="back-btn rv-back" @click="$router.push('/reading')" title="返回读解列表" aria-label="返回读解列表">
-        <span aria-hidden="true">←</span> 读解
+        <span aria-hidden="true">←</span> <span class="rv-back-text">读解</span>
       </button>
       <div class="rv-head">
         <h2 class="rv-title">読み物{{ reading.num }} · {{ reading.unitTitle }}</h2>
@@ -761,8 +761,35 @@ onUnmounted(() => {
 }
 /* 手机底部 Tab 栏（Dock）：为底部操作条让位 */
 @media (max-width: 760px) {
-  .rv-page { padding-bottom: calc(200px + env(safe-area-inset-bottom)); }
-  .rv-topbar { top: 58px; }
-  .rv-actions { bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .rv-page { padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
+
+  /* 顶部条一行到底：返回图标 + 文章标题，标签/百分比收起（进度改由底部条承担） */
+  .rv-topbar {
+    top: 46px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    margin-bottom: 10px;
+    padding: 6px 9px;
+    border-radius: 14px;
+  }
+  .rv-back { width: 32px; min-height: 32px; padding: 0; gap: 0; border-radius: 50%; justify-content: center; font-size: 13px; }
+  .rv-back-text { display: none; }
+  .rv-head { flex: 1 1 auto; min-width: 0; }
+  .rv-title { font-size: 13.5px; line-height: 1.3; }
+  .rv-sub { display: none; }
+  .rv-meter { display: none; }
+  .rv-progress { left: 9px; right: 9px; }
+
+  /* 底部答题条压成一行 */
+  .rv-actions {
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    gap: 6px;
+    flex-wrap: nowrap;
+    padding: 6px 8px;
+  }
+  .rv-nav-btn { flex: 0 0 auto; min-height: 34px; padding: 0 12px; font-size: 12px; border-radius: var(--radius-pill); }
+  .rv-actions-mid { flex: 1 1 auto; order: 0; gap: 3px; min-width: 0; }
+  .rv-actions-text { font-size: 10.5px; white-space: nowrap; }
+  .rv-actions-rail { width: 100%; max-width: 100%; height: 3px; }
 }
 </style>
