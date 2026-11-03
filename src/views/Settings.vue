@@ -291,7 +291,7 @@ const updateDesc = computed(() => {
     case 'available': return `发现新版本 v${updater.state.latest}，点击跳转下载`
     case 'checking': return '正在检查更新…'
     case 'none': return '当前已是最新版本'
-    case 'error': return '更新检查失败'
+    case 'error': return updater.state.error || '更新检查失败'
     default: return '启动时自动检查'
   }
 })
@@ -367,16 +367,21 @@ function clearAll() {
 function checkUpdate() {
   if (updater.state.phase === 'available' && updater.state.releaseUrl) {
     window.open(updater.state.releaseUrl, '_blank', 'noopener')
-  } else {
-    updater.init()
-    setTimeout(() => {
-      if (updater.state.phase === 'available') {
-        window.open(updater.state.releaseUrl, '_blank', 'noopener')
-      } else {
-        alert(updater.state.phase === 'none' ? '当前已是最新版本' : '正在检查，请稍后再试')
-      }
-    }, 1200)
+    return
   }
+  // 手动检查必须重新请求，不能用启动时那次的结果
+  updater.init(true)
+  setTimeout(() => {
+    if (updater.state.phase === 'available') {
+      window.open(updater.state.releaseUrl, '_blank', 'noopener')
+    } else if (updater.state.phase === 'none') {
+      alert('当前已是最新版本')
+    } else if (updater.state.phase === 'error') {
+      alert('检查更新失败：' + (updater.state.error || '请稍后重试'))
+    } else {
+      alert('正在检查，请稍后再试')
+    }
+  }, 1500)
 }
 
 function openFeedback() {

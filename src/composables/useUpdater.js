@@ -117,12 +117,21 @@ async function checkElectron() {
 // ---------- Web / Android / PWA ----------
 async function checkWeb() {
   state.platform = isAndroid() ? 'android' : 'web'
+  state.error = ''
   state.current = await fetchCurrentVersion()
+
+  if (!state.current) {
+    // 连自身版本都读不到，不能武断报“已是最新”
+    state.phase = 'error'
+    state.error = '无法读取本地版本信息'
+    return
+  }
 
   const url = githubLatestUrl()
   if (!url) {
-    // 未配置仓库：静默跳过
-    state.phase = 'none'
+    // 更新源未配置：明确报错，而不是伪装成“已是最新”
+    state.phase = 'error'
+    state.error = '未配置更新源（update-config.js）'
     return
   }
 
@@ -130,15 +139,21 @@ async function checkWeb() {
   try {
     const res = await fetch(url, { headers: { Accept: 'application/vnd.github+json' } })
     if (!res.ok) {
-      state.phase = 'none'
+      state.phase = 'error'
+      state.error = `更新源返回 HTTP ${res.status}`
       return
     }
     const data = await res.json()
     const latest = normalizeVersion(data.tag_name)
+    if (!latest) {
+      state.phase = 'error'
+      state.error = '更新源未返回版本号'
+      return
+    }
     state.latest = latest
     state.releaseUrl = data.html_url || releasePageUrl()
 
-    if (latest && compareVersions(latest, state.current) > 0) {
+    if (compareVersions(latest, state.current) > 0) {
       state.phase = 'available'
       // Android 记住 APK 下载地址
       if (state.platform === 'android') {
@@ -149,7 +164,8 @@ async function checkWeb() {
       state.phase = 'none'
     }
   } catch (e) {
-    state.phase = 'none'
+    state.phase = 'error'
+    state.error = '网络请求失败（' + ((e && e.message) || '无法连接更新源') + '）'
   }
 }
 
@@ -191,8 +207,18 @@ function dismiss() {
   state.phase = 'none'
 }
 
-function init() {
-  if (state.phase !== 'idle') return
+function init(force = false) {
+  // 正在检查中：不重复发起
+  if (state.phase === 'checking') return
+  // 首次自动检查只跑一次；手动“检查更新”传 force 才重查
+  if (!force && state.phase !== 'idle') return
+  if (force) {
+    // 清掉上一轮事件订阅，避免 Electron 端重复提示
+    cleanupFns.forEach((fn) => { try { if (typeof fn === 'function') fn() } catch (e) {} })
+    cleanupFns = []
+  }
+  state.phase = 'idle'
+  state.error = ''
   if (isElectron()) {
     checkElectron()
   } else {
