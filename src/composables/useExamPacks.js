@@ -6,6 +6,7 @@ import { ref } from 'vue'
 import { unzipSync, strFromU8 } from 'fflate'
 import { EXAM_PACKS } from '../data/examPacks'
 import { registerPackQuestions, clearPackQuestions } from '../data/packQuestions'
+import { isNativeApp, downloadAsset, onAssetDownloadProgress } from './nativeBridge'
 
 const isElectron = typeof window !== 'undefined' && !!window.sakuraPacks
 
@@ -156,7 +157,7 @@ async function webStatus(pack) {
 
 // Web 端：打开 GitHub 资产下载页（CDN 无 CORS，只能手动下载后导入）
 // - Capacitor 原生（Android/iOS）：window.open 会被 WebView 静默拦截，改用 @capacitor/browser
-//   在系统浏览器 / Custom Tab 打开下载页
+//   在系统浏览器 / Custom Tab 打开下载页（作为兜底；主路径为 nativeDownload 应用内下载）
 // - 纯 Web / PWA：window.open 新标签页
 async function openExternal(url) {
   const cap = typeof window !== 'undefined' && window.Capacitor
@@ -186,52 +187,102 @@ async function webDownload(pack) {
   await openExternal(url)
 }
 
+// ---------- Android 原生：应用内直接下载 + 进度 ----------
+// 插件流式下载到应用缓存（<cache>/packs/<asset>），逐块回调进度；
+// 完成后用 Filesystem 读回字节，走与「导入 zip」相同的解压/入库流程。
+async function nativeDownload(pack) {
+  pack.status = 'installing'
+  pack.progress = 0
+  pack.phase = 'download'
+  pack.error = ''
+  try {
+    // 经 api.github.com（支持 CORS）取资产直链
+    const res = await fetch(`https://api.github.com/repos/by-be-young/sakura-JLPT/releases/tags/${pack.tag}`)
+    if (!res.ok) throw new Error('获取资产信息失败')
+    const rel = await res.json()
+    const asset = (rel.assets || []).find(a => a.name === pack.asset)
+    if (!asset) throw new Error('未找到下载资产')
+
+    const unsub = await onAssetDownloadProgress((ev) => {
+      if (ev && ev.id === pack.id) {
+        pack.phase = 'download'
+        pack.progress = Math.round(ev.percent || 0)
+      }
+    })
+    try {
+      const r = await downloadAsset({ id: pack.id, url: asset.browser_download_url, fileName: pack.asset })
+      if (!r || !r.ok) throw new Error((r && r.message) || '下载失败')
+      const { Filesystem, Directory } = await import('@capacitor/filesystem')
+      const read = await Filesystem.readFile({ path: `packs/${pack.asset}`, directory: Directory.Cache })
+      const bytes = base64ToBytes(read.data)
+      await installFromBytes(pack, bytes)
+    } finally {
+      if (unsub) unsub()
+    }
+  } catch (e) {
+    pack.status = 'error'
+    pack.error = String(e && e.message ? e.message : e)
+  }
+}
+
+function base64ToBytes(b64) {
+  const bin = atob(b64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return bytes
+}
+
+// 解析 zip 字节 → IndexedDB 落库 → 更新包状态 → 注入题库（原生下载 / 手动导入共用）
+async function installFromBytes(pack, buf) {
+  pack.status = 'installing'
+  pack.phase = 'unzip'
+  pack.error = ''
+  const unzipped = unzipSync(buf)
+  const files = []
+  const textKinds = new Set(['txt', 'json', 'md'])
+  for (const [rel, data] of Object.entries(unzipped)) {
+    const name = rel.split('/').pop() || rel
+    const ext = (name.includes('.') ? name.split('.').pop() : '').toLowerCase()
+    const isText = textKinds.has(ext)
+    const text = isText ? strFromU8(data) : ''
+    files.push({
+      rel,
+      name,
+      kind: isText ? 'text' : (ext === 'pdf' ? 'pdf' : 'bin'),
+      size: data.length,
+      data: isText ? undefined : data,
+      text,
+    })
+  }
+  let questions = null
+  const qEntry = unzipped['questions.json']
+  if (qEntry) {
+    try { questions = JSON.parse(strFromU8(qEntry)) } catch { questions = null }
+  }
+  const rec = {
+    id: pack.id,
+    version: pack.version,
+    installedAt: new Date().toISOString(),
+    files: files.map(({ rel, name, kind, size, data, text }) => ({ rel, name, kind, size, data, text })),
+    sessions: buildWebSessions(files),
+    questions,
+  }
+  await idbPut(rec)
+  pack.files = rec.files.map(f => ({ rel: f.rel, name: f.name, kind: f.kind, size: f.size }))
+  pack.sessions = rec.sessions
+  pack.status = 'installed'
+  pack.phase = ''
+  if (questions) pack.questions = registerFrom(questions, pack)
+  return { ok: true }
+}
+
 // Web 端：导入用户手动下载的 zip 并安装（fflate 解压 + IndexedDB 持久化）
 export async function importZip(packId, file) {
   const pack = getPack(packId)
   if (!pack) return { ok: false, reason: '未知拓展包' }
   try {
-    pack.status = 'installing'
-    pack.phase = 'unzip'
-    pack.error = ''
     const buf = new Uint8Array(await file.arrayBuffer())
-    const unzipped = unzipSync(buf)
-    const files = []
-    const textKinds = new Set(['txt', 'json', 'md'])
-    for (const [rel, data] of Object.entries(unzipped)) {
-      const name = rel.split('/').pop() || rel
-      const ext = (name.includes('.') ? name.split('.').pop() : '').toLowerCase()
-      const isText = textKinds.has(ext)
-      const text = isText ? strFromU8(data) : ''
-      files.push({
-        rel,
-        name,
-        kind: isText ? 'text' : (ext === 'pdf' ? 'pdf' : 'bin'),
-        size: data.length,
-        data: isText ? undefined : data,
-        text,
-      })
-    }
-    let questions = null
-    const qEntry = unzipped['questions.json']
-    if (qEntry) {
-      try { questions = JSON.parse(strFromU8(qEntry)) } catch { questions = null }
-    }
-    const rec = {
-      id: pack.id,
-      version: pack.version,
-      installedAt: new Date().toISOString(),
-      files: files.map(({ rel, name, kind, size, data, text }) => ({ rel, name, kind, size, data, text })),
-      sessions: buildWebSessions(files),
-      questions,
-    }
-    await idbPut(rec)
-    pack.files = rec.files.map(f => ({ rel: f.rel, name: f.name, kind: f.kind, size: f.size }))
-    pack.sessions = rec.sessions
-    pack.status = 'installed'
-    pack.phase = ''
-    if (questions) pack.questions = registerFrom(questions, pack)
-    return { ok: true }
+    return await installFromBytes(pack, buf)
   } catch (e) {
     pack.status = 'error'
     pack.error = String(e && e.message ? e.message : e)
@@ -291,7 +342,9 @@ export function useExamPacks() {
     const pack = getPack(packId)
     if (!pack || pack.status === 'installing') return
     if (pack.status === 'installed') return
-    return isElectron ? electronDownload(pack) : webDownload(pack)
+    if (isElectron) return electronDownload(pack)
+    if (isNativeApp()) return nativeDownload(pack)
+    return webDownload(pack)
   }
 
   function viewFile(packId, rel) {

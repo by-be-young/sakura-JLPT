@@ -16,9 +16,14 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -125,9 +130,77 @@ public class SakuraNativePlugin extends Plugin {
         }
     }
 
+    /**
+     * 下载拓展包资产到应用缓存（<cacheDir>/packs/<fileName>），逐步回调进度。
+     * 进度事件：assetDownloadProgress { id, percent, downloaded, total }
+     * 说明：GitHub 资产 CDN 无 CORS 头，浏览器 fetch 被拦，必须走原生网络通道。
+     */
     @PluginMethod
-    public void setSystemBarsHidden(PluginCall call) {
-        boolean hidden = call.getBoolean("hidden", true);
+    public void downloadAsset(PluginCall call) {
+        String id = call.getString("id", "");
+        String url = call.getString("url");
+        String fileName = call.getString("fileName");
+        if (url == null || url.isEmpty() || fileName == null || fileName.isEmpty()) {
+            call.reject("url and fileName are required");
+            return;
+        }
+        String safeName = new File(fileName).getName();
+        new Thread(() -> {
+            InputStream in = null;
+            FileOutputStream out = null;
+            try {
+                HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setConnectTimeout(20000);
+                conn.setReadTimeout(20000);
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) SakuraJapanese/1.4.0");
+                int code = conn.getResponseCode();
+                if (code != HttpURLConnection.HTTP_OK) {
+                    call.reject("HTTP " + code);
+                    return;
+                }
+                long total = conn.getContentLengthLong();
+                File dir = new File(getContext().getCacheDir(), "packs");
+                if (!dir.exists() && !dir.mkdirs()) {
+                    call.reject("mkdir failed");
+                    return;
+                }
+                File f = new File(dir, safeName);
+                in = new BufferedInputStream(conn.getInputStream(), 65536);
+                out = new FileOutputStream(f);
+                byte[] buf = new byte[65536];
+                long done = 0;
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    out.write(buf, 0, n);
+                    done += n;
+                    if (total > 0) {
+                        int percent = (int) Math.min(100L, Math.round(done * 100.0 / total));
+                        JSObject ev = new JSObject();
+                        ev.put("id", id);
+                        ev.put("percent", percent);
+                        ev.put("downloaded", done);
+                        ev.put("total", total);
+                        notifyListeners("assetDownloadProgress", ev);
+                    }
+                }
+                out.flush();
+                JSObject ret = new JSObject();
+                ret.put("ok", true);
+                ret.put("path", f.getAbsolutePath());
+                ret.put("size", f.length());
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("downloadAsset failed: " + e.getMessage());
+            } finally {
+                try { if (in != null) in.close(); } catch (Exception ignored) {}
+                try { if (out != null) out.close(); } catch (Exception ignored) {}
+            }
+        }).start();
+    }
+
+    @PluginMethod
+    public void setSystemBarsHidden(PluginCall call) {        boolean hidden = call.getBoolean("hidden", true);
         try {
             final Window window = getActivity().getWindow();
             window.getDecorView().post(() -> {
