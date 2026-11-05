@@ -56,19 +56,19 @@
     <nav class="tabbar">
       <div class="tabbar-inner">
         <router-link to="/" class="tab-item" :class="{ active: isActive('/') }">
-          <span class="tab-emoji">🏠</span><span>首页</span>
+          <span class="tab-emoji">🏠</span><span class="tab-label">首页</span>
         </router-link>
         <router-link to="/learn" class="tab-item" :class="{ active: isActive('/learn') }">
-          <span class="tab-emoji">📝</span><span>练习</span>
+          <span class="tab-emoji">📝</span><span class="tab-label">练习</span>
         </router-link>
         <router-link to="/words" class="tab-item" :class="{ active: isActive('/words') }">
-          <span class="tab-emoji">🌸</span><span>背词</span>
+          <span class="tab-emoji">🌸</span><span class="tab-label">背词</span>
         </router-link>
         <router-link to="/study" class="tab-item" :class="{ active: isActive('/study') }">
-          <span class="tab-emoji">📘</span><span>文法</span>
+          <span class="tab-emoji">📘</span><span class="tab-label">文法</span>
         </router-link>
         <router-link to="/my" class="tab-item" :class="{ active: isActive('/my') }">
-          <span class="tab-emoji">👤</span><span>我的</span>
+          <span class="tab-emoji">👤</span><span class="tab-label">我的</span>
           <span v-if="wrongCount" class="tab-badge">{{ wrongCount }}</span>
         </router-link>
       </div>
@@ -87,6 +87,9 @@ import { useLevel } from './store/levelStore'
 import { useFurigana } from './composables/useFurigana'
 import { useTheme } from './store/themeStore'
 import { prefersReducedMotion } from './composables/useMotion'
+import { isNativeApp, setSystemBarsHidden } from './composables/nativeBridge'
+import { useHonor } from './composables/honor'
+import { useWidgetSync } from './composables/widgetSync'
 import AppUpdateToast from './components/AppUpdateToast.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 
@@ -95,6 +98,7 @@ const store = useStore()
 const { level } = useLevel()
 const furigana = useFurigana()
 const theme = useTheme()
+const widgetSync = useWidgetSync()
 const wrongCount = computed(() => store.wrongCountOf(level.value))
 
 // 当前路由是否命中某个一级入口（/my 同时点亮 设置、管理、错题等子页）
@@ -188,6 +192,14 @@ onMounted(() => {
   window.addEventListener('resize', onResize)
   onScroll()
   nextTick(updateInk)
+
+  // ===== 原生端（Capacitor Android）初始化 =====
+  if (isNativeApp()) {
+    // 隐藏系统状态栏（沉浸式）；CSS 的 safe-area 兜底在 Web/PWA 下生效
+    setSystemBarsHidden(true)
+    // 荣耀设备：初始化桌面小组件数据同步
+    widgetSync.init()
+  }
 })
 
 onUnmounted(() => {

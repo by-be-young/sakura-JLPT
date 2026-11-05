@@ -680,4 +680,52 @@ function goBack() {
     max-height: 240px;
   }
 }
+
+/* ===== 移动端答题页适配（≤760px，参考 GrammarReader 的紧凑做法）=====
+   思路：顶栏压缩、箭头收敛为细长条、答题卡内边距收紧、标签允许换行、
+   选项/解析/文章全部减距，底部留白由全局 .container 悬浮 Dock 让位负责 */
+@media (max-width: 760px) {
+  .quiz-header { gap: 10px; }
+  .quiz-header .btn-sm { padding: 0 11px; font-size: 12px; min-height: 32px; }
+
+  .quiz-area { gap: 4px; }
+  .side-arrow {
+    width: 26px;
+    height: 46px;
+    border-radius: 11px;
+    font-size: 17px;
+  }
+
+  .quiz-card { padding: 14px 12px; }
+  .quiz-meta { flex-wrap: wrap; gap: 4px 6px; row-gap: 6px; }
+  .qid-tag { font-size: 10.5px; padding: 1px 7px; }
+  .mock-tag,
+  .type-tag,
+  .status-tag { font-size: 10.5px; padding: 1px 7px; }
+  .fb-btn,
+  .fav-btn { width: 24px; height: 24px; font-size: 12px; }
+  .finish-area { margin-top: 12px; padding-top: 12px; }
+  .finish-area .btn { width: 100%; }
+
+  :deep(.question-sentence) {
+    font-size: 15.5px;
+    padding: 12px 13px;
+    margin-bottom: 12px;
+    line-height: 1.7;
+  }
+  :deep(.options-list) { gap: 8px; }
+  :deep(.option-item) { padding: 10px 13px; font-size: 14px; }
+  :deep(.explanation-box) { margin-top: 12px; padding: 12px 13px; }
+  :deep(.explanation-box .translation) { font-size: 13.5px; margin-bottom: 8px; }
+  :deep(.explanation-box .detail) { font-size: 14.5px; line-height: 1.85; }
+
+  .passage-box { padding: 12px 14px; margin-bottom: 10px; }
+  .passage-title { font-size: 13px; margin-bottom: 8px; }
+  .passage-content { font-size: 14px; line-height: 1.85; max-height: 200px; }
+
+  .picker-toggle { gap: 8px; margin-bottom: 10px; }
+  .picker-hint { font-size: 11px; }
+  .random-settings { padding: 8px 12px; }
+  .toggle-label { font-size: 12.5px; }
+}
 </style>

@@ -62,6 +62,42 @@
       </div>
     </div>
 
+    <!-- 桌面小组件（仅荣耀设备可见；检测完成前不渲染） -->
+    <div v-if="widgetReady" class="settings-group">
+      <div class="settings-group-title">桌面小组件 · 荣耀专属</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="set-icon">📌</span>
+          <div class="set-body">
+            <div class="set-title">单词卡小组件</div>
+            <div class="set-desc">桌面随机展示一个待复习（优先）或未学单词，点击直达复习</div>
+          </div>
+          <div class="set-right">
+            <button class="set-toggle" :class="{ on: widgetEnabled }" @click="toggleWidget"
+              :aria-pressed="widgetEnabled" aria-label="启用单词卡小组件">
+              <span class="set-toggle-knob"></span>
+            </button>
+          </div>
+        </div>
+        <div v-if="widgetEnabled" class="settings-row">
+          <span class="set-icon">📊</span>
+          <div class="set-body">
+            <div class="set-title">今日进度</div>
+            <div class="set-desc">待复习 {{ widgetStats.due }} · 未学 {{ widgetStats.new }} · 今日已完成 {{ widgetStats.done }}/{{ widgetStats.goal }}</div>
+          </div>
+          <button class="set-del set-del-soft" @click="widgetSyncNow">立即同步</button>
+        </div>
+        <div class="settings-row">
+          <span class="set-icon">🖥️</span>
+          <div class="set-body">
+            <div class="set-title">添加到桌面</div>
+            <div class="set-desc">长按桌面空白处 → 服务卡片/小组件 → 樱花日语 → 添加「单词卡」（2×2）</div>
+          </div>
+          <span class="set-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 数据管理 -->
     <div class="settings-group">
       <div class="settings-group-title">数据管理</div>
@@ -202,7 +238,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '../store/themeStore'
 import { useDaily } from '../store/dailyStore'
@@ -210,6 +246,8 @@ import { useStore } from '../store/useStore'
 import { useWordStore } from '../store/wordStore'
 import { useLevel } from '../store/levelStore'
 import { useUpdater } from '../composables/useUpdater'
+import { useHonor } from '../composables/honor'
+import { useWidgetSync, isWidgetEnabled, setWidgetEnabled, buildSnapshot } from '../composables/widgetSync'
 import FeedbackModal from '../components/FeedbackModal.vue'
 
 const router = useRouter()
@@ -218,10 +256,40 @@ const daily = useDaily()
 const store = useStore()
 const wordStore = useWordStore()
 const updater = useUpdater()
+const honor = useHonor()
+const widgetSync = useWidgetSync()
 const { APP_LEVELS } = useLevel()
 const fileInput = ref(null)
 const feedbackVisible = ref(false)
 const currentVersion = ref('')
+
+// ===== 桌面小组件（荣耀专属）=====
+const widgetReady = computed(() => honor.isHonor.value === true)
+const widgetEnabled = ref(isWidgetEnabled())
+const widgetStats = reactive({ due: 0, new: 0, done: 0, goal: 0 })
+
+function refreshWidgetStats() {
+  const s = buildSnapshot()
+  widgetStats.due = s.dueCount
+  widgetStats.new = s.newCount
+  widgetStats.done = s.today.done
+  widgetStats.goal = s.today.goal
+}
+
+function toggleWidget() {
+  widgetEnabled.value = !widgetEnabled.value
+  setWidgetEnabled(widgetEnabled.value)
+  if (widgetEnabled.value) {
+    widgetSync.sync(true)
+  } else {
+    refreshWidgetStats()
+  }
+}
+
+async function widgetSyncNow() {
+  await widgetSync.sync(true)
+  refreshWidgetStats()
+}
 
 // ===== 数据管理：全等级统计 =====
 const totalAnswered = computed(() => APP_LEVELS.reduce((s, l) => s + (store.state.counts?.[l.id]?.answered || 0), 0))
@@ -284,6 +352,14 @@ onMounted(async () => {
     currentVersion.value = ''
   }
   updater.init()
+
+  // 荣耀设备：检测完成后才展示小组件入口
+  await honor.detect()
+  if (honor.isHonor.value) {
+    widgetEnabled.value = isWidgetEnabled()
+    refreshWidgetStats()
+    if (widgetEnabled.value) widgetSync.sync(true)
+  }
 })
 
 const updateDesc = computed(() => {
@@ -408,4 +484,37 @@ function openFeedback() {
   transition: all 0.18s;
 }
 .set-del:hover { background: var(--red); color: #fff; }
+
+/* 小组件开关（柔和樱花粉版本） */
+.set-del-soft {
+  border-color: var(--sakura-300);
+  color: var(--sakura-600);
+}
+.set-del-soft:hover { background: var(--grad-sakura); border-color: transparent; color: #fff; }
+
+.set-toggle {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 13px;
+  background: var(--sakura-100);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.set-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22);
+  transition: transform 0.25s var(--ease-spring);
+}
+.set-toggle.on { background: var(--grad-sakura); border-color: transparent; }
+.set-toggle.on .set-toggle-knob { transform: translateX(20px); }
 </style>

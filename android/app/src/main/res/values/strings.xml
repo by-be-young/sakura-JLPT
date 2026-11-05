@@ -4,4 +4,6 @@
     <string name="title_activity_main">樱花日语</string>
     <string name="package_name">com.sakura.japanese</string>
     <string name="custom_url_scheme">com.sakura.japanese</string>
+    <string name="widget_name">樱花日语单词卡</string>
+    <string name="widget_description">桌面随机展示一个待复习或未学的单词，提醒学习</string>
 </resources>

@@ -447,11 +447,15 @@ button {
 }
 .tab-item.active { color: var(--sakura-600); }
 .tab-item.active::before { opacity: 1; transform: scale(1); }
+/* 选中项：隐藏文字，图标在 52px 高度内真正居中（去掉 translateY 上移偏移） */
+.tab-item.active .tab-label { display: none; }
 .tab-item.active .tab-emoji {
-  transform: translateY(-2px) scale(1.14);
+  transform: scale(1.2);
   filter: grayscale(0) drop-shadow(0 4px 8px rgba(244, 92, 142, 0.35));
 }
 .tab-item:active .tab-emoji { transform: scale(0.92); }
+/* 文字层级高于选中底衬（::before 是定位元素，会盖住静态文本） */
+.tab-item .tab-label { position: relative; z-index: 1; }
 .tab-item .tab-badge {
   position: absolute;
   top: 3px;
@@ -470,7 +474,8 @@ button {
 @media (max-width: 760px) {
   .nav-links { display: none; }
   /* 移动端顶栏收成一条细带：品牌名缩小，功能键只留图标，纵向空间让给正文 */
-  .nav { padding: 0 12px; }
+  /* 顶部安全区（刘海/胶囊挖孔）：顶栏贴住状态栏下方，规避系统任务栏遮挡 */
+  .nav { padding: env(safe-area-inset-top) 12px 0; }
   .nav-inner { height: 46px; gap: 8px; }
   .nav-logo { font-size: 15px; gap: 5px; }
   .nav-logo .icon { font-size: 17px; filter: drop-shadow(0 2px 6px rgba(244, 92, 142, 0.25)); }
@@ -1030,7 +1035,8 @@ button {
   .question-sentence { font-size: 16px; }
   .today-card { flex-direction: column; align-items: flex-start; }
   .ring-wrap { align-self: center; }
-  .container { padding: 16px; }
+  /* 底部留白必须覆盖悬浮 Dock（52px + 8px + 安全区），不能被本块的 padding 简写覆盖 */
+  .container { padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); }
   .app-row { padding: 12px 14px; }
 }
 /* 平板：模式网格 2 列 */
