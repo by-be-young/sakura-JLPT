@@ -15,16 +15,3 @@ contextBridge.exposeInMainWorld('sakuraUpdater', {
     return () => ipcRenderer.removeListener(`updater:${channel}`, listener);
   }
 });
-
-// 拓展包（真题包等）：查询 / 下载安装 / 打开 PDF / 下载进度
-contextBridge.exposeInMainWorld('sakuraPacks', {
-  status: (id) => ipcRenderer.invoke('pack:status', id),
-  download: (id, tag, asset, version) => ipcRenderer.invoke('pack:download', { id, tag, asset, version }),
-  viewFile: (id, rel) => ipcRenderer.invoke('pack:view', { id, rel }),
-  on: (channel, callback) => {
-    if (channel !== 'progress' || typeof callback !== 'function') return () => {};
-    const listener = (_event, data) => callback(data);
-    ipcRenderer.on('pack-progress', listener);
-    return () => ipcRenderer.removeListener('pack-progress', listener);
-  }
-});

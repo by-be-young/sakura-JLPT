@@ -161,20 +161,18 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { levelConfig, levelTitle, hasQuizData, mockInfo, levelQuestionsAll } from '../data/questions'
+import { levelConfig, levelTitle, hasQuizData, mockInfo, levelQuestionsAll, zhentiQuestions } from '../data/questions'
 import { readingN1 } from '../data/reading-n1'
 import { readingN2 } from '../data/reading-n2'
 import { listeningUnits as n2Listening } from '../data/listening'
 import { listeningUnits as n1Listening } from '../data/listening-n1'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
-import { useExamPacks } from '../composables/useExamPacks'
 
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
 const { level } = useLevel()
-const { packs: examPacks } = useExamPacks()
 
 const mode = computed(() => route.query.mode)
 const currentTitle = computed(() => levelTitle(level.value))
@@ -225,22 +223,13 @@ const mockStats = computed(() => {
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
 const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
 
-// 真题拓展包状态（首个包：N3 真题）
-const examPackStats = computed(() => {
-  const p = examPacks.value.find(x => x.id === 'n3-zhenti')
-  if (!p) return { installed: false, count: 0, desc: 'N3 真实考场真题 · 按需下载', tag: '下载即练' }
-  if (p.status === 'installed') {
-    return {
-      installed: true,
-      count: p.questions?.count || 0,
-      desc: '已并入题库 · 随机 / 错题 / 收藏均含真题',
-      tag: p.questions ? p.questions.count + ' 题可练' : '已安装',
-    }
-  }
-  if (p.status === 'installing') return { installed: false, count: 0, desc: '正在下载安装…', tag: '下载中' }
-  if (p.status === 'manual') return { installed: false, count: 0, desc: '已在浏览器打开下载页，等待导入 zip', tag: '待导入' }
-  return { installed: false, count: 0, desc: 'N3 真实考场真题（2022-07 ~ 2024-12）· 按需下载', tag: '按需下载' }
-})
+// 内置真题状态（N3 真题 70 题随应用打包，直接可练）
+const examPackStats = {
+  installed: true,
+  count: zhentiQuestions.length,
+  desc: 'N3 真题已内置 · 随机 / 错题 / 收藏均含真题',
+  tag: zhentiQuestions.length + ' 题可练',
+}
 
 function choose(m) {
   router.replace({ query: { mode: m } })

@@ -160,10 +160,10 @@
 
     <div class="mini-grid">
       <router-link to="/exam" class="mini-card mc-exam" v-reveal="{ delay: 40 }">
-        <span class="mini-cover-emoji">📄</span>
+        <span class="mini-cover-emoji">📕</span>
         <div class="mini-body">
           <b>真题</b>
-          <span>拓展包 · 按需下载后随练</span>
+          <span>N3 真题 · 已内置随练</span>
         </div>
         <span class="mini-go">›</span>
       </router-link>

@@ -1,9 +1,9 @@
-// 题库统一入口：合并 N2 / N3 两个级别的题目
+// 题库统一入口：合并 N2 / N3 两个级别的题目 + 内置 N3 真题
 // - 每道题统一附带 level 与 key（level:id）字段
 // - mockInfo 的键为 "级别:回数"（如 "N2:1"），便于按级别区分
 import { questions as n2Questions, mockInfo as n2Mock } from './questions-n2'
 import { questions as n3Questions, mockInfo as n3Mock } from './questions-n3'
-import { packPool, packQuestionsFor } from './packQuestions'
+import { zhentiN3 } from './zhentiN3'
 
 // 支持的级别（仅有题库数据的级别；全局等级为 N5~N1，见 levelStore）
 export const LEVELS = ['N2', 'N3']
@@ -28,31 +28,48 @@ function decorate(list, level) {
   return list.map(q => ({ ...q, level, key: level + ':' + q.id }))
 }
 
-// 合并后的全量题目（N2 + N3）
+// 真题 id 偏移，避免与静态题库 id（1..N）冲突
+const ZHENTI_ID_OFFSET = 100000
+
+// 内置真题：随应用打包的 N3 真题（2024-12 场次，70 题）
+function decorateZhenti(data, level) {
+  return (data.questions || []).map(q => ({
+    ...q,
+    level,
+    packId: data.packId,
+    session: data.session,
+    source: 'zhenti',
+    id: ZHENTI_ID_OFFSET + q.examNo,
+    key: `${level}:pack:${data.packId}:${q.examNo}`,
+  }))
+}
+
+export const zhentiQuestions = decorateZhenti(zhentiN3, 'N3')
+
+// 合并后的全量题目（N2 + N3 + 内置真题）
 export const questions = [
   ...decorate(n2Questions, 'N2'),
   ...decorate(n3Questions, 'N3'),
+  ...zhentiQuestions,
 ]
 
-// 按级别取题（不含模拟题；已安装的拓展包真题并入同一数据流）
+// 按级别取题（不含模拟题；内置真题并入同一数据流）
 export function levelQuestions(level) {
   return [
     ...questions.filter(q => q.level === level && !q.mock),
-    ...packQuestionsFor(level),
   ]
 }
 
-// 按级别取题（含模拟题；已安装的拓展包真题并入同一数据流）
+// 按级别取题（含模拟题；内置真题并入同一数据流）
 export function levelQuestionsAll(level) {
   return [
     ...questions.filter(q => q.level === level),
-    ...packQuestionsFor(level),
   ]
 }
 
-// 仅取某级别的拓展包真题（专项练习用；未安装则返回空数组）
+// 仅取某级别的内置真题（真题专项用）
 export function levelPackQuestions(level, packId) {
-  return packPool.value.filter(q => q.level === level && (!packId || q.packId === packId))
+  return zhentiQuestions.filter(q => q.level === level && (!packId || q.packId === packId))
 }
 
 // 按级别取模拟题
