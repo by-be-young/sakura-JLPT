@@ -16,6 +16,7 @@ import Listening from '../views/Listening.vue'
 import ListeningUnit from '../views/ListeningUnit.vue'
 import FeedbackAdmin from '../views/FeedbackAdmin.vue'
 import Settings from '../views/Settings.vue'
+import Exam from '../views/Exam.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -31,6 +32,7 @@ const routes = [
   { path: '/reading/:id', name: 'reading-view', component: ReadingView, props: true },
   { path: '/listening', name: 'listening', component: Listening },
   { path: '/listening/:unit', name: 'listening-unit', component: ListeningUnit, props: true },
+  { path: '/exam', name: 'exam', component: Exam },
   { path: '/my', name: 'my', component: My },
   { path: '/settings', name: 'settings', component: Settings },
   { path: '/admin/feedback', name: 'admin-feedback', component: FeedbackAdmin },

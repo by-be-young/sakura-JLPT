@@ -159,7 +159,16 @@
     </div>
 
     <div class="mini-grid">
-      <router-link to="/reading" class="mini-card mc-reading" v-reveal="{ delay: 40 }">
+      <router-link to="/exam" class="mini-card mc-exam" v-reveal="{ delay: 40 }">
+        <span class="mini-cover-emoji">📄</span>
+        <div class="mini-body">
+          <b>真题</b>
+          <span>拓展包 · 按需下载后随练</span>
+        </div>
+        <span class="mini-go">›</span>
+      </router-link>
+
+      <router-link to="/reading" class="mini-card mc-reading" v-reveal="{ delay: 110 }">
         <img class="mini-cover" src="./covers/reading-orange.svg" alt="橙宝书 · 读解" loading="lazy" />
         <div class="mini-body">
           <b>读解</b>
@@ -169,7 +178,7 @@
         <span class="mini-go">›</span>
       </router-link>
 
-      <router-link to="/listening" class="mini-card mc-listening" v-reveal="{ delay: 110 }">
+      <router-link to="/listening" class="mini-card mc-listening" v-reveal="{ delay: 180 }">
         <img class="mini-cover" src="./covers/listening-green.svg" alt="绿宝书 · 听解" loading="lazy" />
         <div class="mini-body">
           <b>听解</b>
@@ -669,8 +678,10 @@ function greet() {
 }
 .mc-reading { background: linear-gradient(135deg, rgba(199, 221, 255, 0.46), rgba(238, 245, 255, 0.2)); }
 .mc-listening { background: linear-gradient(135deg, rgba(222, 202, 255, 0.46), rgba(246, 239, 255, 0.2)); }
+.mc-exam { background: linear-gradient(135deg, rgba(255, 216, 170, 0.52), rgba(255, 247, 230, 0.2)); }
 [data-theme="dark"] .mc-reading { background: linear-gradient(135deg, rgba(106, 128, 221, 0.2), rgba(29, 36, 52, 0.1)); }
 [data-theme="dark"] .mc-listening { background: linear-gradient(135deg, rgba(150, 108, 220, 0.2), rgba(40, 30, 52, 0.1)); }
+[data-theme="dark"] .mc-exam { background: linear-gradient(135deg, rgba(217, 152, 61, 0.22), rgba(42, 34, 26, 0.1)); }
 @media (hover: hover) and (pointer: fine) {
   .mini-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
   .mini-card:hover .mini-go { transform: translateX(4px); }
@@ -685,8 +696,23 @@ function greet() {
   box-shadow: 0 6px 14px -6px rgba(60, 20, 40, 0.55);
   transition: transform var(--dur-4) var(--ease-spring);
 }
+.mini-cover-emoji {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 6px 14px -6px rgba(217, 152, 61, 0.5);
+  flex-shrink: 0;
+  transition: transform var(--dur-4) var(--ease-spring);
+}
+[data-theme="dark"] .mini-cover-emoji { background: rgba(255, 255, 255, 0.1); box-shadow: none; }
 @media (hover: hover) and (pointer: fine) {
   .mini-card:hover .mini-cover { transform: rotate(0deg) scale(1.06); }
+  .mini-card:hover .mini-cover-emoji { transform: rotate(0deg) scale(1.1); }
 }
 .mini-body { flex: 1; min-width: 0; }
 .mini-body b { display: block; font-size: 14.5px; font-weight: 800; color: var(--text); }

@@ -90,6 +90,7 @@ import { prefersReducedMotion } from './composables/useMotion'
 import { isNativeApp, setSystemBarsHidden } from './composables/nativeBridge'
 import { useHonor } from './composables/honor'
 import { useWidgetSync } from './composables/widgetSync'
+import { useExamPacks } from './composables/useExamPacks'
 import AppUpdateToast from './components/AppUpdateToast.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 
@@ -99,6 +100,7 @@ const { level } = useLevel()
 const furigana = useFurigana()
 const theme = useTheme()
 const widgetSync = useWidgetSync()
+const examPacks = useExamPacks()
 const wrongCount = computed(() => store.wrongCountOf(level.value))
 
 // 当前路由是否命中某个一级入口（/my 同时点亮 设置、管理、错题等子页）
@@ -192,6 +194,9 @@ onMounted(() => {
   window.addEventListener('resize', onResize)
   onScroll()
   nextTick(updateInk)
+
+  // 已安装的真题拓展包：启动时把结构化题库并入做题体系
+  examPacks.init()
 
   // ===== 原生端（Capacitor Android）初始化 =====
   if (isNativeApp()) {

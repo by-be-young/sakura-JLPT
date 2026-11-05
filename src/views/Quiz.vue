@@ -53,7 +53,7 @@
         <Transition :name="slideDir" mode="out-in">
         <div class="card quiz-card" :key="currentQuestion.key">
           <div class="quiz-meta" style="margin-bottom:12px;">
-            <span class="qid-tag">{{ level }} No.{{ currentQuestion.id }}</span>
+            <span class="qid-tag">{{ qidLabel }} No.{{ qidDisplay }}</span>
             <span v-if="mode === 'mock'" class="mock-tag">第{{ mockId }}回模拟</span>
             <span v-else-if="mode === 'unit'" class="mock-tag" style="background:#fef0e6;color:#c47a3a;">第{{ unitId }}单元</span>
             <span v-else class="mock-tag" style="background:#e8f4fd;color:#3a7ca5;">{{ modeLabel }}</span>
@@ -91,8 +91,8 @@
 
     <!-- 反馈本题弹窗 -->
     <FeedbackModal v-model:visible="feedbackVisible" type="question"
-      :question-id="`${level}-${currentQuestion.id}`"
-      :question-tag="`${level} No.${currentQuestion.id}`" />
+      :question-id="`${qidLabel}-${qidDisplay}`"
+      :question-tag="`${qidLabel} No.${qidDisplay}`" />
   </div>
 </template>
 
@@ -127,8 +127,13 @@ function updateArticleOverflow() {
 const mode = computed(() => route.params.mode)
 const mockId = computed(() => Number(route.query.mock) || 0)
 const unitId = computed(() => Number(route.query.unit) || 0)
+const source = computed(() => route.query.source || '')
+const packFilter = computed(() => route.query.pack || '')
+// 真题专项练习可跨当前等级：传入 level=N3 时用包等级取题
+const quizLevel = computed(() => route.query.level || level.value)
 
 const modeLabel = computed(() => {
+  if (source.value === 'zhenti') return '真题专项'
   const map = { sequential: '顺序练习', random: '随机练习', unit: '单元练习', wrong: '错题重做', favorites: '收藏练习' }
   return map[mode.value] || '练习'
 })
@@ -162,7 +167,17 @@ function shuffleQuestion(q) {
 }
 
 // 当前级别下、按模式过滤的题（用于题号表 / 列表构建）
-const allLevelQuestions = computed(() => levelQuestions(level.value))
+// 拓展包真题已并入 levelQuestions；source=zhenti 时收窄为真题专项（可按 pack 过滤）
+const allLevelQuestions = computed(() => {
+  let qs = levelQuestions(quizLevel.value)
+  if (source.value) qs = qs.filter(q => q.source === source.value)
+  if (packFilter.value) qs = qs.filter(q => q.packId === packFilter.value)
+  return qs
+})
+
+// 题目标签：真题包题目显示「真题 No.场次题号」，其余显示级别
+const qidLabel = computed(() => (currentQuestion.value.packId ? '真题' : level.value))
+const qidDisplay = computed(() => currentQuestion.value.examNo || currentQuestion.value.id)
 
 const sequentialAll = computed(() => {
   if (mode.value === 'unit') {
@@ -307,7 +322,7 @@ function jumpToQuestion(id) {
 }
 
 onMounted(buildList)
-watch(() => [mode.value, mockId.value, unitId.value, level.value], buildList)
+watch(() => [mode.value, mockId.value, unitId.value, level.value, source.value], buildList)
 
 // 点击选项即自动提交
 function handleSelect(num) {

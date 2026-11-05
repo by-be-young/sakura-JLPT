@@ -29,7 +29,7 @@
           :aria-label="cellTitle(q.key)"
           :aria-current="currentId && q.id === currentId ? 'true' : undefined"
           @click="$emit('select', q.id)">
-          {{ q.id }}
+          {{ q.examNo || q.id }}
         </button>
       </div>
       <span class="picker-fade" aria-hidden="true"></span>

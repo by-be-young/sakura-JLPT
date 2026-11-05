@@ -3,6 +3,7 @@
 // - mockInfo 的键为 "级别:回数"（如 "N2:1"），便于按级别区分
 import { questions as n2Questions, mockInfo as n2Mock } from './questions-n2'
 import { questions as n3Questions, mockInfo as n3Mock } from './questions-n3'
+import { packPool, packQuestionsFor } from './packQuestions'
 
 // 支持的级别（仅有题库数据的级别；全局等级为 N5~N1，见 levelStore）
 export const LEVELS = ['N2', 'N3']
@@ -33,14 +34,25 @@ export const questions = [
   ...decorate(n3Questions, 'N3'),
 ]
 
-// 按级别取题（不含模拟题）
+// 按级别取题（不含模拟题；已安装的拓展包真题并入同一数据流）
 export function levelQuestions(level) {
-  return questions.filter(q => q.level === level && !q.mock)
+  return [
+    ...questions.filter(q => q.level === level && !q.mock),
+    ...packQuestionsFor(level),
+  ]
 }
 
-// 按级别取题（含模拟题）
+// 按级别取题（含模拟题；已安装的拓展包真题并入同一数据流）
 export function levelQuestionsAll(level) {
-  return questions.filter(q => q.level === level)
+  return [
+    ...questions.filter(q => q.level === level),
+    ...packQuestionsFor(level),
+  ]
+}
+
+// 仅取某级别的拓展包真题（专项练习用；未安装则返回空数组）
+export function levelPackQuestions(level, packId) {
+  return packPool.value.filter(q => q.level === level && (!packId || q.packId === packId))
 }
 
 // 按级别取模拟题
