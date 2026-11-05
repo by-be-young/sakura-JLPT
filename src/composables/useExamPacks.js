@@ -155,22 +155,35 @@ async function webStatus(pack) {
 }
 
 // Web 端：打开 GitHub 资产下载页（CDN 无 CORS，只能手动下载后导入）
+// - Capacitor 原生（Android/iOS）：window.open 会被 WebView 静默拦截，改用 @capacitor/browser
+//   在系统浏览器 / Custom Tab 打开下载页
+// - 纯 Web / PWA：window.open 新标签页
+async function openExternal(url) {
+  const cap = typeof window !== 'undefined' && window.Capacitor
+  if (cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) {
+    try {
+      const { Browser } = await import('@capacitor/browser')
+      await Browser.open({ url })
+      return
+    } catch { /* 插件缺失/失败时回退 window.open */ }
+  }
+  window.open(url, '_blank')
+}
+
 async function webDownload(pack) {
   pack.status = 'manual'
   pack.error = ''
+  let url = `https://github.com/by-be-young/sakura-JLPT/releases/tag/${pack.tag}`
   try {
     // 经 api.github.com（支持 CORS）取资产直链与大小
     const res = await fetch(`https://api.github.com/repos/by-be-young/sakura-JLPT/releases/tags/${pack.tag}`)
     if (res.ok) {
       const rel = await res.json()
       const asset = (rel.assets || []).find(a => a.name === pack.asset)
-      if (asset) window.open(asset.browser_download_url, '_blank')
-    } else {
-      window.open(`https://github.com/by-be-young/sakura-JLPT/releases/tag/${pack.tag}`, '_blank')
+      if (asset) url = asset.browser_download_url
     }
-  } catch {
-    window.open(`https://github.com/by-be-young/sakura-JLPT/releases/tag/${pack.tag}`, '_blank')
-  }
+  } catch { /* 保持默认 release 页 */ }
+  await openExternal(url)
 }
 
 // Web 端：导入用户手动下载的 zip 并安装（fflate 解压 + IndexedDB 持久化）

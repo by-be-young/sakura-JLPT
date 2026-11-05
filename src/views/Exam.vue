@@ -65,11 +65,14 @@
       </div>
 
       <div v-if="pack.status === 'manual'" class="pack-manual">
-        <div class="pm-text">📂 已在新标签页打开下载地址（GitHub Releases）。下载完成后点击「导入已下载的 zip」安装。</div>
-        <label class="btn btn-primary file-btn">
-          导入已下载的 zip
-          <input type="file" accept=".zip" @change="onImport(pack, $event)" hidden />
-        </label>
+        <div class="pm-text">📂 已尝试打开下载地址（GitHub Releases）。若浏览器未弹出，点下方「重新打开下载页」；下载完成后点击「导入已下载的 zip」安装。</div>
+        <div class="pm-btns">
+          <button class="btn btn-ghost btn-sm" @click="download(pack)">↻ 重新打开下载页</button>
+          <label class="btn btn-primary file-btn">
+            导入已下载的 zip
+            <input type="file" accept=".zip" @change="onImport(pack, $event)" hidden />
+          </label>
+        </div>
       </div>
 
       <div v-if="pack.status === 'error'" class="pack-error">
@@ -262,6 +265,7 @@ onMounted(async () => {
 
 .pack-manual { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .pm-text { font-size: 13px; color: var(--text-light); line-height: 1.8; }
+.pm-btns { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .file-btn { cursor: pointer; }
 
 .pack-error {

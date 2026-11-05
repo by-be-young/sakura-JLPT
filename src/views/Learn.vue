@@ -77,6 +77,19 @@
             <span class="lc-desc chip-tag">自由练习</span>
           </div>
         </div>
+
+        <div class="learn-card lc-exam" @click="router.push('/exam')">
+          <div class="lc-top">
+            <span class="lc-icon">📕</span>
+            <span class="lc-name">真题练习</span>
+            <span class="lc-arrow">›</span>
+          </div>
+          <div class="lc-num">{{ examPackStats.installed ? examPackStats.count + '题' : '真实' }}<small>{{ examPackStats.installed ? '可练' : '考场' }}</small></div>
+          <div class="lc-desc">{{ examPackStats.desc }}</div>
+          <div class="lc-progress">
+            <span class="lc-desc chip-tag">{{ examPackStats.tag }}</span>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -155,11 +168,13 @@ import { listeningUnits as n2Listening } from '../data/listening'
 import { listeningUnits as n1Listening } from '../data/listening-n1'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
+import { useExamPacks } from '../composables/useExamPacks'
 
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
 const { level } = useLevel()
+const { packs: examPacks } = useExamPacks()
 
 const mode = computed(() => route.query.mode)
 const currentTitle = computed(() => levelTitle(level.value))
@@ -209,6 +224,23 @@ const mockStats = computed(() => {
 // 读解 / 听解
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
 const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
+
+// 真题拓展包状态（首个包：N3 真题）
+const examPackStats = computed(() => {
+  const p = examPacks.value.find(x => x.id === 'n3-zhenti')
+  if (!p) return { installed: false, count: 0, desc: 'N3 真实考场真题 · 按需下载', tag: '下载即练' }
+  if (p.status === 'installed') {
+    return {
+      installed: true,
+      count: p.questions?.count || 0,
+      desc: '已并入题库 · 随机 / 错题 / 收藏均含真题',
+      tag: p.questions ? p.questions.count + ' 题可练' : '已安装',
+    }
+  }
+  if (p.status === 'installing') return { installed: false, count: 0, desc: '正在下载安装…', tag: '下载中' }
+  if (p.status === 'manual') return { installed: false, count: 0, desc: '已在浏览器打开下载页，等待导入 zip', tag: '待导入' }
+  return { installed: false, count: 0, desc: 'N3 真实考场真题（2022-07 ~ 2024-12）· 按需下载', tag: '按需下载' }
+})
 
 function choose(m) {
   router.replace({ query: { mode: m } })
@@ -276,10 +308,12 @@ function startMock(id) {
 .lc-mock { background: linear-gradient(150deg, rgba(178, 233, 205, 0.5), rgba(234, 250, 240, 0.2)); }
 .lc-reading { background: linear-gradient(150deg, rgba(204, 224, 255, 0.5), rgba(238, 245, 255, 0.2)); }
 .lc-listen { background: linear-gradient(150deg, rgba(226, 208, 255, 0.5), rgba(246, 239, 255, 0.2)); }
+.lc-exam { background: linear-gradient(150deg, rgba(255, 216, 170, 0.55), rgba(255, 247, 230, 0.25)); grid-column: 1 / -1; }
 [data-theme="dark"] .lc-quiz { background: linear-gradient(150deg, rgba(217, 152, 61, 0.18), rgba(42, 34, 26, 0.08)); }
 [data-theme="dark"] .lc-mock { background: linear-gradient(150deg, rgba(76, 187, 135, 0.18), rgba(29, 42, 36, 0.08)); }
 [data-theme="dark"] .lc-reading { background: linear-gradient(150deg, rgba(106, 128, 221, 0.18), rgba(29, 36, 52, 0.08)); }
 [data-theme="dark"] .lc-listen { background: linear-gradient(150deg, rgba(150, 108, 220, 0.18), rgba(40, 30, 52, 0.08)); }
+[data-theme="dark"] .lc-exam { background: linear-gradient(150deg, rgba(217, 152, 61, 0.2), rgba(42, 34, 26, 0.1)); }
 .learn-card.disabled { opacity: 0.5; cursor: not-allowed; }
 .learn-card.disabled:hover { transform: none; }
 
