@@ -43,8 +43,8 @@
         <div class="passage-content" v-html="displayArticle" @scroll="updateArticleOverflow"></div>
       </div>
 
-      <!-- 答题区（带左右箭头） -->
-      <div class="quiz-area">
+      <!-- 答题区：桌面端左右箭头；移动端左右滑动切题 -->
+      <div class="quiz-area" @touchstart.passive="onTouchStart" @touchmove.passive="onTouchMove" @touchend="onTouchEnd">
         <!-- 左箭头 -->
         <button class="side-arrow side-arrow-left" :disabled="currentIndex === 0" @click="prevQuestion" title="上一题 (A)">
           <span class="arrow-icon">‹</span>
@@ -87,6 +87,9 @@
           <span class="arrow-icon">›</span>
         </button>
       </div>
+
+      <!-- 移动端滑动提示（箭头在该尺寸下隐藏） -->
+      <div class="swipe-hint">左滑下一题 · 右滑上一题</div>
     </template>
 
     <!-- 反馈本题弹窗 -->
@@ -209,7 +212,9 @@ const displayArticle = computed(() => {
   // 转义 HTML 避免注入；\n 换行；挖空处用〔题号〕标记，渲染为填空位并高亮当前题
   const escaped = a.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   return escaped.replace(/\n/g, '<br>').replace(/〔(\d+)〕/g, (m, id) => {
-    const active = Number(id) === currentQuestion.value.id
+    // 真题的 id 带偏移，挖空标记用的是卷面题号，优先按 examNo 匹配
+    const currentNo = currentQuestion.value.examNo || currentQuestion.value.id
+    const active = Number(id) === currentNo
     return `<span class="passage-gap${active ? ' active' : ''}" data-q="${id}">（　　）</span>`
   })
 })
@@ -327,6 +332,8 @@ watch(() => [mode.value, mockId.value, unitId.value, level.value, source.value],
 // 点击选项即自动提交
 function handleSelect(num) {
   if (showResult.value) return
+  // 刚结束一次滑动切题时，忽略随之而来的误触点击
+  if (Date.now() - lastSwipeAt < 350) return
   selected.value = num
   submitAnswer()
 }
@@ -372,6 +379,40 @@ function nextQuestion() {
     currentIndex.value++
     resetState()
   }
+}
+
+// ===== 移动端左右滑动切题（替代左右箭头）=====
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+let touchTracking = false
+let lastSwipeAt = 0
+const SWIPE_MIN_DISTANCE = 56 // 触发切题的最小水平位移(px)
+
+function onTouchStart(e) {
+  if (e.touches.length !== 1) { touchTracking = false; return }
+  touchTracking = true
+  touchStartX.value = e.touches[0].clientX
+  touchStartY.value = e.touches[0].clientY
+}
+
+function onTouchMove() {
+  // 仅做跟踪；滑动方向在 touchend 统一判定，避免干扰文章区纵向滚动
+}
+
+function onTouchEnd(e) {
+  if (!touchTracking) return
+  touchTracking = false
+  const t = e.changedTouches && e.changedTouches[0]
+  if (!t) return
+  const dx = t.clientX - touchStartX.value
+  const dy = t.clientY - touchStartY.value
+  const absX = Math.abs(dx)
+  const absY = Math.abs(dy)
+  // 水平位移足够，且明显偏横向（排除纵向滚动 / 轻微抖动）
+  if (absX < SWIPE_MIN_DISTANCE || absX < absY * 1.4) return
+  lastSwipeAt = Date.now()
+  if (dx < 0) nextQuestion() // 左滑：下一题
+  else prevQuestion()        // 右滑：上一题
 }
 
 function resetState() {
@@ -472,6 +513,18 @@ function goBack() {
 .arrow-icon {
   line-height: 1;
   font-weight: 700;
+}
+/* 滑动提示：仅移动端显示（桌面端用左右箭头 / A·D 键） */
+.swipe-hint {
+  display: none;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+  opacity: 0.75;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .finish-area {
   text-align: center;
@@ -685,11 +738,6 @@ function goBack() {
   }
 }
 @media (max-width: 640px) {
-  .side-arrow {
-    width: 36px;
-    height: 60px;
-    font-size: 22px;
-  }
   .passage-content {
     font-size: 14px;
     max-height: 240px;
@@ -697,19 +745,16 @@ function goBack() {
 }
 
 /* ===== 移动端答题页适配（≤760px，参考 GrammarReader 的紧凑做法）=====
-   思路：顶栏压缩、箭头收敛为细长条、答题卡内边距收紧、标签允许换行、
-   选项/解析/文章全部减距，底部留白由全局 .container 悬浮 Dock 让位负责 */
+   思路：顶栏压缩、隐藏左右箭头（改用左滑/右滑切题）、答题卡内边距收紧、
+   标签允许换行、选项/解析/文章全部减距，底部留白由全局 .container 悬浮 Dock 让位负责 */
 @media (max-width: 760px) {
   .quiz-header { gap: 10px; }
   .quiz-header .btn-sm { padding: 0 11px; font-size: 12px; min-height: 32px; }
 
-  .quiz-area { gap: 4px; }
-  .side-arrow {
-    width: 26px;
-    height: 46px;
-    border-radius: 11px;
-    font-size: 17px;
-  }
+  .quiz-area { gap: 0; }
+  /* 移动端不再显示左右翻页按钮，改为左滑 / 右滑切题 */
+  .side-arrow { display: none; }
+  .swipe-hint { display: block; }
 
   .quiz-card { padding: 14px 12px; }
   .quiz-meta { flex-wrap: wrap; gap: 4px 6px; row-gap: 6px; }

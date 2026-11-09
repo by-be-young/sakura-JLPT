@@ -163,7 +163,7 @@
         <span class="mini-cover-emoji">📕</span>
         <div class="mini-body">
           <b>真题</b>
-          <span>N3 真题 · 已内置随练</span>
+          <span>N2 / N3 真题 · 已内置随练</span>
         </div>
         <span class="mini-go">›</span>
       </router-link>

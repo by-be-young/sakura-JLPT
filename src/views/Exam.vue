@@ -3,35 +3,35 @@
     <div class="exam-head">
       <button class="btn btn-ghost btn-sm" @click="$router.back()">← 返回</button>
       <h1>真题专区</h1>
-      <span class="head-note">N3 真题 · 已内置随练</span>
+      <span class="head-note">N2 / N3 真题 · 已内置随练</span>
     </div>
 
-    <div class="pack-card">
+    <div class="pack-card" v-for="p in packs" :key="p.packId">
       <div class="pack-top">
         <span class="pack-icon">📕</span>
         <div class="pack-id">
           <div class="pack-name">
-            N3 真题
-            <span class="level-badge">N3</span>
-            <span class="ver-badge">2024-12</span>
+            {{ p.level }} 真题
+            <span class="level-badge">{{ p.level }}</span>
+            <span class="ver-badge">{{ p.session }}</span>
           </div>
-          <div class="pack-summary">2024-12 场次 · 已随应用内置</div>
+          <div class="pack-summary">{{ p.session }} 场次 · 已随应用内置</div>
         </div>
         <span class="pack-state st-installed">已内置</span>
       </div>
 
       <p class="pack-desc">
-        真题已直接内置在应用里，无需下载。70 道题已并入 N3 题库：随机练习 / 错题重做 / 收藏练习均会包含真题；
+        真题已直接内置在应用里，无需下载。{{ p.count }} 道题已并入 {{ p.level }} 题库：随机练习 / 错题重做 / 收藏练习均会包含真题；
         点「开始做题」进入真题专项（覆盖文字 / 語彙 / 文法 / 読解）。
       </p>
 
       <div class="pack-installed">
         <div class="pi-actions">
-          <button class="btn btn-primary" @click="startPractice">▶ 开始做题</button>
-          <span class="btn btn-secondary btn-sm disabled">{{ zhentiCount }} 题可练习</span>
+          <button class="btn btn-primary" @click="startPractice(p)">▶ 开始做题</button>
+          <span class="btn btn-secondary btn-sm disabled">{{ p.count }} 题可练习</span>
         </div>
         <div class="pi-note">
-          📚 题型分布：文字 {{ types['文字'] || 0 }} · 語彙 {{ types['語彙'] || 0 }} · 文法 {{ types['文法'] || 0 }} · 読解 {{ types['読解'] || 0 }}
+          📚 题型分布：文字 {{ p.types['文字'] || 0 }} · 語彙 {{ p.types['語彙'] || 0 }} · 文法 {{ p.types['文法'] || 0 }} · 読解 {{ p.types['読解'] || 0 }}
         </div>
       </div>
     </div>
@@ -41,20 +41,19 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { zhentiQuestions } from '../data/questions'
+import { zhentiQuestions, zhentiPacks } from '../data/questions'
 
 const router = useRouter()
 
-const zhentiCount = computed(() => zhentiQuestions.length)
+const packs = computed(() => zhentiPacks.map(p => {
+  const list = zhentiQuestions.filter(q => q.packId === p.packId)
+  const types = {}
+  for (const q of list) types[q.type] = (types[q.type] || 0) + 1
+  return { ...p, count: list.length, types }
+}))
 
-const types = computed(() => {
-  const m = {}
-  for (const q of zhentiQuestions) m[q.type] = (m[q.type] || 0) + 1
-  return m
-})
-
-function startPractice() {
-  router.push('/quiz/sequential?source=zhenti&level=N3')
+function startPractice(p) {
+  router.push(`/quiz/sequential?source=zhenti&level=${p.level}&pack=${p.packId}`)
 }
 </script>
 

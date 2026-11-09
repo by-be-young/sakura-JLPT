@@ -223,11 +223,11 @@ const mockStats = computed(() => {
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
 const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
 
-// 内置真题状态（N3 真题 70 题随应用打包，直接可练）
+// 内置真题状态（N2 真题 71 题 + N3 真题 70 题随应用打包，直接可练）
 const examPackStats = {
   installed: true,
   count: zhentiQuestions.length,
-  desc: 'N3 真题已内置 · 随机 / 错题 / 收藏均含真题',
+  desc: 'N2 / N3 真题已内置 · 随机 / 错题 / 收藏均含真题',
   tag: zhentiQuestions.length + ' 题可练',
 }
 
