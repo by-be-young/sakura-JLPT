@@ -62,15 +62,15 @@
       </div>
     </div>
 
-    <!-- 桌面小组件（仅荣耀设备可见；检测完成前不渲染） -->
+    <!-- 桌面小组件（安卓常见品牌可见；检测完成前不渲染） -->
     <div v-if="widgetReady" class="settings-group">
-      <div class="settings-group-title">桌面小组件 · 荣耀专属</div>
+      <div class="settings-group-title">桌面小组件 · 安卓</div>
       <div class="settings-card">
         <div class="settings-row">
           <span class="set-icon">📌</span>
           <div class="set-body">
             <div class="set-title">单词卡小组件</div>
-            <div class="set-desc">桌面随机展示一个待复习（优先）或未学单词，点击直达复习</div>
+            <div class="set-desc">按当前难度 {{ level }} 出词（待复习优先，其次未学词），点击直达复习 · 本机 {{ widgetBrand }}</div>
           </div>
           <div class="set-right">
             <button class="set-toggle" :class="{ on: widgetEnabled }" @click="toggleWidget"
@@ -88,10 +88,17 @@
           <button class="set-del set-del-soft" @click="widgetSyncNow">立即同步</button>
         </div>
         <div class="settings-row">
+          <span class="set-icon">↻</span>
+          <div class="set-body">
+            <div class="set-title">桌面直接换词</div>
+            <div class="set-desc">组件右上角「↻」点一下换下一个词，不用打开应用；多天未打开时页脚标注同步时间，仍可换词</div>
+          </div>
+        </div>
+        <div class="settings-row">
           <span class="set-icon">🖥️</span>
           <div class="set-body">
             <div class="set-title">添加到桌面</div>
-            <div class="set-desc">长按桌面空白处 → 服务卡片/小组件 → 樱花日语 → 添加「单词卡」（2×2）</div>
+            <div class="set-desc">长按桌面空白处 → 小组件 / 服务卡片 → 樱花日语 → 「单词卡」（2×2，可拉宽）</div>
           </div>
           <span class="set-arrow">›</span>
         </div>
@@ -246,7 +253,7 @@ import { useStore } from '../store/useStore'
 import { useWordStore } from '../store/wordStore'
 import { useLevel } from '../store/levelStore'
 import { useUpdater } from '../composables/useUpdater'
-import { useHonor } from '../composables/honor'
+import { useWidgetDevice } from '../composables/widgetDevice'
 import { useWidgetSync, isWidgetEnabled, setWidgetEnabled, buildSnapshot } from '../composables/widgetSync'
 import FeedbackModal from '../components/FeedbackModal.vue'
 
@@ -256,15 +263,16 @@ const daily = useDaily()
 const store = useStore()
 const wordStore = useWordStore()
 const updater = useUpdater()
-const honor = useHonor()
+const device = useWidgetDevice()
 const widgetSync = useWidgetSync()
-const { APP_LEVELS } = useLevel()
+const { level, APP_LEVELS } = useLevel()
 const fileInput = ref(null)
 const feedbackVisible = ref(false)
 const currentVersion = ref('')
 
-// ===== 桌面小组件（荣耀专属）=====
-const widgetReady = computed(() => honor.isHonor.value === true)
+// ===== 桌面小组件（安卓常见品牌）=====
+const widgetReady = computed(() => device.isSupported.value === true)
+const widgetBrand = computed(() => device.brandName.value || '安卓')
 const widgetEnabled = ref(isWidgetEnabled())
 const widgetStats = reactive({ due: 0, new: 0, done: 0, goal: 0 })
 
@@ -353,9 +361,9 @@ onMounted(async () => {
   }
   updater.init()
 
-  // 荣耀设备：检测完成后才展示小组件入口
-  await honor.detect()
-  if (honor.isHonor.value) {
+  // 支持品牌：检测完成后才展示小组件入口
+  await device.detect()
+  if (device.isSupported.value) {
     widgetEnabled.value = isWidgetEnabled()
     refreshWidgetStats()
     if (widgetEnabled.value) widgetSync.sync(true)

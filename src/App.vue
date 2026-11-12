@@ -88,7 +88,6 @@ import { useFurigana } from './composables/useFurigana'
 import { useTheme } from './store/themeStore'
 import { prefersReducedMotion } from './composables/useMotion'
 import { isNativeApp, setSystemBarsHidden } from './composables/nativeBridge'
-import { useHonor } from './composables/honor'
 import { useWidgetSync } from './composables/widgetSync'
 import AppUpdateToast from './components/AppUpdateToast.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
@@ -197,7 +196,7 @@ onMounted(() => {
   if (isNativeApp()) {
     // 隐藏系统状态栏（沉浸式）；CSS 的 safe-area 兜底在 Web/PWA 下生效
     setSystemBarsHidden(true)
-    // 荣耀设备：初始化桌面小组件数据同步
+    // 支持品牌（荣耀/华为/小米/OPPO/vivo/三星等）：初始化桌面小组件数据同步
     widgetSync.init()
   }
 })

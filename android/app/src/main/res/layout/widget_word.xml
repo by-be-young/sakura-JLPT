@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 桌面单词卡小组件（2×2） -->
+<!-- 桌面单词卡小组件（2×2，可横向拉伸；不同品牌桌面网格下自适应） -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <!-- 待复习 / 新词 角标 -->
     <TextView
@@ -25,36 +25,42 @@
         android:textColor="#FFFFFF"
         android:textSize="10sp" />
 
-    <!-- 换一个（仅本地重绘，不打开应用） -->
+    <!-- 换下一个（仅本地重绘，不打开应用） -->
     <TextView
         android:id="@+id/widget_refresh"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:background="@drawable/widget_refresh_bg"
-        android:contentDescription="换一个"
+        android:contentDescription="换下一个单词"
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:text="↻"
         android:textColor="#C4598B"
-        android:textSize="16sp" />
+        android:textSize="15sp" />
 
-    <!-- 单词主体 -->
+    <!-- 单词主体：夹在角标与页脚之间，居中对齐，避免小尺寸网格下与页脚重叠 -->
     <LinearLayout
         android:id="@+id/widget_body"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:gravity="center_vertical"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/widget_footer"
+        android:layout_below="@id/widget_badge"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
         android:orientation="vertical"
-        android:paddingTop="10dp"
-        android:paddingBottom="6dp">
+        android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/widget_word"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:autoSizeMaxTextSize="26sp"
+            android:autoSizeMinTextSize="14sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:ellipsize="end"
             android:fontFamily="sans-serif-black"
             android:gravity="center"
@@ -67,6 +73,10 @@
             android:id="@+id/widget_kana"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autoSizeMaxTextSize="13sp"
+            android:autoSizeMinTextSize="9sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
@@ -78,6 +88,10 @@
             android:id="@+id/widget_meaning"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autoSizeMaxTextSize="11sp"
+            android:autoSizeMinTextSize="8sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
@@ -95,7 +109,7 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:text="还有 3 个待复习"
+        android:text="N2 · 还有 3 个待复习"
         android:textColor="#B7A9B1"
         android:textSize="9.5sp" />
 

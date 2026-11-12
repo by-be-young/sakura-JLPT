@@ -22,11 +22,12 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 樱花日语 · 本地原生桥（主包内置，P0）。
+ * 樱花日语 · 本地原生桥（主包内置）。
  *
  * 能力：
- *  - getDeviceInfo     荣耀设备判定（BRAND/MANUFACTURER == HONOR 或指纹 HONOR/ 前缀），
- *                      老荣耀（HUAWEI 品牌字段）默认不兼容；
+ *  - getDeviceInfo     设备信息 + 小组件品牌门禁（常见安卓品牌白名单：
+ *                      荣耀 / 华为 / 小米·Redmi·POCO / OPPO·一加·realme /
+ *                      vivo·iQOO / 三星，或指纹以对应品牌前缀开头）；
  *  - writeSnapshot     把背词快照写入应用私有目录 widget_snapshot.json，并触发组件刷新；
  *  - readSnapshot      读取快照（供前端调试/展示）；
  *  - updateWidget      主动刷新桌面小组件；
@@ -37,13 +38,57 @@ public class SakuraNativePlugin extends Plugin {
 
     static final String SNAPSHOT_FILE = "widget_snapshot.json";
 
+    /** 小组件支持的品牌白名单（品牌字段或指纹前缀）。 */
+    private static final String[] WIDGET_BRANDS = {
+            "HONOR", "HUAWEI",
+            "XIAOMI", "REDMI", "POCO",
+            "OPPO", "ONEPLUS", "REALME",
+            "VIVO", "IQOO",
+            "SAMSUNG"
+    };
+
+    /** 品牌 → 展示名 */
+    private static final String[][] BRAND_LABELS = {
+            {"HONOR", "荣耀"}, {"HUAWEI", "华为"},
+            {"XIAOMI", "小米"}, {"REDMI", "Redmi"}, {"POCO", "POCO"},
+            {"OPPO", "OPPO"}, {"ONEPLUS", "一加"}, {"REALME", "realme"},
+            {"VIVO", "vivo"}, {"IQOO", "iQOO"},
+            {"SAMSUNG", "三星"}
+    };
+
+    private static String safe(String s) {
+        return s == null ? "" : s;
+    }
+
     static boolean isHonorDevice() {
-        String brand = Build.BRAND == null ? "" : Build.BRAND;
-        String mfg = Build.MANUFACTURER == null ? "" : Build.MANUFACTURER;
-        String fp = Build.FINGERPRINT == null ? "" : Build.FINGERPRINT;
+        String brand = safe(Build.BRAND);
+        String mfg = safe(Build.MANUFACTURER);
+        String fp = safe(Build.FINGERPRINT);
         return brand.equalsIgnoreCase("HONOR")
                 || mfg.equalsIgnoreCase("HONOR")
                 || fp.startsWith("HONOR/");
+    }
+
+    /** 小组件是否可用：品牌字段或指纹前缀命中白名单。 */
+    static boolean isWidgetSupportedDevice() {
+        String brand = safe(Build.BRAND);
+        String mfg = safe(Build.MANUFACTURER);
+        String fp = safe(Build.FINGERPRINT).toUpperCase(java.util.Locale.ROOT);
+        for (String b : WIDGET_BRANDS) {
+            if (brand.equalsIgnoreCase(b) || mfg.equalsIgnoreCase(b)) return true;
+            if (fp.startsWith(b + "/")) return true;
+        }
+        return false;
+    }
+
+    /** 品牌展示名（荣耀 / 小米 / OPPO …）。 */
+    static String widgetBrandName() {
+        String brand = safe(Build.BRAND).toUpperCase(java.util.Locale.ROOT);
+        String mfg = safe(Build.MANUFACTURER).toUpperCase(java.util.Locale.ROOT);
+        for (String[] pair : BRAND_LABELS) {
+            if (pair[0].equals(brand) || pair[0].equals(mfg)) return pair[1];
+        }
+        return brand.isEmpty() ? mfg : brand;
     }
 
     @PluginMethod
@@ -54,6 +99,8 @@ public class SakuraNativePlugin extends Plugin {
         ret.put("model", Build.MODEL);
         ret.put("fingerprint", Build.FINGERPRINT);
         ret.put("isHonor", isHonorDevice());
+        ret.put("supported", isWidgetSupportedDevice());
+        ret.put("brandName", widgetBrandName());
         ret.put("platform", "android");
         call.resolve(ret);
     }

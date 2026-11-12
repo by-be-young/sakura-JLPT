@@ -34,10 +34,10 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- 桌面单词卡小组件（荣耀专属功能，主包内置） -->
+        <!-- 桌面单词卡小组件（安卓常见品牌，主包内置；exported 放开以便第三方桌面触发刷新） -->
         <receiver
             android:name=".SakuraWidgetProvider"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
