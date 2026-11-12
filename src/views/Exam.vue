@@ -3,7 +3,7 @@
     <div class="exam-head">
       <button class="btn btn-ghost btn-sm" @click="$router.back()">← 返回</button>
       <h1>真题专区</h1>
-      <span class="head-note">N2 / N3 真题 · 已内置随练</span>
+      <span class="head-note">{{ level }} 真题 · 整卷随练</span>
     </div>
 
     <div class="pack-card" v-for="p in packs" :key="p.packId">
@@ -15,25 +15,26 @@
             <span class="level-badge">{{ p.level }}</span>
             <span class="ver-badge">{{ p.session }}</span>
           </div>
-          <div class="pack-summary">{{ p.session }} 场次 · 已随应用内置</div>
+          <div class="pack-summary">{{ p.session }} 场次 · 共 {{ p.count }} 题</div>
         </div>
-        <span class="pack-state st-installed">已内置</span>
       </div>
 
       <p class="pack-desc">
-        真题已直接内置在应用里，无需下载。{{ p.count }} 道题已并入 {{ p.level }} 题库：随机练习 / 错题重做 / 收藏练习均会包含真题；
-        点「开始做题」进入真题专项（覆盖文字 / 語彙 / 文法 / 読解）。
+        覆盖文字 / 語彙 / 文法 / 読解，按原卷顺序逐题练习。
       </p>
 
       <div class="pack-installed">
         <div class="pi-actions">
           <button class="btn btn-primary" @click="startPractice(p)">▶ 开始做题</button>
-          <span class="btn btn-secondary btn-sm disabled">{{ p.count }} 题可练习</span>
         </div>
         <div class="pi-note">
           📚 题型分布：文字 {{ p.types['文字'] || 0 }} · 語彙 {{ p.types['語彙'] || 0 }} · 文法 {{ p.types['文法'] || 0 }} · 読解 {{ p.types['読解'] || 0 }}
         </div>
       </div>
+    </div>
+
+    <div v-if="!packs.length" class="pack-empty">
+      当前难度（{{ level }}）暂无真题，可通过顶部难度选择切换到 N1 / N2 / N3。
     </div>
   </div>
 </template>
@@ -41,11 +42,13 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { zhentiQuestions, zhentiPacks } from '../data/questions'
+import { zhentiQuestions, zhentiPacksOfLevel } from '../data/questions'
+import { useLevel } from '../store/levelStore'
 
 const router = useRouter()
+const { level } = useLevel()
 
-const packs = computed(() => zhentiPacks.map(p => {
+const packs = computed(() => zhentiPacksOfLevel(level.value).map(p => {
   const list = zhentiQuestions.filter(q => q.packId === p.packId)
   const types = {}
   for (const q of list) types[q.type] = (types[q.type] || 0) + 1
@@ -106,18 +109,11 @@ function startPractice(p) {
 .ver-badge { background: rgba(255, 255, 255, 0.7); color: var(--text-light); }
 [data-theme="dark"] .ver-badge { background: rgba(255, 255, 255, 0.1); }
 .pack-summary { font-size: 12px; color: var(--text-light); margin-top: 3px; }
-.pack-state {
-  font-size: 12px; font-weight: 700;
-  padding: 4px 12px; border-radius: var(--radius-pill);
-  flex-shrink: 0;
-}
-.st-installed { background: var(--green-soft); color: var(--green); }
 
 .pack-desc { font-size: 12.5px; color: var(--text-light); margin: 12px 0 0; line-height: 1.7; }
 
 .pack-installed { margin-top: 14px; }
 .pi-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.btn.disabled { opacity: 0.75; cursor: default; }
 .pi-note {
   margin-top: 10px;
   font-size: 12px; line-height: 1.8;
@@ -128,4 +124,13 @@ function startPractice(p) {
   border: 1px solid rgba(172, 230, 200, 0.5);
 }
 [data-theme="dark"] .pi-note { background: rgba(79, 187, 135, 0.12); border-color: rgba(79, 187, 135, 0.3); }
+
+.pack-empty {
+  padding: 34px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light);
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--border);
+}
 </style>

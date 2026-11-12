@@ -38,14 +38,14 @@
           </div>
         </div>
 
-        <div class="learn-card lc-mock" :class="{ disabled: !hasQuiz }" @click="hasQuiz && choose('mock')">
+        <div class="learn-card lc-mock" :class="{ disabled: !hasQuiz || !mockStats.count }" @click="hasQuiz && mockStats.count && choose('mock')">
           <div class="lc-top">
             <span class="lc-icon">🧪</span>
             <span class="lc-name">模拟测试</span>
             <span class="lc-arrow">›</span>
           </div>
           <div class="lc-num">{{ mockStats.count }}<small>套卷</small></div>
-          <div class="lc-desc">{{ mockStats.done ? '已完成 ' + mockStats.done + ' 套 · 平均 ' + mockStats.avg + ' 分' : '按回次全真模拟，检验真实水平' }}</div>
+          <div class="lc-desc">{{ !mockStats.count ? '本级暂无模拟卷' : (mockStats.done ? '已完成 ' + mockStats.done + ' 套 · 平均 ' + mockStats.avg + ' 分' : '按回次全真模拟，检验真实水平') }}</div>
           <div class="lc-progress">
             <div class="bar-track"><div class="bar-fill mock" :style="{ width: mockStats.pct + '%' }"></div></div>
             <span class="lc-pct">{{ mockStats.pct }}%</span>
@@ -84,10 +84,10 @@
             <span class="lc-name">真题练习</span>
             <span class="lc-arrow">›</span>
           </div>
-          <div class="lc-num">{{ examPackStats.installed ? examPackStats.count + '题' : '真实' }}<small>{{ examPackStats.installed ? '可练' : '考场' }}</small></div>
+          <div class="lc-num">{{ examPackStats.numText }}<small>{{ examPackStats.numUnit }}</small></div>
           <div class="lc-desc">{{ examPackStats.desc }}</div>
           <div class="lc-progress">
-            <span class="lc-desc chip-tag">{{ examPackStats.tag }}</span>
+            <span v-if="examPackStats.tag" class="lc-desc chip-tag">{{ examPackStats.tag }}</span>
           </div>
         </div>
       </div>
@@ -161,7 +161,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { levelConfig, levelTitle, hasQuizData, mockInfo, levelQuestionsAll, zhentiQuestions } from '../data/questions'
+import { levelConfig, levelTitle, hasQuizData, mockInfo, levelQuestionsAll, levelPackQuestions } from '../data/questions'
 import { readingN1 } from '../data/reading-n1'
 import { readingN2 } from '../data/reading-n2'
 import { listeningUnits as n2Listening } from '../data/listening'
@@ -223,13 +223,21 @@ const mockStats = computed(() => {
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
 const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
 
-// 内置真题状态（N2 真题 71 题 + N3 真题 70 题随应用打包，直接可练）
-const examPackStats = {
-  installed: true,
-  count: zhentiQuestions.length,
-  desc: 'N2 / N3 真题已内置 · 随机 / 错题 / 收藏均含真题',
-  tag: zhentiQuestions.length + ' 题可练',
-}
+// 真题状态（按当前难度统计本级真题套数与题量）
+const examPackStats = computed(() => {
+  const list = levelPackQuestions(level.value)
+  const count = list.length
+  if (!count) {
+    return { numText: '—', numUnit: '', desc: '本级暂无真题 · 可切换难度查看 N1 / N2 / N3', tag: '' }
+  }
+  const packs = new Set(list.map(q => q.packId)).size
+  return {
+    numText: String(count),
+    numUnit: '题可练',
+    desc: level.value + ' 真题 · 随机 / 错题 / 收藏均含真题',
+    tag: packs + ' 套整卷',
+  }
+})
 
 function choose(m) {
   router.replace({ query: { mode: m } })
