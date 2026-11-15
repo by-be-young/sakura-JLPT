@@ -1,4 +1,4 @@
-// 题库统一入口：合并 N2 / N3 静态题库 + 内置 N1/N2/N3 真题
+// 题库统一入口：合并 N2 / N3 静态题库 + 内置 N1/N2/N3/N4 真题
 // - 每道题统一附带 level 与 key（level:id）字段
 // - mockInfo 的键为 "级别:回数"（如 "N2:1"），便于按级别区分
 import { questions as n2Questions, mockInfo as n2Mock } from './questions-n2'
@@ -6,15 +6,17 @@ import { questions as n3Questions, mockInfo as n3Mock } from './questions-n3'
 import { zhentiN1 } from './zhentiN1'
 import { zhentiN2 } from './zhentiN2'
 import { zhentiN3 } from './zhentiN3'
+import { zhentiN4 } from './zhentiN4'
 
-// 支持的级别（N1 目前只有内置真题；全局等级为 N5~N1，见 levelStore）
-export const LEVELS = ['N1', 'N2', 'N3']
+// 支持的级别（N1 / N4 目前只有内置真题；全局等级为 N5~N1，见 levelStore）
+export const LEVELS = ['N1', 'N2', 'N3', 'N4']
 
 // 每个级别的展示配置（模拟测试回数 = 可用的回数；暂无模拟卷的级别为 0）
 export const levelConfig = {
   N1: { id: 'N1', name: 'N1', title: 'N1 级', mockCount: 0 },
   N2: { id: 'N2', name: 'N2', title: 'N2 级', mockCount: 5 },
   N3: { id: 'N3', name: 'N3', title: 'N3 级', mockCount: 5 },
+  N4: { id: 'N4', name: 'N4', title: 'N4 级', mockCount: 0 },
 }
 
 // 级别展示标题（N5~N1 通用）
@@ -32,9 +34,9 @@ function decorate(list, level) {
 }
 
 // 真题 id 偏移，按级别分配不同基数，避免多套真题 examNo 相同导致 id 冲突
-const ZHENTI_ID_OFFSET = { N1: 300000, N2: 200000, N3: 100000 }
+const ZHENTI_ID_OFFSET = { N1: 300000, N2: 200000, N3: 100000, N4: 400000 }
 
-// 内置真题：随应用打包的 N1（2023-07，66 题）、N2（2021-12，71 题）、N3（2024-12，70 题）
+// 内置真题：随应用打包的 N1（2023-07，66 题）、N2（2021-12，71 题）、N3（2024-12，70 题）、N4（2021-12，56 题）
 function decorateZhenti(data, level) {
   const base = ZHENTI_ID_OFFSET[level] || 400000
   return (data.questions || []).map(q => ({
@@ -52,6 +54,7 @@ export const zhentiQuestions = [
   ...decorateZhenti(zhentiN1, 'N1'),
   ...decorateZhenti(zhentiN2, 'N2'),
   ...decorateZhenti(zhentiN3, 'N3'),
+  ...decorateZhenti(zhentiN4, 'N4'),
 ]
 
 // 真题包元信息（供真题专区 / 练习页入口展示）
@@ -59,6 +62,7 @@ export const zhentiPacks = [
   { level: 'N1', session: '2023-07', packId: 'n1-zhenti', count: decorateZhenti(zhentiN1, 'N1').length },
   { level: 'N2', session: '2021-12', packId: 'n2-zhenti', count: decorateZhenti(zhentiN2, 'N2').length },
   { level: 'N3', session: '2024-12', packId: 'n3-zhenti', count: decorateZhenti(zhentiN3, 'N3').length },
+  { level: 'N4', session: '2021-12', packId: 'n4-zhenti', count: decorateZhenti(zhentiN4, 'N4').length },
 ]
 
 // 按级别取真题包（真题专区按当前难度只展示本级）

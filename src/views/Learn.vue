@@ -228,7 +228,7 @@ const examPackStats = computed(() => {
   const list = levelPackQuestions(level.value)
   const count = list.length
   if (!count) {
-    return { numText: '—', numUnit: '', desc: '本级暂无真题 · 可切换难度查看 N1 / N2 / N3', tag: '' }
+    return { numText: '—', numUnit: '', desc: '本级暂无真题 · 可切换难度查看 N1 / N2 / N3 / N4', tag: '' }
   }
   const packs = new Set(list.map(q => q.packId)).size
   return {

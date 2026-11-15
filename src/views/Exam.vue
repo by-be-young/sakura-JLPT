@@ -34,7 +34,7 @@
     </div>
 
     <div v-if="!packs.length" class="pack-empty">
-      当前难度（{{ level }}）暂无真题，可通过顶部难度选择切换到 N1 / N2 / N3。
+      当前难度（{{ level }}）暂无真题，可通过顶部难度选择切换到 N1 / N2 / N3 / N4。
     </div>
   </div>
 </template>
