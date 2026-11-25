@@ -1,157 +1,251 @@
 <template>
-  <div class="container">
-    <!-- 无任何内容等级：占位 -->
-    <div v-if="!hasQuiz && !readingAvailable" class="placeholder-card">
-      <div class="emoji">📚</div>
-      <h3>{{ currentTitle }}题库待补充</h3>
-      <p>当前等级的刷题题库正在准备中，敬请期待。可以先通过「背词」和「文法」学习该等级内容。</p>
+  <div class="container learn">
+    <!-- 无内容等级的占位 -->
+    <div v-if="!hasQuiz && !readingAvailable" class="empty-state">
+      <div class="empty-kicker">LIBRARY / {{ level }}</div>
+      <h1>{{ currentTitle }} · 题库准备中</h1>
+      <p>当前难度的题库正在整理。可以先去背词或学习文法，等题库上线后再回来。</p>
+      <div class="empty-actions">
+        <router-link to="/words" class="empty-btn primary">去背词</router-link>
+        <router-link to="/study" class="empty-btn">去学文法</router-link>
+      </div>
     </div>
 
-    <!-- 选择：题库练习 / 模拟测试 / 读解 / 听解 -->
+    <!-- ==================== 练习中心 ==================== -->
     <template v-else-if="!mode">
-      <div class="learn-hero">
-        <div>
-          <div class="hero-title">📚 练习中心</div>
-          <div class="hero-sub">{{ currentTitle }} · 真题演练 · 全真模拟</div>
+      <header class="learn-hero" v-reveal>
+        <div class="hero-copy">
+          <div class="hero-kicker"><span></span>PRACTICE / {{ level }}</div>
+          <h1>练习</h1>
+          <p>{{ currentTitle }} · 红蓝宝书主线，配合专项能力训练</p>
         </div>
-        <div class="hero-books" aria-hidden="true">
-          <img class="hero-cover" src="./covers/vocabulary-red.svg" alt="" />
-          <img class="hero-cover" src="./covers/grammar-blue.svg" alt="" />
-          <img class="hero-cover" src="./covers/reading-orange.svg" alt="" />
-          <img class="hero-cover" src="./covers/listening-green.svg" alt="" />
+        <div class="hero-side">
+          <span class="level-stamp">{{ level }}</span>
+          <span class="stamp-note">当前难度</span>
         </div>
-        <span class="hero-badge">{{ level }}</span>
-      </div>
+      </header>
 
-      <div class="learn-grid stagger">
-        <div class="learn-card lc-quiz" :class="{ disabled: !hasQuiz }" @click="hasQuiz && choose('bank')">
-          <div class="lc-top">
-            <span class="lc-icon">📝</span>
-            <span class="lc-name">题库练习</span>
-            <span class="lc-arrow">›</span>
+      <!-- 红蓝宝书 -->
+      <section class="series-block" v-reveal="{ delay: 40 }">
+        <div class="series-head">
+          <div class="book-pair" aria-hidden="true">
+            <img class="pair-red" src="./covers/vocabulary-red.svg" alt="" loading="eager" />
+            <img class="pair-blue" src="./covers/grammar-blue.svg" alt="" loading="eager" />
+            <span class="pair-band">合本</span>
           </div>
-          <div class="lc-num">{{ quizStats.total }}<small>题</small></div>
-          <div class="lc-desc">顺序 · 随机 · 单元三种模式，逐题巩固</div>
-          <div class="lc-progress">
-            <div class="bar-track"><div class="bar-fill" :style="{ width: quizStats.pct + '%' }"></div></div>
-            <span class="lc-pct">{{ quizStats.pct }}%</span>
+          <div class="series-copy">
+            <div class="series-kicker">JLPT 备考系列</div>
+            <h2>《红蓝宝书》</h2>
+            <p>题库练习与模拟测试同属《红蓝宝书》合集，文字・語彙・文法一并覆盖。</p>
           </div>
-        </div>
-
-        <div class="learn-card lc-mock" :class="{ disabled: !hasQuiz || !mockStats.count }" @click="hasQuiz && mockStats.count && choose('mock')">
-          <div class="lc-top">
-            <span class="lc-icon">🧪</span>
-            <span class="lc-name">模拟测试</span>
-            <span class="lc-arrow">›</span>
-          </div>
-          <div class="lc-num">{{ mockStats.count }}<small>套卷</small></div>
-          <div class="lc-desc">{{ !mockStats.count ? '本级暂无模拟卷' : (mockStats.done ? '已完成 ' + mockStats.done + ' 套 · 平均 ' + mockStats.avg + ' 分' : '按回次全真模拟，检验真实水平') }}</div>
-          <div class="lc-progress">
-            <div class="bar-track"><div class="bar-fill mock" :style="{ width: mockStats.pct + '%' }"></div></div>
-            <span class="lc-pct">{{ mockStats.pct }}%</span>
+          <div class="series-facts">
+            <div><b>{{ quizStats.total || '—' }}</b><span>题库题量</span></div>
+            <div><b>{{ mockStats.count || '—' }}</b><span>模拟套卷</span></div>
           </div>
         </div>
 
-        <div class="learn-card lc-reading" :class="{ disabled: !readingAvailable }" @click="readingAvailable && router.push('/reading')">
-          <div class="lc-top">
-            <span class="lc-icon">📖</span>
-            <span class="lc-name">读解</span>
-            <span class="lc-arrow">›</span>
+        <div class="series-grid">
+          <div class="series-card" :class="{ disabled: !hasQuiz }" @click="hasQuiz && choose('bank')">
+            <div class="card-top">
+              <span class="card-tag">《红蓝宝书》题库</span>
+              <span class="card-index">01</span>
+            </div>
+            <div class="card-title-row">
+              <div>
+                <h3>题库练习</h3>
+                <p>顺序 · 随机 · 单元三种方式，逐题巩固。</p>
+              </div>
+              <div class="card-number">{{ quizStats.total || '—' }}<small>题</small></div>
+            </div>
+            <div class="card-bar">
+              <div class="bar-track"><span :style="{ width: quizStats.pct + '%' }"></span></div>
+              <em>{{ quizStats.pct }}%</em>
+            </div>
+            <div class="card-foot">
+              <span v-if="quizStats.answered">已答 {{ quizStats.answered }} 题 · 正确率 {{ quizStats.correctRate === null ? '—' : quizStats.correctRate + '%' }}</span>
+              <span v-else>尚未开始 · 选择一种方式进入</span>
+              <span class="card-enter">选择模式 <i>→</i></span>
+            </div>
           </div>
-          <div class="lc-num">{{ readingCount }}<small>篇</small></div>
-          <div class="lc-desc">文章阅读训练 · 答题解析{{ readingAvailable ? '' : '（待补充）' }}</div>
-          <div class="lc-progress">
-            <span class="lc-desc chip-tag">N1 / N2 已收录</span>
-          </div>
-        </div>
 
-        <div class="learn-card lc-listen" @click="router.push('/listening')">
-          <div class="lc-top">
-            <span class="lc-icon">🎧</span>
-            <span class="lc-name">听解</span>
-            <span class="lc-arrow">›</span>
-          </div>
-          <div class="lc-num">{{ listeningCount }}<small>单元</small></div>
-          <div class="lc-desc">词汇 · 题目 · 补充知识，自由练习</div>
-          <div class="lc-progress">
-            <span class="lc-desc chip-tag">自由练习</span>
+          <div class="series-card" :class="{ disabled: !hasQuiz || !mockStats.count }"
+            @click="hasQuiz && mockStats.count && choose('mock')">
+            <div class="card-top">
+              <span class="card-tag">《红蓝宝书》模拟</span>
+              <span class="card-index">02</span>
+            </div>
+            <div class="card-title-row">
+              <div>
+                <h3>模拟测试</h3>
+                <p>按回次完整作答，检验真实水平。</p>
+              </div>
+              <div class="card-number">{{ mockStats.count || '—' }}<small>套</small></div>
+            </div>
+            <div class="card-bar">
+              <div class="bar-track mock"><span :style="{ width: mockStats.pct + '%' }"></span></div>
+              <em>{{ mockStats.pct }}%</em>
+            </div>
+            <div class="card-foot">
+              <span v-if="mockStats.done">已完成 {{ mockStats.done }} 套 · 均分 {{ mockStats.avg }}</span>
+              <span v-else-if="mockStats.count">尚未作答 · 全真模拟</span>
+              <span v-else>本级模拟卷即将上线</span>
+              <span class="card-enter">查看套卷 <i>→</i></span>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="learn-card lc-exam" @click="router.push('/exam')">
-          <div class="lc-top">
-            <span class="lc-icon">📕</span>
-            <span class="lc-name">真题练习</span>
-            <span class="lc-arrow">›</span>
-          </div>
-          <div class="lc-num">{{ examPackStats.numText }}<small>{{ examPackStats.numUnit }}</small></div>
-          <div class="lc-desc">{{ examPackStats.desc }}</div>
-          <div class="lc-progress">
-            <span v-if="examPackStats.tag" class="lc-desc chip-tag">{{ examPackStats.tag }}</span>
-          </div>
+      <!-- 专项 -->
+      <section class="special-block" v-reveal="{ delay: 100 }">
+        <header class="special-head">
+          <div><span class="special-index">02</span><h2>专项训练</h2></div>
+          <p>题库之外的单项能力</p>
+        </header>
+
+        <div class="special-grid">
+          <router-link to="/exam" class="special-card exam">
+            <div class="special-top"><span class="special-label">真题</span><span class="special-arrow">↗</span></div>
+            <h3>整卷真题</h3>
+            <p>{{ examPackStats.desc }}</p>
+            <div class="special-foot">
+              <span class="special-num">{{ examPackStats.numText }}<small>{{ examPackStats.numUnit }}</small></span>
+              <span v-if="examPackStats.tag" class="special-chip">{{ examPackStats.tag }}</span>
+            </div>
+          </router-link>
+
+          <router-link to="/reading" class="special-card reading" :class="{ disabled: !readingAvailable }"
+            @click="readingAvailable && router.push('/reading')">
+            <div class="special-top"><span class="special-label">读解</span><span class="special-arrow">↗</span></div>
+            <h3>阅读训练</h3>
+            <p>{{ readingAvailable ? '橙宝书 · 文章阅读与答题解析' : '本级读解内容待补充' }}</p>
+            <div class="special-foot">
+              <span class="special-num">{{ readingAvailable ? readingCount : '—' }}<small>篇</small></span>
+              <span class="special-chip">{{ readingAvailable ? 'N1 / N2 已收录' : '待补充' }}</span>
+            </div>
+          </router-link>
+
+          <router-link to="/listening" class="special-card listening">
+            <div class="special-top"><span class="special-label">听解</span><span class="special-arrow">↗</span></div>
+            <h3>听力单元</h3>
+            <p>绿宝书 · 词汇、题目与补充知识</p>
+            <div class="special-foot">
+              <span class="special-num">{{ listeningCount }}<small>单元</small></span>
+              <span class="special-chip">自由练习</span>
+            </div>
+          </router-link>
+
+          <router-link to="/supplement" class="special-card supplement" :class="{ disabled: !supStats.total }"
+            @click="supStats.total && router.push('/supplement')">
+            <div class="special-top"><span class="special-label">补充</span><span class="special-arrow">↗</span></div>
+            <h3>补充题库</h3>
+            <p>非红蓝宝书 · 独立统计</p>
+            <div class="special-foot">
+              <span class="special-num">{{ supStats.total || '—' }}<small>题</small></span>
+              <span class="special-chip">{{ supStats.total ? '已答 ' + supStats.done + ' 题' : '优先收录 N3' }}</span>
+            </div>
+          </router-link>
         </div>
-      </div>
+      </section>
     </template>
 
-    <!-- 题库练习 -->
+    <!-- ==================== 题库练习 ==================== -->
     <template v-else-if="mode === 'bank'">
-      <div class="list-header">
-        <h2>📝 {{ currentTitle }} · 题库练习</h2>
-        <button class="btn btn-ghost btn-sm" @click="$router.replace({ query: {} })">← 选择方式</button>
-      </div>
-      <div class="mode-info">
-        <span>共 <b>{{ quizStats.total }}</b> 题</span>
-        <span>已答 <b>{{ quizStats.answered }}</b> 题</span>
-        <span v-if="quizStats.correctRate !== null">正确率 <b>{{ quizStats.correctRate }}%</b></span>
-      </div>
-      <div class="app-list">
-        <div class="app-row" @click="router.push('/quiz/sequential')">
-          <span class="row-icon ic-seq">📖</span>
-          <div class="row-body">
-            <div class="row-title">顺序答题</div>
-            <div class="row-desc">按题目编号从指定题号开始，逐题系统复习。题号标记答题状态。</div>
-          </div>
-          <span class="row-arrow">›</span>
+      <header class="sub-head" v-reveal>
+        <button class="back-link" @click="backToPick" aria-label="返回练习中心">← <span>返回</span></button>
+        <div class="sub-copy">
+          <span class="sub-kicker">《红蓝宝书》题库练习</span>
+          <h1>{{ currentTitle }} · 题库</h1>
         </div>
-        <div class="app-row" @click="router.push('/quiz/random')">
-          <span class="row-icon ic-rand">🎲</span>
-          <div class="row-body">
-            <div class="row-title">随机抽题</div>
-            <div class="row-desc">默认优先抽取未做过的题目，也可设置为完全随机，检验真实水平。</div>
+        <span class="sub-level">{{ level }}</span>
+      </header>
+
+      <div class="bank-layout">
+        <div class="mode-list" v-reveal="{ delay: 40 }">
+          <div class="mode-card" @click="router.push('/quiz/sequential')">
+            <span class="mode-index">01</span>
+            <div class="mode-copy">
+              <div class="mode-top"><h3>顺序答题</h3><span class="mode-tag">从指定题号开始</span></div>
+              <p>按题目编号从头梳理，题号会标记答题状态，适合系统复习。</p>
+            </div>
+            <span class="mode-arrow">→</span>
           </div>
-          <span class="row-arrow">›</span>
-        </div>
-        <div class="app-row" @click="router.push('/units')">
-          <span class="row-icon ic-unit">📚</span>
-          <div class="row-body">
-            <div class="row-title">单元练习</div>
-            <div class="row-desc">按教材单元逐题练习，即时查看解析，不限时，适合针对性巩固。</div>
+
+          <div class="mode-card" @click="router.push('/quiz/random')">
+            <span class="mode-index">02</span>
+            <div class="mode-copy">
+              <div class="mode-top"><h3>随机抽题</h3><span class="mode-tag">优先未做过的题</span></div>
+              <p>默认避开已完成题目，也可以切换为完全随机，检验真实水平。</p>
+            </div>
+            <span class="mode-arrow">→</span>
           </div>
-          <span class="row-arrow">›</span>
+
+          <div class="mode-card" @click="router.push('/units')">
+            <span class="mode-index">03</span>
+            <div class="mode-copy">
+              <div class="mode-top"><h3>单元练习</h3><span class="mode-tag">按教材单元</span></div>
+              <p>按单元逐题练习，不限时，适合针对薄弱环节集中巩固。</p>
+            </div>
+            <span class="mode-arrow">→</span>
+          </div>
         </div>
+
+        <aside class="bank-side" v-reveal="{ delay: 100 }">
+          <div class="side-head"><span>本级题库</span><em>{{ level }}</em></div>
+          <div class="side-number">{{ quizStats.total }}<small>题</small></div>
+          <div class="side-grid">
+            <div><b>{{ quizStats.answered }}</b><span>已作答</span></div>
+            <div><b>{{ quizStats.correctRate === null ? '—' : quizStats.correctRate + '%' }}</b><span>正确率</span></div>
+          </div>
+          <div class="side-bar">
+            <div class="side-bar-head"><span>完成度</span><em>{{ quizStats.pct }}%</em></div>
+            <div class="side-track"><span :style="{ width: quizStats.pct + '%' }"></span></div>
+          </div>
+          <p class="side-note">题库练习取自《红蓝宝书》合集，与模拟测试同源。</p>
+        </aside>
       </div>
     </template>
 
-    <!-- 模拟测试 -->
+    <!-- ==================== 模拟测试 ==================== -->
     <template v-else-if="mode === 'mock'">
-      <div class="list-header">
-        <h2>🧪 {{ currentTitle }} · 模拟测试</h2>
-        <button class="btn btn-ghost btn-sm" @click="$router.replace({ query: {} })">← 选择方式</button>
+      <header class="sub-head" v-reveal>
+        <button class="back-link" @click="backToPick" aria-label="返回练习中心">← <span>返回</span></button>
+        <div class="sub-copy">
+          <span class="sub-kicker">《红蓝宝书》模拟测试</span>
+          <h1>{{ currentTitle }} · 全真模拟</h1>
+        </div>
+        <span class="sub-level">{{ level }}</span>
+      </header>
+
+      <div class="mock-summary" v-reveal="{ delay: 40 }">
+        <div class="summary-main">
+          <span>模拟卷</span>
+          <b>{{ mockStats.count }}<small>套</small></b>
+        </div>
+        <div class="summary-item"><b>{{ mockStats.done }}</b><span>已完成</span></div>
+        <div class="summary-item"><b>{{ mockStats.avg === null ? '—' : mockStats.avg }}</b><span>平均分</span></div>
+        <p>每一回都是一套完整试卷。作答后自动记录成绩，可反复重做。</p>
       </div>
-      <div class="mode-info">
-        <span>共 <b>{{ mockStats.count }}</b> 套模拟卷</span>
-        <span>已完成 <b>{{ mockStats.done }}</b> 套</span>
-        <span v-if="mockStats.avg !== null">平均 <b>{{ mockStats.avg }}</b> 分</span>
-      </div>
-      <div class="mock-list">
-        <div v-for="m in mockList" :key="m.id" class="mock-item"
+
+      <div class="ticket-grid" v-reveal="{ delay: 80 }">
+        <div v-for="m in mockList" :key="m.id" class="ticket"
           :class="{ disabled: !m.available }" @click="m.available && startMock(m.id)">
-          <div class="round">第{{ m.id }}回</div>
-          <div class="cnt">{{ m.available ? m.count + '题' : '待补充' }}</div>
-          <div v-if="m.available && store.state.mockResults[m.mockKey]" class="score">
-            {{ store.state.mockResults[m.mockKey].correct }}/{{ store.state.mockResults[m.mockKey].total }}
+          <div class="ticket-top">
+            <span class="ticket-round">ROUND {{ pad(m.id) }}</span>
+            <span class="ticket-status" :class="{ ready: m.available }">{{ m.available ? '可作答' : '待补充' }}</span>
           </div>
-          <div v-if="!m.available" class="coming">即将上线</div>
+          <div class="ticket-body">
+            <h3>第 {{ m.id }} 回</h3>
+            <span class="ticket-count">{{ m.available ? m.count + ' 题' : '即将上线' }}</span>
+          </div>
+          <div class="ticket-rule"></div>
+          <div class="ticket-foot">
+            <span v-if="m.available && store.state.mockResults[m.mockKey]" class="ticket-score">
+              <i>上次</i>{{ store.state.mockResults[m.mockKey].correct }}/{{ store.state.mockResults[m.mockKey].total }}
+            </span>
+            <span v-else-if="m.available" class="ticket-empty">尚未作答</span>
+            <span v-else class="ticket-empty">暂不可用</span>
+            <span v-if="m.available" class="ticket-go">开始 <i>→</i></span>
+          </div>
         </div>
       </div>
     </template>
@@ -166,6 +260,7 @@ import { readingN1 } from '../data/reading-n1'
 import { readingN2 } from '../data/reading-n2'
 import { listeningUnits as n2Listening } from '../data/listening'
 import { listeningUnits as n1Listening } from '../data/listening-n1'
+import { supplementStatsOfLevel } from '../data/supplement'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
 
@@ -219,6 +314,12 @@ const mockStats = computed(() => {
   return { count, done, avg: done ? Math.round(sum / done) : null, pct: count ? Math.round(done / count * 100) : 0 }
 })
 
+// 补充题库（独立于红蓝宝书题库）
+const supStats = computed(() => {
+  const s = supplementStatsOfLevel(level.value, store.state.answered)
+  return { total: s.total, done: s.done, pct: s.pct }
+})
+
 // 读解 / 听解
 const readingCount = computed(() => (level.value === 'N1' ? readingN1 : readingN2).length)
 const listeningCount = computed(() => (level.value === 'N1' ? n1Listening : n2Listening).length)
@@ -243,148 +344,534 @@ function choose(m) {
   router.replace({ query: { mode: m } })
 }
 
+function backToPick() {
+  router.replace({ query: {} })
+}
+
 function startMock(id) {
   router.push({ name: 'quiz', params: { mode: 'mock' }, query: { mock: id } })
+}
+
+function pad(n) {
+  return String(n).padStart(2, '0')
 }
 </script>
 
 <style scoped>
-.level-sel {
-  margin-bottom: 18px;
-}
-.placeholder-card {
-  background: var(--card-hover);
-  border: 2px dashed var(--sakura-200, #ffc9d9);
-  border-radius: 20px;
-  padding: 40px 24px;
-  text-align: center;
-  margin: 8px 0 8px;
-}
-.placeholder-card .emoji { font-size: 42px; margin-bottom: 10px; }
-.placeholder-card h3 { color: var(--sakura-600); margin: 0 0 8px; }
-.placeholder-card p { color: var(--text-light); font-size: 13px; line-height: 1.7; margin: 0; }
+.learn { max-width: 1000px; }
 
-/* 页头 */
+/* ==================== 空状态 ==================== */
+.empty-state {
+  margin-top: 12px;
+  padding: 48px 32px;
+  border-radius: 26px;
+  border: 1px dashed var(--border-strong);
+  background: var(--card);
+  text-align: center;
+}
+.empty-kicker { font-size: 10px; letter-spacing: 2.5px; color: var(--text-faint); font-weight: 700; }
+.empty-state h1 {
+  margin-top: 12px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+}
+.empty-state p { margin-top: 10px; font-size: 12.5px; line-height: 1.8; color: var(--text-light); }
+.empty-actions { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+.empty-btn {
+  padding: 9px 20px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--sakura-600);
+  background: var(--card);
+}
+.empty-btn.primary { background: var(--grad-sakura); border-color: transparent; color: #fff; }
+
+/* ==================== 练习中心页头 ==================== */
 .learn-hero {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
-  padding: 4px 2px 18px;
+  gap: 24px;
+  padding: 8px 2px 26px;
+  border-bottom: 1px solid var(--border);
 }
-.hero-title { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
-.hero-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
-.hero-badge {
-  background: linear-gradient(145deg, #ff9dbd, #ff7da0);
-  color: #fff;
-  font-weight: 800;
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 14px rgba(255, 125, 160, 0.35);
-}
-
-/* 2×2 数据大卡 */
-.learn-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-.learn-card {
-  border-radius: 22px;
-  padding: 18px 16px;
-  box-shadow: var(--card-float);
-  cursor: pointer;
-  transition: all 0.22s;
-  position: relative;
-  overflow: hidden;
-}
-.learn-card:hover { transform: translateY(-3px); }
-.lc-quiz { background: linear-gradient(150deg, rgba(255, 224, 178, 0.5), rgba(255, 247, 230, 0.2)); }
-.lc-mock { background: linear-gradient(150deg, rgba(178, 233, 205, 0.5), rgba(234, 250, 240, 0.2)); }
-.lc-reading { background: linear-gradient(150deg, rgba(204, 224, 255, 0.5), rgba(238, 245, 255, 0.2)); }
-.lc-listen { background: linear-gradient(150deg, rgba(226, 208, 255, 0.5), rgba(246, 239, 255, 0.2)); }
-.lc-exam { background: linear-gradient(150deg, rgba(255, 216, 170, 0.55), rgba(255, 247, 230, 0.25)); grid-column: 1 / -1; }
-[data-theme="dark"] .lc-quiz { background: linear-gradient(150deg, rgba(217, 152, 61, 0.18), rgba(42, 34, 26, 0.08)); }
-[data-theme="dark"] .lc-mock { background: linear-gradient(150deg, rgba(76, 187, 135, 0.18), rgba(29, 42, 36, 0.08)); }
-[data-theme="dark"] .lc-reading { background: linear-gradient(150deg, rgba(106, 128, 221, 0.18), rgba(29, 36, 52, 0.08)); }
-[data-theme="dark"] .lc-listen { background: linear-gradient(150deg, rgba(150, 108, 220, 0.18), rgba(40, 30, 52, 0.08)); }
-[data-theme="dark"] .lc-exam { background: linear-gradient(150deg, rgba(217, 152, 61, 0.2), rgba(42, 34, 26, 0.1)); }
-.learn-card.disabled { opacity: 0.5; cursor: not-allowed; }
-.learn-card.disabled:hover { transform: none; }
-
-.lc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.lc-icon {
-  width: 34px; height: 34px;
-  border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px;
-  background: rgba(255, 255, 255, 0.55);
-}
-[data-theme="dark"] .lc-icon { background: rgba(255, 255, 255, 0.08); }
-.lc-name { font-size: 15px; font-weight: 700; }
-.lc-arrow { margin-left: auto; font-size: 20px; color: var(--text-faint); }
-.lc-num { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1; }
-.lc-num small { font-size: 12px; color: var(--text-light); font-weight: 600; margin-left: 2px; }
-.lc-desc { font-size: 11.5px; color: var(--text-light); margin-top: 5px; line-height: 1.5; }
-.lc-progress { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
-.lc-progress .bar-track {
-  flex: 1; height: 5px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 3px; overflow: hidden;
-}
-[data-theme="dark"] .lc-progress .bar-track { background: rgba(255, 255, 255, 0.1); }
-.lc-progress .bar-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, var(--sakura-400), var(--sakura-600));
-}
-.lc-progress .bar-fill.mock { background: linear-gradient(90deg, #4cbb87, #2e9e6b); }
-.lc-pct { font-size: 11px; color: var(--sakura-600); font-weight: 700; }
-.chip-tag {
-  background: rgba(255, 255, 255, 0.55);
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-top: 0;
-}
-[data-theme="dark"] .chip-tag { background: rgba(255, 255, 255, 0.08); }
-
-/* 子页信息条 */
-.mode-info {
+.hero-kicker {
   display: flex;
-  gap: 16px;
-  padding: 0 2px 14px;
-  font-size: 12.5px;
-  color: var(--text-light);
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 9.5px;
+  letter-spacing: 2.5px;
+  font-weight: 700;
+  color: var(--text-faint);
 }
-.mode-info b { color: var(--sakura-600); font-weight: 800; }
-
-/* 入口图标色块（与首页一致） */
-.app-row .row-icon.ic-seq { background: linear-gradient(145deg, #eef5ff, #dcebff); }
-.app-row .row-icon.ic-rand { background: linear-gradient(145deg, #f3e8ff, #e9dcff); }
-.app-row .row-icon.ic-unit { background: linear-gradient(145deg, #fff0f5, #ffe0ec); }
-
-.mock-item.disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.hero-kicker span { display: inline-block; width: 24px; height: 1px; background: var(--sakura-400); }
+.hero-copy h1 {
+  margin-top: 12px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  line-height: 1.1;
+  color: var(--text);
 }
-.mode-card.disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.mode-card.disabled:hover {
-  transform: none;
-  box-shadow: var(--shadow);
-}
-.mock-item.disabled:hover {
-  transform: none;
-  box-shadow: var(--shadow);
-}
-.coming {
-  font-size: 11px;
+.hero-copy p { margin-top: 9px; font-size: 12px; letter-spacing: 0.4px; color: var(--text-light); }
+.hero-side { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+.level-stamp {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 1px solid var(--sakura-300);
+  background: rgba(255, 255, 255, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
   color: var(--sakura-600);
-  margin-top: 4px;
+}
+[data-theme="dark"] .level-stamp { background: rgba(255, 255, 255, 0.06); }
+.stamp-note { font-size: 9px; letter-spacing: 1.5px; color: var(--text-faint); }
+
+/* ==================== 红蓝宝书 ==================== */
+.series-block {
+  margin-top: 28px;
+  border-radius: 26px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  position: relative;
+}
+.series-block::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #d95d73 0%, #d95d73 44%, #6677c9 56%, #6677c9 100%);
+}
+.series-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 26px 20px;
+  background: linear-gradient(105deg, rgba(255, 245, 247, 0.75), rgba(246, 247, 255, 0.55));
+  border-bottom: 1px solid var(--border);
+}
+[data-theme="dark"] .series-head { background: linear-gradient(105deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025)); }
+.book-pair { position: relative; width: 82px; height: 88px; flex-shrink: 0; }
+.book-pair img { position: absolute; width: 55px; height: auto; border-radius: 5px; box-shadow: 0 10px 20px -10px rgba(60, 20, 40, 0.6); }
+.pair-red { left: 0; top: 10px; transform: rotate(-8deg); z-index: 1; }
+.pair-blue { right: 0; top: 0; transform: rotate(6deg); z-index: 2; }
+.pair-band {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #3d3238;
+  color: #fff;
+  font-size: 9px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+.series-copy { flex: 1; min-width: 0; }
+.series-kicker { font-size: 9.5px; letter-spacing: 2px; color: var(--text-faint); font-weight: 700; }
+.series-copy h2 {
+  margin-top: 6px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+.series-copy p { margin-top: 5px; font-size: 11.5px; line-height: 1.65; color: var(--text-light); max-width: 520px; }
+.series-facts { display: flex; gap: 22px; flex-shrink: 0; }
+.series-facts div { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.series-facts b { font-family: 'Noto Serif SC', serif; font-size: 22px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+.series-facts span { font-size: 9px; letter-spacing: 1px; color: var(--text-faint); }
+
+.series-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.series-card { position: relative; padding: 22px 24px 20px; cursor: pointer; transition: background var(--dur-3); }
+.series-card:first-child { border-right: 1px solid var(--border); }
+.series-card:hover { background: var(--card-hover); }
+.series-card:active { background: var(--sakura-50); }
+.series-card.disabled { opacity: 0.5; cursor: not-allowed; }
+.series-card.disabled:hover { background: transparent; }
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-tag {
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: 5px;
+  background: var(--sakura-50);
+  color: var(--sakura-600);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+[data-theme="dark"] .card-tag { background: rgba(255, 135, 174, 0.12); color: var(--sakura-500); }
+.series-card:nth-child(2) .card-tag { background: rgba(102, 119, 201, 0.09); color: #5b6dbd; }
+[data-theme="dark"] .series-card:nth-child(2) .card-tag { background: rgba(138, 149, 216, 0.14); color: #aab5ff; }
+.card-index { font-family: 'Noto Serif SC', serif; font-size: 10px; letter-spacing: 1px; color: var(--text-faint); }
+.card-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-top: 16px; }
+.card-title-row h3 { font-family: 'Noto Serif SC', serif; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
+.card-title-row p { margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--text-light); max-width: 240px; }
+.card-number {
+  flex-shrink: 0;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 34px;
+  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.card-number small { margin-left: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0; color: var(--text-faint); }
+.card-bar { display: flex; align-items: center; gap: 10px; margin-top: 17px; }
+.bar-track { flex: 1; height: 4px; border-radius: 999px; background: var(--sakura-50); overflow: hidden; }
+.bar-track span { display: block; height: 100%; border-radius: 999px; background: var(--grad-sakura); transition: width var(--dur-5) var(--ease-out-expo); }
+.bar-track.mock span { background: linear-gradient(90deg, #9aa8e8, #6677c9); }
+.card-bar em { font-style: normal; font-size: 9.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--text-light);
+}
+.card-enter { flex-shrink: 0; color: var(--text); font-weight: 700; letter-spacing: 0.3px; }
+.card-enter i { font-style: normal; margin-left: 3px; color: var(--sakura-500); }
+
+/* ==================== 专项 ==================== */
+.special-block { margin-top: 36px; }
+.special-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.special-head > div { display: flex; align-items: baseline; gap: 12px; }
+.special-index { font-family: 'Noto Serif SC', serif; font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--sakura-400); }
+.special-head h2 { font-family: 'Noto Serif SC', serif; font-size: 23px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
+.special-head p { font-size: 10.5px; letter-spacing: 0.5px; color: var(--text-faint); }
+
+.special-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.special-card {
+  --accent: var(--sakura-500);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 152px;
+  padding: 17px 17px 15px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform var(--dur-3) var(--ease-out-expo), box-shadow var(--dur-3), border-color var(--dur-3);
+}
+.special-card.exam { --accent: var(--amber); }
+.special-card.reading { --accent: #d98b45; }
+.special-card.listening { --accent: #3fae83; }
+.special-card.supplement { --accent: var(--iris); }
+.special-card::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  top: -30px;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.055;
+}
+.special-card.disabled { opacity: 0.5; cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  .special-card:not(.disabled):hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--accent); }
+  .special-card:not(.disabled):hover .special-arrow { transform: translate(2px, -2px); }
+}
+.special-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.special-label { font-size: 9.5px; letter-spacing: 2px; font-weight: 700; color: var(--accent); }
+.special-arrow { font-size: 13px; color: var(--text-faint); transition: transform var(--dur-2); }
+.special-card h3 { margin-top: 12px; font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
+.special-card p { margin-top: 4px; font-size: 10.5px; line-height: 1.55; color: var(--text-light); }
+.special-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 14px; }
+.special-num { font-family: 'Noto Serif SC', serif; font-size: 22px; line-height: 1; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.special-num small { margin-left: 3px; font-size: 9px; font-weight: 600; color: var(--text-faint); }
+.special-chip {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--sakura-50);
+  color: var(--text-light);
+  font-size: 8.5px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+[data-theme="dark"] .special-chip { background: rgba(255, 255, 255, 0.06); }
+
+/* ==================== 子页头 ==================== */
+.sub-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 2px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 13px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: all var(--dur-2);
+}
+.back-link:hover { border-color: var(--sakura-300); color: var(--sakura-600); background: var(--sakura-50); }
+.back-link span { letter-spacing: 0.5px; }
+.sub-copy { flex: 1; min-width: 0; }
+.sub-kicker { font-size: 9.5px; letter-spacing: 2px; font-weight: 700; color: var(--sakura-500); }
+.sub-copy h1 {
+  margin-top: 5px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text);
+  line-height: 1.25;
+}
+.sub-level {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--sakura-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--sakura-600);
+  letter-spacing: 1px;
+}
+
+/* ==================== 题库模式 ==================== */
+.bank-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.75fr); gap: 18px; margin-top: 22px; }
+.mode-list { display: flex; flex-direction: column; gap: 12px; }
+.mode-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform var(--dur-3) var(--ease-out-expo), box-shadow var(--dur-3), border-color var(--dur-3);
+}
+@media (hover: hover) and (pointer: fine) {
+  .mode-card:hover { transform: translateX(4px); border-color: var(--sakura-200); box-shadow: var(--shadow); }
+  .mode-card:hover .mode-arrow { color: var(--sakura-600); transform: translateX(3px); }
+}
+.mode-card:active { transform: scale(0.995); }
+.mode-index {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--sakura-50);
+  color: var(--sakura-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+[data-theme="dark"] .mode-index { background: rgba(255, 135, 174, 0.12); color: var(--sakura-500); }
+.mode-copy { flex: 1; min-width: 0; }
+.mode-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.mode-top h3 { font-family: 'Noto Serif SC', serif; font-size: 19px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
+.mode-tag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.mode-copy p { margin-top: 6px; font-size: 11.5px; line-height: 1.65; color: var(--text-light); }
+.mode-arrow { flex-shrink: 0; font-size: 18px; color: var(--text-faint); transition: all var(--dur-2); }
+
+.bank-side {
+  align-self: start;
+  padding: 22px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, var(--sakura-50), rgba(255, 255, 255, 0));
+  position: sticky;
+  top: 88px;
+}
+[data-theme="dark"] .bank-side { background: linear-gradient(160deg, rgba(255, 135, 174, 0.07), transparent); }
+.side-head { display: flex; align-items: center; justify-content: space-between; font-size: 9.5px; letter-spacing: 1.5px; color: var(--text-faint); font-weight: 700; }
+.side-head em { font-style: normal; color: var(--sakura-500); }
+.side-number { margin-top: 16px; font-family: 'Noto Serif SC', serif; font-size: 42px; line-height: 1; font-weight: 800; letter-spacing: -1px; color: var(--text); font-variant-numeric: tabular-nums; }
+.side-number small { margin-left: 4px; font-size: 11px; color: var(--text-faint); font-weight: 600; }
+.side-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.side-grid div { display: flex; flex-direction: column; gap: 3px; }
+.side-grid b { font-family: 'Noto Serif SC', serif; font-size: 19px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+.side-grid span { font-size: 9px; letter-spacing: 0.8px; color: var(--text-faint); }
+.side-bar { margin-top: 18px; }
+.side-bar-head { display: flex; justify-content: space-between; font-size: 9.5px; letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 7px; }
+.side-bar-head em { font-style: normal; font-variant-numeric: tabular-nums; }
+.side-track { height: 4px; border-radius: 999px; background: rgba(224, 62, 116, 0.1); overflow: hidden; }
+.side-track span { display: block; height: 100%; border-radius: 999px; background: var(--grad-sakura); transition: width var(--dur-5) var(--ease-out-expo); }
+.side-note { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 10px; line-height: 1.7; color: var(--text-faint); }
+
+/* ==================== 模拟卷 ==================== */
+.mock-summary {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-top: 22px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: linear-gradient(110deg, rgba(255, 245, 247, 0.8), rgba(246, 247, 255, 0.55));
+}
+[data-theme="dark"] .mock-summary { background: linear-gradient(110deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)); }
+.summary-main { display: flex; align-items: baseline; gap: 8px; padding-right: 26px; border-right: 1px solid var(--border); }
+.summary-main span { font-size: 9.5px; letter-spacing: 1px; color: var(--text-faint); }
+.summary-main b { font-family: 'Noto Serif SC', serif; font-size: 30px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+.summary-main small { margin-left: 3px; font-size: 10px; color: var(--text-faint); }
+.summary-item { display: flex; flex-direction: column; gap: 3px; }
+.summary-item b { font-family: 'Noto Serif SC', serif; font-size: 20px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+.summary-item span { font-size: 9px; letter-spacing: 0.8px; color: var(--text-faint); }
+.mock-summary p { margin-left: auto; max-width: 260px; font-size: 10px; line-height: 1.65; color: var(--text-faint); text-align: right; }
+
+.ticket-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.ticket {
+  position: relative;
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--dur-3) var(--ease-out-expo), box-shadow var(--dur-3), border-color var(--dur-3);
+}
+.ticket::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: linear-gradient(180deg, #d95d73, #6677c9);
+  border-radius: 0 2px 2px 0;
+  opacity: 0.75;
+}
+.ticket.disabled { opacity: 0.45; cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  .ticket:not(.disabled):hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--sakura-200); }
+  .ticket:not(.disabled):hover .ticket-go { color: var(--sakura-600); }
+}
+.ticket:active { transform: scale(0.995); }
+.ticket-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ticket-round { font-size: 9px; letter-spacing: 1.5px; color: var(--text-faint); font-weight: 700; }
+.ticket-status {
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--sakura-50);
+  color: var(--text-faint);
+  font-size: 8.5px;
+  letter-spacing: 0.3px;
+}
+.ticket-status.ready { color: var(--sakura-600); }
+[data-theme="dark"] .ticket-status { background: rgba(255, 255, 255, 0.06); }
+.ticket-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 16px; }
+.ticket-body h3 { font-family: 'Noto Serif SC', serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
+.ticket-count { font-size: 10px; color: var(--text-light); }
+.ticket-rule { height: 1px; background: var(--border); margin: 14px 0 11px; }
+.ticket-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 9.5px; color: var(--text-faint); }
+.ticket-score { color: var(--text-light); font-variant-numeric: tabular-nums; }
+.ticket-score i { font-style: normal; margin-right: 6px; color: var(--text-faint); }
+.ticket-empty { color: var(--text-faint); }
+.ticket-go { color: var(--text); font-weight: 700; transition: color var(--dur-2); }
+.ticket-go i { font-style: normal; margin-left: 2px; }
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 900px) {
+  .series-facts { display: none; }
+  .special-grid { grid-template-columns: repeat(2, 1fr); }
+  .ticket-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 760px) {
+  .hero-copy h1 { font-size: 33px; }
+  .learn-hero { align-items: center; }
+  .series-grid { grid-template-columns: 1fr; }
+  .series-card:first-child { border-right: 0; border-bottom: 1px solid var(--border); }
+  .bank-layout { grid-template-columns: 1fr; }
+  .bank-side { position: static; }
+  .mock-summary { flex-wrap: wrap; gap: 20px; }
+  .summary-main { padding-right: 18px; }
+  .mock-summary p { flex-basis: 100%; max-width: none; text-align: left; margin-left: 0; }
+}
+@media (max-width: 620px) {
+  .series-head { align-items: flex-start; padding: 22px 20px 18px; gap: 16px; }
+  .book-pair { width: 70px; height: 78px; }
+  .book-pair img { width: 47px; }
+  .series-copy h2 { font-size: 20px; }
+  .series-card { padding: 20px 20px 18px; }
+  .special-card { min-height: 142px; }
+  .sub-copy h1 { font-size: 23px; }
+  .sub-level { width: 42px; height: 42px; font-size: 15px; }
+  .ticket-grid { grid-template-columns: 1fr; }
+  .mock-summary { padding: 18px 20px; }
+}
+@media (max-width: 480px) {
+  .learn-hero { padding-bottom: 20px; }
+  .hero-side { display: none; }
+  .hero-copy h1 { font-size: 30px; }
+  .hero-copy p { font-size: 11px; }
+  .series-head { flex-wrap: wrap; }
+  .series-copy { flex-basis: calc(100% - 86px); }
+  .special-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .special-card { min-height: 132px; padding: 14px 13px 13px; }
+  .special-card h3 { font-size: 16px; margin-top: 9px; }
+  .special-card p { font-size: 9.5px; }
+  .special-foot { padding-top: 10px; }
+  .special-num { font-size: 19px; }
+  .special-chip { display: none; }
+  .mode-card { padding: 20px 16px; gap: 13px; }
+  .mode-index { width: 30px; height: 30px; }
+  .mode-top h3 { font-size: 17px; }
+  .mode-copy p { font-size: 10.5px; }
+  .mock-summary { gap: 16px; }
+}
+@media (max-width: 360px) {
+  .special-grid { grid-template-columns: 1fr; }
+  .special-card { min-height: 118px; }
+  .empty-state { padding: 36px 20px; }
+  .empty-actions { flex-direction: column; align-items: stretch; }
 }
 </style>

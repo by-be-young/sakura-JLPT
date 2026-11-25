@@ -18,13 +18,13 @@
       </div>
 
       <!-- 答题卡 / 题号表（顺序/单元/模拟 模式可用，默认收起） -->
-      <div v-if="mode === 'sequential' || mode === 'unit' || mode === 'mock'" class="picker-toggle">
+      <div v-if="mode === 'sequential' || mode === 'unit' || mode === 'mock' || mode === 'supplement'" class="picker-toggle">
         <button class="btn btn-secondary btn-sm" @click="showPicker = !showPicker">
-          {{ showPicker ? '收起' : (mode === 'mock' ? '📋 答题卡' : '📋 选择题号 / 跳转') }}
+          {{ showPicker ? '收起' : (mode === 'mock' || mode === 'supplement' ? '📋 答题卡' : '📋 选择题号 / 跳转') }}
         </button>
         <span class="picker-hint">绿=答对 红=答错 灰=未做</span>
       </div>
-      <QuestionPicker v-if="showPicker && (mode === 'sequential' || mode === 'unit' || mode === 'mock')"
+      <QuestionPicker v-if="showPicker && (mode === 'sequential' || mode === 'unit' || mode === 'mock' || mode === 'supplement')"
         :questions="pickerQuestions" :title="pickerTitle" :current-id="currentQuestion.id"
         @select="jumpToQuestion" />
 
@@ -103,6 +103,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { levelQuestions, levelMockQuestions } from '../data/questions'
+import { supplementQuestionsOf } from '../data/supplement'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
 import { useDaily } from '../store/dailyStore'
@@ -132,12 +133,15 @@ const mockId = computed(() => Number(route.query.mock) || 0)
 const unitId = computed(() => Number(route.query.unit) || 0)
 const source = computed(() => route.query.source || '')
 const packFilter = computed(() => route.query.pack || '')
+const partFilter = computed(() => Number(route.query.part) || 0)
+const wrongOnly = computed(() => route.query.wrong === '1')
+const favOnly = computed(() => route.query.fav === '1')
 // 真题专项练习可跨当前等级：传入 level=N3 时用包等级取题
 const quizLevel = computed(() => route.query.level || level.value)
 
 const modeLabel = computed(() => {
   if (source.value === 'zhenti') return '真题专项'
-  const map = { sequential: '顺序练习', random: '随机练习', unit: '单元练习', wrong: '错题重做', favorites: '收藏练习' }
+  const map = { sequential: '顺序练习', random: '随机练习', unit: '单元练习', wrong: '错题重做', favorites: '收藏练习', supplement: '补充题库' }
   return map[mode.value] || '练习'
 })
 
@@ -172,15 +176,25 @@ function shuffleQuestion(q) {
 // 当前级别下、按模式过滤的题（用于题号表 / 列表构建）
 // 拓展包真题已并入 levelQuestions；source=zhenti 时收窄为真题专项（可按 pack 过滤）
 const allLevelQuestions = computed(() => {
+  // 补充题库：独立取题，绝不与红蓝宝书题库混在一起
+  if (mode.value === 'supplement') {
+    return supplementQuestionsOf(quizLevel.value, packFilter.value, partFilter.value)
+  }
   let qs = levelQuestions(quizLevel.value)
   if (source.value) qs = qs.filter(q => q.source === source.value)
   if (packFilter.value) qs = qs.filter(q => q.packId === packFilter.value)
   return qs
 })
 
-// 题目标签：真题包题目显示「真题 No.场次题号」，其余显示级别
-const qidLabel = computed(() => (currentQuestion.value.packId ? '真题' : level.value))
-const qidDisplay = computed(() => currentQuestion.value.examNo || currentQuestion.value.id)
+// 题目标签：补充题库显示「补充 No.包内序号」，真题显示「真题 No.场次题号」
+const qidLabel = computed(() => {
+  if (mode.value === 'supplement') return '补充'
+  return currentQuestion.value.packId ? '真题' : level.value
+})
+const qidDisplay = computed(() => {
+  if (mode.value === 'supplement') return currentQuestion.value.no
+  return currentQuestion.value.examNo || currentQuestion.value.id
+})
 
 const sequentialAll = computed(() => {
   if (mode.value === 'unit') {
@@ -198,11 +212,11 @@ const currentQuestion = computed(() => {
 
 // 答题卡数据源：模拟模式用当前回题目，顺序/单元用全量
 const pickerQuestions = computed(() => {
-  if (mode.value === 'mock') return questionList.value
+  if (mode.value === 'mock' || mode.value === 'supplement') return questionList.value
   return sequentialAll.value
 })
 const pickerTitle = computed(() =>
-  mode.value === 'mock' ? `第${mockId.value}回模拟 · 答题卡` : '选择起始题号')
+  mode.value === 'mock' ? `第${mockId.value}回模拟 · 答题卡` : (mode.value === 'supplement' ? '补充题库 · 答题卡' : '选择起始题号'))
 
 // 完形填空/读解：整篇文章（同组题共享 article，切题时文章不切换）
 const currentArticle = computed(() => currentQuestion.value.article || '')
@@ -283,6 +297,10 @@ function buildList() {
   } else if (mode.value === 'favorites') {
     list = allLevelQuestions.value.filter(q => store.state.favorites.includes(q.key))
       .sort((a, b) => (store.state.answered[b.key]?.time || 0) - (store.state.answered[a.key]?.time || 0))
+  } else if (mode.value === 'supplement') {
+    list = allLevelQuestions.value.slice()
+    if (wrongOnly.value) list = list.filter(q => store.state.wrong.includes(q.key))
+    if (favOnly.value) list = list.filter(q => store.state.favorites.includes(q.key))
   }
   questionList.value = list
   currentIndex.value = 0
@@ -327,7 +345,7 @@ function jumpToQuestion(id) {
 }
 
 onMounted(buildList)
-watch(() => [mode.value, mockId.value, unitId.value, level.value, source.value], buildList)
+watch(() => [mode.value, mockId.value, unitId.value, level.value, source.value, packFilter.value, partFilter.value, wrongOnly.value, favOnly.value], buildList)
 
 // 点击选项即自动提交
 function handleSelect(num) {
@@ -448,12 +466,14 @@ function finishQuiz() {
   // 把本次练习的真实题数/答对数带给结果页，避免结果页按整级题库统计
   router.push({
     name: 'result',
-    query: { from: mode.value, mock: mockId.value, correct: sessionCorrect, total: sessionTotal },
+    query: { from: mode.value, mock: mockId.value, correct: sessionCorrect, total: sessionTotal, pack: packFilter.value, part: partFilter.value || '' },
   })
 }
 
 function goBack() {
-  if (mode.value === 'mock') {
+  if (mode.value === 'supplement') {
+    router.push('/supplement')
+  } else if (mode.value === 'mock') {
     router.push({ path: '/learn', query: { mode: 'mock' } })
   } else {
     router.push({ path: '/learn', query: { mode: 'bank' } })

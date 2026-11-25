@@ -131,17 +131,21 @@ export function useStore() {
   // key 形如 "N2:5"
   function recordAnswer(key, selected, correct) {
     const lv = key.split(':')[0]
-    if (!isPlainObject(state.counts)) state.counts = {}
-    if (!isPlainObject(state.counts[lv])) state.counts[lv] = { answered: 0, correct: 0 }
+    // 补充题库（sup: 前缀）独立统计，不计入红蓝宝书题库的分级计数
+    const trackCount = LEVELS.includes(lv)
+    if (trackCount && !isPlainObject(state.counts)) state.counts = {}
+    if (trackCount && !isPlainObject(state.counts[lv])) state.counts[lv] = { answered: 0, correct: 0 }
     if (!isPlainObject(state.answered)) state.answered = {}
-    const c = state.counts[lv]
+    const c = trackCount ? state.counts[lv] : null
     const prev = state.answered[key]
-    if (!prev) {
-      c.answered++
-      if (correct) c.correct++
-    } else {
-      if (prev.correct && !correct) c.correct--
-      if (!prev.correct && correct) c.correct++
+    if (c) {
+      if (!prev) {
+        c.answered++
+        if (correct) c.correct++
+      } else {
+        if (prev.correct && !correct) c.correct--
+        if (!prev.correct && correct) c.correct++
+      }
     }
     state.answered[key] = { selected, correct, time: Date.now() }
     const wrong = toList(state.wrong)

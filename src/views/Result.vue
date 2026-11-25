@@ -64,6 +64,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { levelQuestionsAll, levelMockQuestions } from '../data/questions'
+import { supplementQuestionsOfLevel } from '../data/supplement'
 import { useStore } from '../store/useStore'
 import { useLevel } from '../store/levelStore'
 
@@ -77,6 +78,7 @@ const mockId = computed(() => Number(route.query.mock) || 0)
 
 const modeLabel = computed(() => {
   if (fromMode.value === 'mock') return `第${mockId.value}回模拟测试`
+  if (fromMode.value === 'supplement') return '补充题库'
   const map = { sequential: '顺序练习', random: '随机练习', wrong: '错题重做', favorites: '收藏练习' }
   return map[fromMode.value] || '练习'
 })
@@ -86,6 +88,9 @@ const sessionQuestions = computed(() => {
   if (fromMode.value === 'mock') {
     return levelMockQuestions(level.value, mockId.value)
   }
+  if (fromMode.value === 'supplement') {
+    return supplementQuestionsOfLevel(level.value)
+  }
   return levelQuestionsAll(level.value)
 })
 
@@ -93,6 +98,8 @@ const sessionQuestions = computed(() => {
 // 否则退回按“当前级别已答题”统计 —— 旧逻辑会把整级题库都算进本页，出现“共 1000 题 / 答错 997”。
 const queryTotal = Number(route.query.total)
 const queryCorrect = Number(route.query.correct)
+const packQuery = computed(() => route.query.pack || '')
+const partQuery = computed(() => route.query.part || '')
 const hasSessionStats = Number.isFinite(queryTotal) && queryTotal > 0
 
 const total = computed(() => (hasSessionStats ? queryTotal : sessionQuestions.value.length))
@@ -123,17 +130,25 @@ const encouragement = computed(() => {
 function retry() {
   if (fromMode.value === 'mock') {
     router.push({ name: 'quiz', params: { mode: 'mock' }, query: { mock: mockId.value } })
+  } else if (fromMode.value === 'supplement') {
+    router.push({ name: 'quiz', params: { mode: 'supplement' }, query: { pack: packQuery.value, part: partQuery.value } })
   } else {
     router.push({ name: 'quiz', params: { mode: fromMode.value } })
   }
 }
 
 function reviewWrong() {
+  if (fromMode.value === 'supplement') {
+    router.push({ name: 'quiz', params: { mode: 'supplement' }, query: { pack: packQuery.value, part: partQuery.value, wrong: '1' } })
+    return
+  }
   router.push({ name: 'quiz', params: { mode: 'wrong' } })
 }
 
 function goBack() {
-  if (fromMode.value === 'mock') {
+  if (fromMode.value === 'supplement') {
+    router.push('/supplement')
+  } else if (fromMode.value === 'mock') {
     router.push({ path: '/learn', query: { mode: 'mock' } })
   } else {
     router.push({ path: '/learn', query: { mode: 'bank' } })

@@ -1,0 +1,223 @@
+[
+ {
+  "s": "問題1 · Grammar",
+  "p": "台風が来て、昨日は<ruby>沖縄<rt>おきなわ</rt></ruby>では大雨だった（　）。",
+  "o": [
+   "のは",
+   "とを",
+   "のを",
+   "とか"
+  ],
+  "a": 3,
+  "en": "I heard that because of the typhoon, it rained heavily in Okinawa yesterday.",
+  "np": "आँधी आएर हिजो ओकिनावामा ठूलो वर्षा भएको थियो रे।",
+  "why": "Sentence-final とか reports uncertain hearsay: “I heard that...” or “apparently...”.",
+  "wrong": "のは makes the preceding clause a topic and needs a following predicate. とを is not a valid particle combination here. のを makes the clause an object and needs a following verb.",
+  "v": "台風（たいふう）= typhoon / आँधी; 来る（くる）= come / आउनु; 昨日（きのう）= yesterday / हिजो; 沖縄（おきなわ）= Okinawa / ओकिनावा; 大雨（おおあめ）= heavy rain / ठूलो वर्षा",
+  "g": "Sentence-final ～とか means “I heard that...” or “apparently...”."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "妻「あなたの体のために、明日からたばこを吸うのをやめてちょうだい。」<br>夫「（　）厳しいことを言わないでよ。」",
+  "o": [
+   "こんなに",
+   "そんなに",
+   "あんなに",
+   "どんなに"
+  ],
+  "a": 1,
+  "en": "Wife: “For your health, please stop smoking from tomorrow.” Husband: “Don’t say something so strict.”",
+  "np": "श्रीमती: “स्वास्थ्यका लागि भोलिदेखि चुरोट छोड्नुहोस्।” श्रीमान्: “त्यति कडा कुरा नगर न।”",
+  "why": "そんなに means “that much/so” and refers naturally to the strict request the wife has just made.",
+  "wrong": "こんなに refers to something close to the speaker. あんなに refers to something distant or previously observed. どんなに means “no matter how much” and normally combines with ～ても or ～か.",
+  "v": "妻（つま）= wife / श्रीमती; 夫（おっと）= husband / श्रीमान्; 体（からだ）= body, health / शरीर, स्वास्थ्य; 明日（あした）= tomorrow / भोलि; 吸う（すう）= smoke / धूम्रपान गर्नु; 厳しい（きびしい）= strict / कडा",
+  "g": "Vるのをやめる means “stop doing V.” Vてちょうだい is an informal request, and Vないで asks someone not to do something."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "私は昨日から<ruby>風邪<rt>かぜ</rt></ruby>（　）で、熱が少しある。",
+  "o": [
+   "っぽい",
+   "ほど",
+   "げ",
+   "気味"
+  ],
+  "a": 3,
+  "en": "I have felt slightly sick with a cold since yesterday and have a mild fever.",
+  "np": "हिजोदेखि मलाई अलिअलि रुघा लागेको छ र थोरै ज्वरो पनि छ।",
+  "why": "風邪気味 means showing slight signs of a cold. 気味 behaves like a noun here, so 気味で connects correctly to the next clause.",
+  "wrong": "風邪っぽい is possible by itself, but before this で it would need to be 風邪っぽくて. ほど expresses degree. ～げ normally attaches to adjective stems, such as 悲しげ.",
+  "v": "私（わたし）= I / म; 昨日（きのう）= yesterday / हिजो; 風邪（かぜ）= cold / रुघा; 気味（ぎみ）= slight tendency / हल्का लक्षण; 熱（ねつ）= fever / ज्वरो; 少し（すこし）= a little / थोरै",
+  "g": "N／Vます-stem＋気味（ぎみ） means “slightly...” or “showing a tendency toward...,” often for an undesirable condition."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "近所へ散歩に行った（　）、スーパーで牛乳を買ってきました。",
+  "o": [
+   "かたがた",
+   "ついでに",
+   "かわりに",
+   "ままに"
+  ],
+  "a": 1,
+  "en": "While I was out taking a walk nearby, I also bought some milk at the supermarket.",
+  "np": "नजिकै घुम्न गएको मौकामा सुपरमार्केटबाट दूध पनि किनेर ल्याएँ।",
+  "why": "Vたついでに means doing an additional task while already doing something else.",
+  "wrong": "かたがた is formal and normally follows a noun or verb stem, not 行った. かわりに means “instead of/in exchange for.” ままに means “as it is/as directed.”",
+  "v": "近所（きんじょ）= neighborhood / छिमेक; 散歩（さんぽ）= walk / घुमफिर; 牛乳（ぎゅうにゅう）= milk / दूध; 買ってくる（かってくる）= buy and bring back / किनेर ल्याउनु",
+  "g": "Vた＋ついでに means “while doing that, take the opportunity to do something else.”"
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "学校から家へ帰る（　）彼女に会ったので、道で少し話しました。",
+  "o": [
+   "途中まで",
+   "途中へ",
+   "途中で",
+   "途中から"
+  ],
+  "a": 2,
+  "en": "I met her on the way home from school, so we talked briefly on the road.",
+  "np": "विद्यालयबाट घर फर्किने बाटोमा उनीसँग भेट भएकाले केहीबेर कुरा गर्‍यौँ।",
+  "why": "Vる途中で means “while in the middle of doing V” or “on the way.”",
+  "wrong": "途中まで means “up to the middle point.” 途中へ means “toward the middle” and cannot connect the event. 途中から means “from midway.”",
+  "v": "学校（がっこう）= school / विद्यालय; 家（いえ）= home / घर; 帰る（かえる）= return / फर्कनु; 途中（とちゅう）= on the way / बाटोमा; 彼女（かのじょ）= she / उनी; 会う（あう）= meet / भेट्नु; 道（みち）= road / बाटो",
+  "g": "Vる途中（とちゅう）で indicates that another event occurs while the first action is in progress."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "この町は、駅を（　）発展してきた。",
+  "o": [
+   "中心とともに",
+   "中心として",
+   "中心において",
+   "中心にかけて"
+  ],
+  "a": 1,
+  "en": "This town has developed around the station.",
+  "np": "यो सहर स्टेशनलाई केन्द्र बनाएर विकास हुँदै आएको हो।",
+  "why": "Nを中心として means “with N as the center” or “centered around N.”",
+  "wrong": "中心とともに means “together with the center.” 中心において means “at the center” and cannot follow 駅を. 中心にかけて describes a range or direction.",
+  "v": "町（まち）= town / सहर; 駅（えき）= station / स्टेशन; 中心（ちゅうしん）= center / केन्द्र; 発展する（はってんする）= develop / विकास हुनु",
+  "g": "Nを中心（ちゅうしん）として means “centered around N.” Vてくる describes a change continuing up to the present."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "毎朝私は、ベランダの花に水を（　）。",
+  "o": [
+   "くれます",
+   "もらいます",
+   "やります",
+   "さしあげます"
+  ],
+  "a": 2,
+  "en": "I water the flowers on the balcony every morning.",
+  "np": "म हरेक बिहान बाल्कोनीका फूलमा पानी हाल्छु।",
+  "why": "やる is used when giving something to plants or animals. 水をやる is the standard expression for watering plants.",
+  "wrong": "くれる means someone gives to the speaker. もらう means to receive. さしあげる is a humble form used when giving to a respected person, not to flowers.",
+  "v": "毎朝（まいあさ）= every morning / हरेक बिहान; 私（わたし）= I / म; 花（はな）= flower / फूल; 水（みず）= water / पानी; やる = give to a plant or animal / दिनु, पानी हाल्नु",
+  "g": "Japanese giving verbs change according to the relationship between giver and receiver. やる is natural for plants and animals."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "彼女に会うのは、卒業以来3年（　）。",
+  "o": [
+   "よりだ",
+   "ながらだ",
+   "からだ",
+   "ぶりだ"
+  ],
+  "a": 3,
+  "en": "This is the first time in three years that I have met her since graduation.",
+  "np": "स्नातक भएपछि तीन वर्षमा पहिलो पटक उनीसँग भेट भएको हो।",
+  "why": "A period＋ぶり means doing something for the first time after that length of time.",
+  "wrong": "よりだ expresses comparison. ながらだ means “while/although.” からだ means “because” or “from,” not an interval since the previous occurrence.",
+  "v": "彼女（かのじょ）= she / उनी; 会う（あう）= meet / भेट्नु; 卒業（そつぎょう）= graduation / स्नातक; 以来（いらい）= since / देखि; 3年ぶり（さんねんぶり）= for the first time in three years / तीन वर्षपछि पहिलो पटक",
+  "g": "N以来（いらい） means “since N.” Period＋ぶり means “for the first time after that period.”"
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "弟は先生に何と（　）。",
+  "o": [
+   "お話しなさいましたか",
+   "話されましたか",
+   "おっしゃいましたか",
+   "申しましたか"
+  ],
+  "a": 3,
+  "en": "What did your younger brother say to the teacher?",
+  "np": "तपाईंको भाइले शिक्षकलाई के भन्यो?",
+  "why": "申す is the humble form of 言う. The younger brother is treated as an in-group member and is lowered in relation to the teacher.",
+  "wrong": "お話しなさいましたか, 話されましたか, and おっしゃいましたか are honorific expressions that raise the younger brother, so they are inappropriate here.",
+  "v": "弟（おとうと）= younger brother / भाइ; 先生（せんせい）= teacher / शिक्षक; 何と（なんと）= what / के भनेर; 言う（いう）= say / भन्नु; 申す（もうす）= say, humble / विनम्र रूपमा भन्नु",
+  "g": "申す（もうす） is 謙譲語（けんじょうご）, while おっしゃる is 尊敬語（そんけいご）."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "あの子は、小さい子ども（　）、とてもかしこい。",
+  "o": [
+   "にしては",
+   "のあまり",
+   "であるからには",
+   "からして"
+  ],
+  "a": 0,
+  "en": "That child is very clever for such a young child.",
+  "np": "त्यो बच्चा सानो बच्चाको हिसाबले निकै बुद्धिमान छ।",
+  "why": "Nにしては means “considering that someone is N” and introduces a result different from the usual expectation.",
+  "wrong": "のあまり means “because of too much...”. であるからには means “now that/since it is the case.” からして means “judging from” or “starting with.”",
+  "v": "子ども（こども）= child / बच्चा; 小さい（ちいさい）= small, young / सानो; かしこい = clever / बुद्धिमान",
+  "g": "Nにしては means “for an N/considering N,” usually followed by a surprising result."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "男の学生「あ、ペンを忘れちゃった。」<br>女の学生「私（　）、これを使ってよ。」",
+  "o": [
+   "のもよければ",
+   "のでよければ",
+   "がよいから",
+   "でよいから"
+  ],
+  "a": 1,
+  "en": "Male student: “Oh, I forgot my pen.” Female student: “If mine is okay, use this.”",
+  "np": "छात्र: “मैले कलम बिर्सिएछु।” छात्रा: “मेरो भए हुन्छ भने, यो प्रयोग गर।”",
+  "why": "私のでよければ means “if mine is okay.” の replaces the already understood noun ペン, and でよければ means “if it is acceptable.”",
+  "wrong": "のもよければ unnecessarily adds “also.” 私がよいから means “because I am good.” 私でよいから means “because I am acceptable”; both refer to the person rather than the pen.",
+  "v": "男の学生（おとこのがくせい）= male student / छात्र; 女の学生（おんなのがくせい）= female student / छात्रा; 忘れる（わすれる）= forget / बिर्सनु; 私の（わたしの）= mine / मेरो; 使う（つかう）= use / प्रयोग गर्नु",
+  "g": "の can replace a previously mentioned noun. Nでよければ means “if N is acceptable.” Vちゃった is conversational Vてしまった."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "あまり時間がないから、食事を（　）、簡単なものにするつもりだ。",
+  "o": [
+   "するとしては",
+   "するとしようと",
+   "するとしても",
+   "するとしようなら"
+  ],
+  "a": 2,
+  "en": "Since I do not have much time, even if I eat, I intend to have something simple.",
+  "np": "धेरै समय नभएकाले खाना खाए पनि सामान्य खाना खाने योजना छ।",
+  "why": "Vるとしても means “even if one does V” or “even assuming V happens.”",
+  "wrong": "するとしては does not express concession. するとしようと is incomplete. するとしようなら is not the correct conditional form; するとしたら would be grammatical.",
+  "v": "時間（じかん）= time / समय; 食事（しょくじ）= meal / खाना; 簡単な（かんたんな）= simple / सामान्य; つもり = intention / योजना",
+  "g": "Vるとしても means “even if V.” Vるつもりだ expresses an intention."
+ },
+ {
+  "s": "問題1 · Grammar",
+  "p": "私はアイスクリームが大好きなので、お店で見かけると（　）。",
+  "o": [
+   "買おうとしています",
+   "買おうとはしません",
+   "買わないでいられます",
+   "買わないではいられません"
+  ],
+  "a": 3,
+  "en": "I love ice cream, so whenever I see it in a shop, I cannot help buying it.",
+  "np": "मलाई आइसक्रिम धेरै मन पर्ने भएकाले पसलमा देख्दा नकिनी बस्न सक्दिनँ।",
+  "why": "Vないではいられない means “cannot help doing” or “cannot refrain from doing.”",
+  "wrong": "買おうとしています means “am trying/about to buy.” 買おうとはしません means “do not try to buy.” 買わないでいられます means “can remain without buying,” the opposite meaning.",
+  "v": "私（わたし）= I / म; 大好き（だいすき）= love very much / धेरै मन पर्ने; 店（みせ）= shop / पसल; 見かける（みかける）= happen to see / देख्नु; 買う（かう）= buy / किन्नु",
+  "g": "Vないではいられない means “cannot help doing V.” Vると expresses an automatic or repeated result."
+ }
+]
