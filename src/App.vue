@@ -76,6 +76,9 @@
 
     <!-- 更新提示 -->
     <AppUpdateToast />
+
+    <!-- iOS / iPadOS 安装引导（添加到主屏幕） -->
+    <IosInstallGuide />
   </div>
 </template>
 
@@ -90,6 +93,7 @@ import { prefersReducedMotion } from './composables/useMotion'
 import { isNativeApp, setSystemBarsHidden } from './composables/nativeBridge'
 import { useWidgetSync } from './composables/widgetSync'
 import AppUpdateToast from './components/AppUpdateToast.vue'
+import IosInstallGuide from './components/IosInstallGuide.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 
 const route = useRoute()

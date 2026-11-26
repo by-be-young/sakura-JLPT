@@ -22,7 +22,7 @@ const DEFAULT_URL = 'https://qdsjpgkxgdzmialzssud.supabase.co'
 
 // anon public key（Supabase 后台 → Project Settings → API → anon / public）
 // 留空时应用保持纯本地模式，登录入口会提示「未配置云端」。
-const DEFAULT_ANON_KEY = ''
+const DEFAULT_ANON_KEY = 'sb_publishable_md2JklYGrdRNTp_xk_0-Bw_PdpOLqbm'
 
 export const SUPABASE_CONFIG = {
   url: ENV_URL || DEFAULT_URL,
