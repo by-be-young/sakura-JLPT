@@ -237,10 +237,74 @@ packs.extend(web_packs)
 questions.extend(web_qs)
 print("added web questions", len(web_qs), "total", len(questions))
 
+# 与 N2 对齐：N3 只保留「語彙 / 文法」两个题包，不按原题源或小题型拆分。
+# 原题源信息仍保留在题目的 sourceId / providerNote 中，仅不呈现在题包结构上。
+vocab_qs = []
+grammar_qs = []
+for q in questions:
+    if q.get("type") in ("文法", "語法"):
+        grammar_qs.append(q)
+    else:
+        vocab_qs.append(q)
+
+for idx, q in enumerate(vocab_qs, 1):
+    legacy_key = f"sup:N3:{q['packId']}:{q['no']}"
+    q.update({
+        "packId": "n3-vocab",
+        "no": idx,
+        "type": "語彙",
+        "part": 1,
+        "partName": "全部题目",
+        "unit": 1,
+        "legacyKey": legacy_key,
+    })
+for idx, q in enumerate(grammar_qs, 1):
+    legacy_key = f"sup:N3:{q['packId']}:{q['no']}"
+    q.update({
+        "packId": "n3-grammar",
+        "no": idx,
+        "type": "文法",
+        "part": 1,
+        "partName": "全部题目",
+        "unit": 1,
+        "legacyKey": legacy_key,
+    })
+
+questions = vocab_qs + grammar_qs
+packs = [
+    {
+        "id": "n3-vocab",
+        "level": "N3",
+        "title": f"N3 文字・語彙 {len(vocab_qs)} 题",
+        "shortTitle": f"文字・語彙 {len(vocab_qs)} 题",
+        "type": "語彙",
+        "origin": "external",
+        "provider": "N3 补充题库",
+        "providerNote": "公开 N3 练习题汇总；按語彙 / 文法统一编排，不区分原题源或小题型",
+        "url": "",
+        "count": len(vocab_qs),
+        "parts": [{"no": 1, "name": "全部题目", "count": len(vocab_qs)}],
+    },
+    {
+        "id": "n3-grammar",
+        "level": "N3",
+        "title": f"N3 文法 {len(grammar_qs)} 题",
+        "shortTitle": f"文法 {len(grammar_qs)} 题",
+        "type": "文法",
+        "origin": "external",
+        "provider": "N3 补充题库",
+        "providerNote": "公开 N3 练习题汇总；按語彙 / 文法统一编排，不区分原题源或小题型",
+        "url": "",
+        "count": len(grammar_qs),
+        "parts": [{"no": 1, "name": "全部题目", "count": len(grammar_qs)}],
+    },
+]
+
 # 写入最终模块
 final = (
     "// N3 补充题库：163 道外部精选 + 816 道 Challenge JLPT 网页题 + 21 道資格ブートキャンプ补充题。\n"
     "// 题目与选项均来自公开网页；不使用站内自动生成题。\n"
+    "// 最终按語彙 / 文法两个题包统一编排，不区分原题源或小题型。\n"
     "// 网页题句子中文译文已补齐；解析优先使用原站中文翻译，缺失时保留日文原解析。\n"
     "export const supplementPacks = " + js(packs) + ";\n\n"
     "export const supplementN3Questions = " + js(questions) + ";\n"

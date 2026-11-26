@@ -45,7 +45,7 @@ const n2PacksMerged = n2Packs.map(base => {
 export const supplementPacks = [...n2PacksMerged, ...listenPacks, ...listen2Packs, ...n3Packs]
 
 function makeKey(q) {
-  return `sup:${q.level}:${q.packId}:${q.no}`
+  return q.legacyKey || `sup:${q.level}:${q.packId}:${q.no}`
 }
 
 export const supplementQuestions = [...supplementN2Questions, ...extraN2Questions, ...listenQuestions, ...listen2Questions, ...supplementN3Questions].map(q => ({
