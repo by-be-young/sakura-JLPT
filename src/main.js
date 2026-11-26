@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './styles/main.css'
+import './styles/journal.css'
 import { initSupabase } from './composables/useAuth'
 import { vReveal } from './composables/useMotion'
 

@@ -1,5 +1,12 @@
 <template>
-  <div class="container my-page">
+  <div class="container my-page journal-page">
+    <header class="journal-page-head">
+      <div>
+        <div class="journal-kicker">MY STUDY / {{ level }}</div>
+        <h1>我的学习</h1>
+      </div>
+    </header>
+
     <!-- ===== 个人资料 ===== -->
     <section class="profile-card">
       <div class="profile-main">
@@ -18,7 +25,7 @@
         </button>
       </div>
       <p class="profile-tip" v-if="!authState.user">
-        {{ authState.configured ? '登录后可跨设备同步学习数据' : '本地学习 · 数据保存在本设备' }}
+        {{ authState.configured ? '登录后跨设备同步' : '仅保存在本设备' }}
       </p>
     </section>
 
@@ -110,7 +117,7 @@
       <div v-else class="panel-card empty-card">
         <div class="empty-emoji">📚</div>
         <p class="empty-title">{{ currentTitle }}题库待补充</p>
-        <p class="empty-desc">当前等级暂无刷题数据，可以先通过「背词」「文法」学习该等级内容。</p>
+        <p class="empty-desc">本级暂无刷题数据。</p>
       </div>
 
       <!-- 文法进度 -->
@@ -167,7 +174,7 @@
       <div v-else class="panel-card empty-card">
         <div class="empty-emoji">🎉</div>
         <p class="empty-title">{{ level }} 还没有错题</p>
-        <p class="empty-desc">继续保持！做错的题会自动进入这里，方便集中重练。</p>
+        <p class="empty-desc">做错的题会自动收进这里。</p>
         <button class="btn btn-primary btn-sm" @click="$router.push('/learn')">去练习</button>
       </div>
     </template>
@@ -197,7 +204,7 @@
       <div v-else class="panel-card empty-card">
         <div class="empty-emoji">🌟</div>
         <p class="empty-title">{{ level }} 还没有收藏题目</p>
-        <p class="empty-desc">做题时点击 ❤️ 收藏，重要题目会集中在这里。</p>
+        <p class="empty-desc">做题时点击 ❤️ 收藏。</p>
         <button class="btn btn-primary btn-sm" @click="$router.push('/learn')">去练习</button>
       </div>
     </template>

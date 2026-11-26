@@ -1,9 +1,9 @@
 <template>
-  <div class="container admin-page">
+  <div class="container admin-page journal-page">
     <!-- 页头 -->
     <div class="page-head" v-reveal>
       <div class="page-head-main">
-        <div class="icon-tile amber" aria-hidden="true">📋</div>
+        <div class="icon-tile amber seal" aria-hidden="true">反</div>
         <div class="page-head-text">
           <h1 class="page-title">反馈管理</h1>
           <p class="page-sub">{{ subtitle }}</p>

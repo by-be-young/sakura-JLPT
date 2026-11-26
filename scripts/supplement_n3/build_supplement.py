@@ -1,4 +1,4 @@
-import re, json, os, html as htmlmod
+import re, json, os, html as htmlmod, subprocess, sys
 
 D = r"D:\01-项目\日语自学网站\scripts\supplement_n3"
 nihongo = json.load(open(os.path.join(D, "nihongo_raw.json"), encoding="utf-8"))
@@ -166,15 +166,86 @@ packs = [
 def js(obj):
     return json.dumps(obj, ensure_ascii=False, indent=2)
 
-out = """// 补充题库 · N3（非红蓝宝书题库，独立数据模块，请勿并入 questions.js）
-// 数据来源：Nihongo World 原创练习题、Coto Academy 语汇模拟题、Gogaku Education 文法模拟题
-// 全部题目均明确标注 N3；均为练习题/模拟题，不是历年真题。
-// 由 scripts/supplement_n3/build_supplement.py 生成。
+curated = {"packs": packs, "questions": questions}
+for pack in packs:
+    pack["origin"] = "external"
+curated_path = os.path.join(D, "curated.json")
+open(curated_path, "w", encoding="utf-8").write(js(curated))
+print("written", curated_path, len(questions), "curated questions")
 
-export const supplementPacks = """ + js(packs) + """
+# 追加网页题库：Challenge JLPT（四选一）与資格ブートキャンプ（补充 21 题）
+challenge = json.load(open(os.path.join(D, "challenge_raw.json"), encoding="utf-8"))
+challenge_zh = json.load(open(os.path.join(D, "challenge_translations.json"), encoding="utf-8")) if os.path.exists(os.path.join(D, "challenge_translations.json")) else {}
+shikaku_extra = json.load(open(os.path.join(D, "shikaku_extra.json"), encoding="utf-8"))
 
-export const supplementN3Questions = """ + js(questions) + """
-"""
-path = r"D:\01-项目\日语自学网站\src\data\supplement-n3.js"
-open(path, "w", encoding="utf-8").write(out)
-print("written", path, len(questions), "questions")
+CHALLENGE_META = {
+    "vocabulary": ("cj-vocab-325", "N3 网页语汇 325 题", "网页语汇 325", "語彙", "語彙・文脈"),
+    "grammar": ("cj-grammar-241", "N3 网页文法 241 题", "网页文法 241", "文法", "文法・文法形式"),
+    "kanji_choice": ("cj-kanji-250", "N3 网页汉字选择 250 题", "网页汉字 250", "文字", "漢字選択"),
+}
+
+def clean_question(s):
+    s = (s or "").replace("\n", "<br>")
+    s = re.sub(r"<span[^>]*class=\"kanji\"[^>]*>(.*?)</span>", r"<u>\1</u>", s)
+    s = re.sub(r"（\s*）", "（　　）", s)
+    s = s.replace("<br><br>", "<br>")
+    return s.strip()
+
+web_packs = []
+web_qs = []
+for kind, (pid, title, short, typ, part_name) in CHALLENGE_META.items():
+    items = challenge[kind]
+    for idx, q in enumerate(items, 1):
+        zh = challenge_zh.get(q["id"], {})
+        sentence = clean_question(q.get("question", ""))
+        if kind == "kanji_choice" and q.get("instruction"):
+            sentence = clean_question(q["instruction"] + "<br>" + q.get("question", ""))
+        web_qs.append({
+            "id": 5000 + len(web_qs) + 1,
+            "no": idx,
+            "packId": pid,
+            "level": "N3",
+            "type": typ,
+            "part": 1,
+            "partName": part_name,
+            "unit": 1,
+            "sentence": sentence,
+            "sentenceFurigana": sentence,
+            "options": q.get("choices") or [],
+            "answer": (q.get("answer_index") or 0) + 1,
+            "translation": zh.get("translation", ""),
+            "explanation": zh.get("explanation") or q.get("explanation_ja", ""),
+            "sourceId": q.get("id", ""),
+        })
+    web_packs.append({
+        "id": pid,
+        "level": "N3",
+        "title": title,
+        "shortTitle": short,
+        "type": typ,
+        "origin": "external",
+        "provider": "Let's Challenge JLPT",
+        "providerNote": "公开 N3 免费练习题，四选一，答案与日文解析来自原网页，非历年真题；中文译文由 MyMemory 分批生成，解析优先使用站点中文翻译",
+        "url": "https://www.challenge-jlpt.com/n3-practice/",
+        "count": len(items),
+        "parts": [{"no": 1, "name": part_name, "count": len(items)}],
+    })
+
+web_packs.extend(shikaku_extra["packs"])
+web_qs.extend(shikaku_extra["questions"])
+packs.extend(web_packs)
+questions.extend(web_qs)
+print("added web questions", len(web_qs), "total", len(questions))
+
+# 写入最终模块
+final = (
+    "// N3 补充题库：163 道外部精选 + 816 道 Challenge JLPT 网页题 + 21 道資格ブートキャンプ补充题。\n"
+    "// 题目与选项均来自公开网页；不使用站内自动生成题。\n"
+    "// 网页题句子中文译文已补齐；解析优先使用原站中文翻译，缺失时保留日文原解析。\n"
+    "export const supplementPacks = " + js(packs) + ";\n\n"
+    "export const supplementN3Questions = " + js(questions) + ";\n"
+)
+project_root = os.path.dirname(os.path.dirname(D))
+out_path = os.path.join(project_root, "src", "data", "supplement-n3.js")
+open(out_path, "w", encoding="utf-8").write(final)
+print("written", out_path, len(questions), "questions")

@@ -1,12 +1,13 @@
 <template>
-  <div class="container study-page">
+  <div class="container study-page journal-page">
     <!-- 页头 -->
     <div class="study-hero">
       <div class="hero-lead">
         <img class="hero-cover" src="./covers/grammar-blue.svg" alt="蓝宝书 · 文法详解" />
-        <div>
-          <div class="hero-title">📘 文法 · 蓝宝书</div>
-          <div class="hero-sub">{{ currentTitle }} · 系统语法体系 · 详解例句</div>
+        <div class="hero-copy">
+          <div class="hero-kicker">GRAMMAR / 蓝宝书</div>
+          <div class="hero-title">文法</div>
+          <div class="hero-sub">{{ currentTitle }} · 文法</div>
         </div>
       </div>
       <span class="hero-badge">{{ level }}</span>
@@ -24,7 +25,7 @@
         <div class="go-tags">
           <span v-if="chapter.learnedCount" class="go-tag learned">📖 已学 {{ chapter.learnedCount }}</span>
           <span v-if="chapter.markedCount" class="go-tag marked">★ 已标记 {{ chapter.markedCount }}</span>
-          <span v-if="!chapter.learnedCount && !chapter.markedCount" class="go-tag hint">从第一个单元开始学习</span>
+          <span v-if="!chapter.learnedCount && !chapter.markedCount" class="go-tag hint">从第一单元开始</span>
         </div>
       </div>
       <div class="go-right">

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>练习中心改版 · 视觉原型</title>
+<style>
+  :root {
+    --sakura-50:#fff6f9; --sakura-100:#ffe4ec; --sakura-200:#ffc9d9; --sakura-300:#ffa3bf;
+    --sakura-400:#ff7aa2; --sakura-500:#f45c8e; --sakura-600:#e03e74;
+    --iris:#7c6cf0; --iris-soft:#efedff;
+    --amber:#d99a3d; --amber-soft:#fdf3e2;
+    --clay:#d98b45; --clay-soft:#fdf0e4;
+    --jade:#3fae83; --jade-soft:#e8f6f0;
+    --bg:#fdf9f6; --card:#fff; --text:#3d3238; --text-light:#8a7a84; --text-faint:#b9aab2;
+    --border:#ffe0ea; --border-strong:#ffc9d9;
+    --shadow-card:0 2px 10px rgba(60,30,45,.06);
+    --shadow:0 4px 20px rgba(244,92,142,.1);
+    --grad-sakura:linear-gradient(135deg,#ff7aa2,#e03e74);
+    --pill:999px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:'Noto Sans JP','PingFang SC','Microsoft YaHei',sans-serif;
+    background:var(--bg); color:var(--text);
+    background-image:radial-gradient(1200px 600px at 50% -10%, var(--sakura-50) 0%, transparent 60%);
+    min-height:100vh; padding:28px 20px 80px;
+  }
+  .serif { font-family:'Noto Serif SC','Songti SC',serif; }
+  .wrap { max-width:1040px; margin:0 auto; }
+
+  .proto-bar { display:flex; align-items:center; gap:10px; margin-bottom:26px; }
+  .proto-bar .k { font-size:10px; letter-spacing:2px; color:var(--text-faint); font-weight:700; }
+  .proto-btn {
+    border:1px solid var(--border-strong); background:#fff; color:var(--text-light);
+    padding:8px 16px; border-radius:var(--pill); font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .proto-btn.on { background:var(--grad-sakura); color:#fff; border-color:transparent; box-shadow:var(--shadow); }
+  .proto-note { margin-left:auto; font-size:11px; color:var(--text-faint); }
+
+  .crumb { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-faint); letter-spacing:.5px; }
+  .crumb b { color:var(--text-light); font-weight:600; }
+  .hero { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; padding:14px 2px 22px; border-bottom:1px solid var(--border); }
+  .kicker { display:flex; align-items:center; gap:10px; font-size:9.5px; letter-spacing:2.5px; font-weight:700; color:var(--text-faint); }
+  .kicker::before { content:''; width:24px; height:1px; background:var(--sakura-400); }
+  h1 { font-size:38px; letter-spacing:3px; margin-top:12px; line-height:1.1; }
+  .hero p { margin-top:9px; font-size:12px; color:var(--text-light); letter-spacing:.4px; }
+  .hero-stats { display:flex; gap:26px; text-align:right; padding-bottom:4px; }
+  .hero-stats b { font-size:22px; display:block; line-height:1; font-variant-numeric:tabular-nums; }
+  .hero-stats span { font-size:9px; letter-spacing:1px; color:var(--text-faint); }
+
+  .tabs { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:6px; padding:14px 0 12px; margin-top:6px;
+    background:linear-gradient(180deg, var(--bg) 72%, rgba(253,249,246,0)); backdrop-filter:blur(6px); flex-wrap:wrap; }
+  .tab {
+    display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px; border-radius:var(--pill);
+    border:1px solid var(--border); background:#fff; color:var(--text-light); font-size:12.5px; font-weight:600; cursor:pointer;
+    transition:border-color .18s, color .18s, background .18s;
+  }
+  .tab .dot { width:7px; height:7px; border-radius:50%; background:var(--text-faint); }
+  .tab .n { font-size:11px; color:var(--text-faint); font-variant-numeric:tabular-nums; }
+  .tab.on { border-color:currentColor; background:#fff; color:var(--text); box-shadow:var(--shadow-card); }
+  .tab.vocab.on { color:var(--amber); } .tab.grammar.on { color:var(--iris); }
+  .tab.reading.on { color:var(--clay); } .tab.listening.on { color:var(--jade); }
+  .tab .dot.vocab { background:var(--amber); } .tab .dot.grammar { background:var(--iris); }
+  .tab .dot.reading { background:var(--clay); } .tab .dot.listening { background:var(--jade); }
+  .tab-mix { margin-left:auto; }
+  .mix-btn {
+    display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 18px; border-radius:var(--pill);
+    border:1px solid transparent; background:var(--grad-sakura); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .mix-btn small { font-weight:600; opacity:.85; }
+
+  .panel-view { animation:fade .25s ease-out; }
+  @keyframes fade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .sec { margin-top:22px; }
+  .sec-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .sec-name { display:flex; align-items:center; gap:8px; font-size:17px; font-weight:800; letter-spacing:.5px; }
+  .sec-name .bar { width:3px; height:16px; border-radius:2px; }
+  .sec-meta { font-size:11px; color:var(--text-faint); letter-spacing:.3px; }
+  .sec-link { margin-left:auto; font-size:11.5px; font-weight:600; color:var(--text-light); cursor:pointer; border:0; background:none; }
+  .sec-link:hover { color:var(--sakura-600); }
+
+  .cards { display:flex; flex-direction:column; gap:12px; }
+  .pack {
+    position:relative; padding:18px 20px 16px 23px; border-radius:20px; border:1px solid var(--border);
+    background:var(--card); box-shadow:var(--shadow-card); cursor:pointer;
+    transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s, border-color .22s;
+  }
+  .pack::before { content:''; position:absolute; left:0; top:16px; bottom:16px; width:3px; border-radius:0 3px 3px 0; }
+  .pack.vocab::before { background:var(--amber); } .pack.grammar::before { background:var(--iris); }
+  .pack.reading::before { background:var(--clay); }
+  .pack:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+  .pack:hover .go { color:var(--sakura-600); }
+  .pack-top { display:flex; align-items:center; gap:8px; }
+  .chip { padding:3px 8px; border-radius:5px; font-size:9.5px; font-weight:700; letter-spacing:.3px; }
+  .chip.vocab { background:var(--amber-soft); color:var(--amber); }
+  .chip.grammar { background:var(--iris-soft); color:var(--iris); }
+  .chip.reading { background:var(--clay-soft); color:var(--clay); }
+  .chip.jade { background:var(--jade-soft); color:var(--jade); }
+  .chip.ghost { background:var(--sakura-50); color:var(--text-light); font-weight:600; }
+  .pack-count { margin-left:auto; font-size:11px; color:var(--text-faint); font-variant-numeric:tabular-nums; }
+  .pack h3 { margin-top:12px; font-family:'Noto Serif SC','Songti SC',serif; font-size:19px; letter-spacing:.4px; }
+  .pack .sub { margin-top:5px; font-size:10.5px; color:var(--text-light); line-height:1.6; }
+  .pack .bar-row { display:flex; align-items:center; gap:10px; margin-top:15px; }
+  .track { flex:1; height:4px; border-radius:var(--pill); background:var(--sakura-50); overflow:hidden; }
+  .track span { display:block; height:100%; border-radius:var(--pill); }
+  .pct { font-size:9.5px; color:var(--text-faint); font-variant-numeric:tabular-nums; }
+  .pack-foot { display:flex; align-items:center; justify-content:space-between; margin-top:9px; font-size:10px; color:var(--text-light); }
+  .go { font-weight:700; color:var(--text); transition:color .18s; }
+  .go::after { content:' →'; color:var(--sakura-500); }
+  .ghost-link { margin-right:14px; font-weight:600; color:var(--text-faint); }
+  .ghost-link:hover { color:var(--sakura-600); }
+
+  .group {
+    grid-column:1 / -1; display:flex; gap:18px; align-items:center; padding:18px 20px;
+    border-radius:20px; border:1px solid var(--border); background:var(--card); box-shadow:var(--shadow-card);
+    cursor:pointer; position:relative; overflow:hidden;
+  }
+  .group::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--jade); }
+  .qr { width:76px; height:76px; flex-shrink:0; border-radius:12px; border:1px solid var(--border); background:#fff;
+    display:grid; place-items:center; overflow:hidden; }
+  .qr img { width:64px; height:64px; object-fit:contain; }
+  .group-main { flex:1; min-width:0; }
+  .group h3 { font-family:'Noto Serif SC','Songti SC',serif; font-size:20px; }
+  .group .sub { margin-top:6px; font-size:10.5px; color:var(--text-light); }
+  .group-stats { display:flex; gap:18px; margin-top:12px; font-size:10px; color:var(--text-faint); }
+  .group-stats b { color:var(--text); font-size:13px; margin-right:3px; }
+  .group-side { text-align:right; flex-shrink:0; }
+  .group-side .go { display:block; margin-top:10px; }
+
+  .dim { position:fixed; inset:0; background:rgba(49,36,44,.28); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .24s; z-index:40; }
+  .dim.on { opacity:1; pointer-events:auto; }
+  .drawer {
+    position:fixed; top:0; right:0; bottom:0; width:440px; max-width:92vw; background:#fff; z-index:50;
+    box-shadow:-18px 0 40px rgba(60,30,45,.16); transform:translateX(102%); transition:transform .3s cubic-bezier(.16,1,.3,1);
+    display:flex; flex-direction:column;
+  }
+  .drawer.on { transform:none; }
+  .drawer-head { padding:22px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:12px; }
+  .drawer-head h2 { font-family:'Noto Serif SC','Songti SC',serif; font-size:21px; letter-spacing:.5px; }
+  .drawer-head .k { margin-top:6px; font-size:10px; letter-spacing:1.5px; color:var(--text-faint); }
+  .close { margin-left:auto; width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:#fff; cursor:pointer; color:var(--text-light); font-size:15px; }
+  .drawer-body { flex:0 1 auto; overflow-y:auto; min-height:0; padding:18px 24px 10px; }
+  .field { margin-bottom:20px; }
+  .label { display:flex; align-items:center; justify-content:space-between; font-size:11px; letter-spacing:.8px; color:var(--text-faint); font-weight:700; margin-bottom:9px; }
+  .scope { display:flex; gap:8px; }
+  .scope button { flex:1; padding:11px 12px; border-radius:12px; border:1px solid var(--border); background:#fff; cursor:pointer; text-align:left; font-size:11.5px; color:var(--text-light); }
+  .scope button.on { border-color:var(--sakura-400); background:var(--sakura-50); color:var(--text); }
+  .scope b { display:block; font-size:13px; margin-bottom:2px; }
+
+  .wrow { display:grid; grid-template-columns:1fr auto 62px; align-items:center; gap:14px; padding:14px 0; border-bottom:1px dashed var(--border); }
+  .wname { display:flex; align-items:center; gap:9px; font-size:13px; font-weight:700; }
+  .wname .dot { width:8px; height:8px; border-radius:50%; }
+  .wload { font-size:10px; color:var(--text-faint); margin-top:3px; font-weight:500; }
+  .steps { display:flex; gap:5px; }
+  .step { width:26px; height:26px; border-radius:50%; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:10px; color:var(--text-faint); }
+  .step.on { border-color:currentColor; color:#fff; }
+  .wrow.vocab { color:var(--amber); } .wrow.grammar { color:var(--iris); } .wrow.reading { color:var(--clay); }
+  .wrow.vocab .step.on { background:var(--amber); } .wrow.grammar .step.on { background:var(--iris); }
+  .wrow.reading .step.on { background:var(--clay); }
+  .wpct { text-align:right; font-variant-numeric:tabular-nums; }
+  .wpct b { font-size:15px; color:var(--text); }
+  .wpct small { display:block; font-size:9.5px; color:var(--text-faint); }
+  .wrow.off { opacity:.42; }
+  .wrow.off .steps { pointer-events:none; }
+
+  .totals { display:flex; gap:8px; }
+  .total { flex:1; padding:10px 0; border-radius:11px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; color:var(--text-light); font-weight:700; }
+  .total.on { border-color:var(--sakura-400); background:var(--sakura-50); color:var(--sakura-600); }
+  .presets { display:flex; gap:8px; flex-wrap:wrap; }
+  .preset { padding:7px 13px; border-radius:var(--pill); border:1px solid var(--border); background:#fff; font-size:11px; color:var(--text-light); cursor:pointer; }
+  .preset:hover { border-color:var(--sakura-300); color:var(--sakura-600); }
+  .check { display:flex; align-items:center; gap:9px; font-size:12px; color:var(--text-light); }
+  .check input { width:16px; height:16px; accent-color:var(--sakura-500); }
+
+  .summary {
+    margin:8px 24px 0; padding:14px 16px; border-radius:14px;
+    background:linear-gradient(120deg, var(--sakura-50), #fff); border:1px solid var(--border);
+  }
+  .summary .s1 { font-size:10px; letter-spacing:1px; color:var(--text-faint); font-weight:700; }
+  .summary .s2 { margin-top:8px; font-size:13px; font-weight:700; }
+  .summary .s2 b { font-family:'Noto Serif SC','Songti SC',serif; font-size:22px; margin-right:4px; }
+  .summary .s3 { margin-top:6px; font-size:10.5px; color:var(--text-light); }
+  .drawer-foot { margin-top:auto; padding:16px 24px 22px; }
+  .start { width:100%; height:50px; border-radius:14px; border:0; background:var(--grad-sakura); color:#fff; font-size:14px; font-weight:800; letter-spacing:1px; cursor:pointer; box-shadow:var(--shadow); }
+  .start:disabled { background:#e9dfe3; color:#fff; box-shadow:none; cursor:not-allowed; }
+  .note { margin-top:10px; font-size:10px; color:var(--text-faint); text-align:center; }
+
+  @media (max-width: 720px) {
+    body { padding:18px 14px 60px; }
+    h1 { font-size:30px; } .hero-stats { display:none; }
+    .cards { grid-template-columns:1fr; }
+    .tab-mix { margin-left:0; width:100%; } .mix-btn { width:100%; justify-content:center; }
+    .drawer { top:auto; left:0; right:0; width:auto; height:88vh; border-radius:22px 22px 0 0; transform:translateY(102%); }
+    .drawer.on { transform:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="proto-bar">
+    <span class="k">原型 / N2</span>
+    <button class="proto-btn on" id="btnA">补充练习页</button>
+    <button class="proto-btn" id="btnB">随机配比面板</button>
+    <span class="proto-note">静态原型 · 仅确认层级与交互</span>
+  </div>
+
+  <div id="viewA">
+    <div class="crumb"><b>练习</b><span>›</span><b>补充练习</b><span>›</span><span>N2</span></div>
+    <header class="hero">
+      <div>
+        <div class="kicker">SUPPLEMENT / N2</div>
+        <h1 class="serif">补充练习</h1>
+        <p>外部题源 · 4 个能力域 · 75 题 + 1 个听力题组（32 题）</p>
+      </div>
+      <div class="hero-stats">
+        <div><b>75</b><span>题包题量</span></div>
+        <div><b>32</b><span>听力题数</span></div>
+        <div><b>38%</b><span>完成度</span></div>
+      </div>
+    </header>
+
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-filter="all" role="tab">全部 <span class="n">107</span></button>
+      <button class="tab vocab" data-filter="vocab" role="tab"><span class="dot vocab"></span>文字・語彙 <span class="n">32</span></button>
+      <button class="tab grammar" data-filter="grammar" role="tab"><span class="dot grammar"></span>文法 <span class="n">22</span></button>
+      <button class="tab reading" data-filter="reading" role="tab"><span class="dot reading"></span>読解 <span class="n">21</span></button>
+      <button class="tab listening" data-filter="listening" role="tab"><span class="dot listening"></span>聴解 <span class="n">1 组</span></button>
+      <button class="tab-mix"><span class="mix-btn" id="openMix">随机配比 <small id="mixChip">語彙2 · 文法2 · 読解1</small></span></button>
+    </div>
+
+    <section class="sec panel-view" data-domain="vocab">
+      <div class="sec-head">
+        <span class="sec-name" style="color:#bf8220"><span class="bar" style="background:var(--amber)"></span>文字・語彙</span>
+        <span class="sec-meta">32 题 · 完成 12（38%）· 错题 5</span>
+        <button class="sec-link" onclick="openMix()">随机练本域 →</button>
+      </div>
+      <div class="cards">
+        <div class="pack vocab">
+          <div class="pack-top">
+            <span class="chip vocab">全真模拟题1</span>
+            <span class="chip ghost">問題1〜6</span>
+            <span class="pack-count">32 题</span>
+          </div>
+          <h3>文字・語彙</h3>
+          <p class="sub">漢字読み / 表記 / 文脈規定 / 言い換え類義 / 類義表現 / 用法</p>
+          <div class="bar-row">
+            <div class="track"><span style="width:38%;background:var(--amber)"></span></div>
+            <span class="pct">38%</span>
+          </div>
+          <div class="pack-foot">
+            <span>正确率 71% · 错题 5 · 收藏 1</span>
+            <span><span class="ghost-link">错题重做</span><span class="go">顺序练习</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec panel-view" data-domain="grammar">
+      <div class="sec-head">
+        <span class="sec-name" style="color:#6755e6"><span class="bar" style="background:var(--iris)"></span>文法</span>
+        <span class="sec-meta">22 题 · 完成 0（0%）· 错题 0</span>
+        <button class="sec-link" onclick="openMix()">随机练本域 →</button>
+      </div>
+      <div class="cards">
+        <div class="pack grammar">
+          <div class="pack-top">
+            <span class="chip grammar">全真模拟题1</span>
+            <span class="chip ghost">問題7〜9</span>
+            <span class="pack-count">22 题</span>
+          </div>
+          <h3>文法</h3>
+          <p class="sub">文法形式 / 並べ替え / 文章の文法</p>
+          <div class="bar-row">
+            <div class="track"><span style="width:0%;background:var(--iris)"></span></div>
+            <span class="pct">0%</span>
+          </div>
+          <div class="pack-foot"><span>尚未开始</span><span class="go">顺序练习</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec panel-view" data-domain="reading">
+      <div class="sec-head">
+        <span class="sec-name" style="color:#c4702f"><span class="bar" style="background:var(--clay)"></span>読解</span>
+        <span class="sec-meta">21 题 · 完成 0（0%）· 共 7 篇文章</span>
+        <button class="sec-link" onclick="openMix()">随机练本域 →</button>
+      </div>
+      <div class="cards">
+        <div class="pack reading">
+          <div class="pack-top">
+            <span class="chip reading">全真模拟题1</span>
+            <span class="chip ghost">問題10〜14</span>
+            <span class="pack-count">21 题</span>
+          </div>
+          <h3>読解</h3>
+          <p class="sub">短文 / 中文 / 情報検索 / 長文 / 情報検索</p>
+          <div class="bar-row">
+            <div class="track"><span style="width:0%;background:var(--clay)"></span></div>
+            <span class="pct">0%</span>
+          </div>
+          <div class="pack-foot"><span>尚未开始</span><span class="go">顺序练习</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec panel-view" data-domain="listening">
+      <div class="sec-head">
+        <span class="sec-name" style="color:#2c9970"><span class="bar" style="background:var(--jade)"></span>聴解</span>
+        <span class="sec-meta">1 个题组 · 6 大問 · 32 题</span>
+        <button class="sec-link">题组说明 →</button>
+      </div>
+      <div class="cards">
+        <div class="group">
+          <div class="qr"><img src="../../src/assets/listening-mock/qr_mock1.png" alt="音频二维码" /></div>
+          <div class="group-main">
+            <div class="pack-top" style="margin-bottom:8px">
+              <span class="chip jade">全真模拟题1</span>
+              <span class="chip ghost">音频二维码</span>
+            </div>
+            <h3>全真模拟题1 聴解</h3>
+            <p class="sub">問題1〜5 · 书页17 二维码 · 官方答案 · 选项在录音中的题目按编号作答</p>
+            <div class="group-stats">
+              <span><b>6</b>大問</span>
+              <span><b>32</b>题</span>
+              <span><b>0</b>已答</span>
+            </div>
+          </div>
+          <div class="group-side">
+            <span class="chip jade">题组</span>
+            <span class="go">进入题组</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="dim" id="dim"></div>
+
+<aside class="drawer" id="drawer" aria-label="随机练习配比">
+  <div class="drawer-head">
+    <div>
+      <h2 class="serif">随机练习 · 配比</h2>
+      <div class="k">MIX / N2 · 按能力域分配题量</div>
+    </div>
+    <button class="close" id="closeMix">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="field">
+      <div class="label"><span>题目范围</span><span id="poolNote">801 题</span></div>
+      <div class="scope">
+        <button class="on" data-scope="bank"><b>红蓝宝书</b>801 题 · 主线</button>
+        <button data-scope="supp"><b>补充题库</b>75 题 · 独立统计</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label"><span>能力域与权重</span><span>0–4 档</span></div>
+
+      <div class="wrow vocab" data-w="vocab">
+        <div>
+          <div class="wname"><span class="dot" style="background:var(--amber)"></span>文字・語彙</div>
+          <div class="wload" data-load>可用 518 题 · 正确率 68%</div>
+        </div>
+        <div class="steps">
+          <button class="step" data-v="0">0</button>
+          <button class="step" data-v="1">1</button>
+          <button class="step on" data-v="2">2</button>
+          <button class="step" data-v="3">3</button>
+          <button class="step" data-v="4">4</button>
+        </div>
+        <div class="wpct"><b>40%</b><small>8 题</small></div>
+      </div>
+
+      <div class="wrow grammar" data-w="grammar">
+        <div>
+          <div class="wname"><span class="dot" style="background:var(--iris)"></span>文法</div>
+          <div class="wload" data-load>可用 263 题 · 正确率 61%</div>
+        </div>
+        <div class="steps">
+          <button class="step" data-v="0">0</button>
+          <button class="step" data-v="1">1</button>
+          <button class="step on" data-v="2">2</button>
+          <button class="step" data-v="3">3</button>
+          <button class="step" data-v="4">4</button>
+        </div>
+        <div class="wpct"><b>40%</b><small>8 题</small></div>
+      </div>
+
+      <div class="wrow reading" data-w="reading">
+        <div>
+          <div class="wname"><span class="dot" style="background:var(--clay)"></span>読解</div>
+          <div class="wload" data-load>可用 20 题 · 正确率 55%</div>
+        </div>
+        <div class="steps">
+          <button class="step" data-v="0">0</button>
+          <button class="step on" data-v="1">1</button>
+          <button class="step" data-v="2">2</button>
+          <button class="step" data-v="3">3</button>
+          <button class="step" data-v="4">4</button>
+        </div>
+        <div class="wpct"><b>20%</b><small>4 题</small></div>
+      </div>
+
+      <div class="wrow off" style="border-bottom:0">
+        <div>
+          <div class="wname" style="color:var(--jade)"><span class="dot" style="background:var(--jade)"></span>聴解</div>
+          <div class="wload">题组制 · 不参与混排随机</div>
+        </div>
+        <div class="steps"><span style="font-size:11px;color:var(--text-faint)">单独练 →</span></div>
+        <div class="wpct"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label"><span>本次题量</span><span id="totalNote">20 题</span></div>
+      <div class="totals">
+        <button class="total" data-total="10">10</button>
+        <button class="total on" data-total="20">20</button>
+        <button class="total" data-total="30">30</button>
+        <button class="total" data-total="0">全部</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label"><span>预设</span><span></span></div>
+      <div class="presets">
+        <button class="preset" data-preset="balance">均衡 2:2:2</button>
+        <button class="preset" data-preset="weak">弱项优先</button>
+        <button class="preset" data-preset="reading">只练阅读</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" checked /> 优先出未做过的题</label>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="s1">本次组卷</div>
+    <div class="s2"><b id="sumTotal">20</b>题 · <span id="sumCounts">語彙 8 / 文法 8 / 読解 4</span></div>
+    <div class="s3" id="sumNote">按 2 : 2 : 1 分配，読解题量不足时自动回补語彙</div>
+  </div>
+
+  <div class="drawer-foot">
+    <button class="start" id="startBtn">开始练习</button>
+    <div class="note">配比会记住；换范围不会串用</div>
+  </div>
+</aside>
+
+<script>
+const POOLS = {
+  bank: { vocab: 518, grammar: 263, reading: 20, note: '801 题' },
+  supp: { vocab: 32, grammar: 22, reading: 21, note: '75 题' },
+};
+const state = { scope: 'bank', weights: { vocab: 2, grammar: 2, reading: 1 }, total: 20 };
+
+const $ = (s, p = document) => p.querySelector(s);
+const $$ = (s, p = document) => [...p.querySelectorAll(s)];
+
+function paint() {
+  const pool = POOLS[state.scope];
+  $('#poolNote').textContent = pool.note;
+  $$('.scope button').forEach(b => b.classList.toggle('on', b.dataset.scope === state.scope));
+
+  const w = state.weights;
+  const sum = w.vocab + w.grammar + w.reading;
+  const total = state.total || Math.min(pool.vocab + pool.grammar + pool.reading, 801);
+
+  const items = ['vocab', 'grammar', 'reading'].map(k => {
+    const raw = sum ? total * w[k] / sum : 0;
+    return { k, raw: Math.floor(raw), frac: raw - Math.floor(raw) };
+  });
+  let left = total - items.reduce((s, x) => s + x.raw, 0);
+  items.sort((a, b) => b.frac - a.frac);
+  for (let i = 0; left > 0 && items.length; i++, left--) items[i % items.length].raw++;
+
+  const counts = {};
+  items.forEach(x => counts[x.k] = Math.min(x.raw, pool[x.k]));
+
+  $('#sumTotal').textContent = total;
+  $('#sumCounts').textContent = `語彙 ${counts.vocab} / 文法 ${counts.grammar} / 読解 ${counts.reading}`;
+
+  ['vocab', 'grammar', 'reading'].forEach((k, i) => {
+    const row = $(`.wrow[data-w="${k}"]`);
+    const pct = sum ? Math.round(w[k] / sum * 100) : 0;
+    $('.wpct b', row).textContent = pct + '%';
+    $('.wpct small', row).textContent = (counts[k] || 0) + ' 题';
+    row.classList.toggle('off', w[k] === 0);
+    $$('.step', row).forEach(s => s.classList.toggle('on', Number(s.dataset.v) === w[k]));
+    $('[data-load]', row).textContent =
+      `可用 ${pool[k]} 题` + (state.scope === 'bank' ? [' · 正确率 68%', ' · 正确率 61%', ' · 正确率 55%'][i] : '');
+  });
+
+  const enabled = Object.values(w).filter(x => x > 0).length;
+  $('#startBtn').disabled = enabled === 0;
+  $('#sumNote').textContent = enabled === 0
+    ? '至少选择一个能力域后才能开始'
+    : (sum ? `按 ${w.vocab} : ${w.grammar} : ${w.reading} 分配；某域题量不足时自动回补其他域` : '');
+  $('#mixChip').textContent = w.vocab === w.grammar && w.grammar === w.reading
+    ? `均衡 ${w.vocab}·${w.grammar}·${w.reading}`
+    : `語彙${w.vocab} · 文法${w.grammar} · 読解${w.reading}`;
+}
+
+$$('.scope button').forEach(b => b.onclick = () => { state.scope = b.dataset.scope; paint(); });
+$$('.step').forEach(s => s.onclick = () => {
+  const k = s.closest('.wrow').dataset.w;
+  state.weights[k] = Number(s.dataset.v);
+  paint();
+});
+$$('.total').forEach(b => b.onclick = () => {
+  state.total = Number(b.dataset.total);
+  $$('.total').forEach(x => x.classList.toggle('on', x === b));
+  $('#totalNote').textContent = state.total ? state.total + ' 题' : '全部';
+  paint();
+});
+$$('.preset').forEach(b => b.onclick = () => {
+  if (b.dataset.preset === 'balance') state.weights = { vocab: 2, grammar: 2, reading: 2 };
+  if (b.dataset.preset === 'weak') state.weights = { vocab: 1, grammar: 2, reading: 4 };
+  if (b.dataset.preset === 'reading') state.weights = { vocab: 0, grammar: 0, reading: 4 };
+  paint();
+});
+
+// 域切换（演示：仅过滤分区）
+$$('.tab[data-filter]').forEach(t => t.onclick = () => {
+  $$('.tab[data-filter]').forEach(x => x.classList.toggle('on', x === t));
+  const f = t.dataset.filter;
+  $$('#viewA .sec').forEach(sec => {
+    sec.style.display = (f === 'all' || sec.dataset.domain === f) ? '' : 'none';
+  });
+});
+
+// 抽屉
+const drawer = $('#drawer'), dim = $('#dim');
+function openMix() {
+  drawer.classList.add('on'); dim.classList.add('on');
+  $('#btnA').classList.remove('on'); $('#btnB').classList.add('on');
+}
+function closeMix() {
+  drawer.classList.remove('on'); dim.classList.remove('on');
+  $('#btnB').classList.remove('on'); $('#btnA').classList.add('on');
+}
+$('#openMix').onclick = openMix;
+$('#closeMix').onclick = closeMix;
+dim.onclick = closeMix;
+$('#btnA').onclick = closeMix;
+$('#btnB').onclick = openMix;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMix(); });
+
+paint();
+// 便于截图/评审：?mix=1 直接展开配比抽屉
+if (location.search.includes('mix=1')) openMix();
+</script>
+</body>
+</html>
+

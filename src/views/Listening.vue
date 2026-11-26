@@ -1,16 +1,16 @@
 <template>
-  <div class="container">
+  <div class="container journal-page">
     <!-- 头部 -->
     <div class="list-header">
       <div class="list-title">
         <img class="hero-cover" src="./covers/listening-green.svg" alt="绿宝书 · 听解" />
-        <h2>🎧 {{ level }} · 听解</h2>
+        <div class="list-title-copy">
+          <div class="journal-kicker">LISTENING / {{ level }}</div>
+          <h2>{{ level }} · 听解</h2>
+        </div>
       </div>
       <button class="btn btn-ghost btn-sm" @click="$router.push('/learn')">← 练习</button>
     </div>
-    <p class="list-desc">
-      绿宝书《新日本语能力考试{{ level }}听解（详解+练习）》单元训练。每单元含词汇、题目与补充知识，可扫码播放对应音频。
-    </p>
 
     <!-- 单元列表 -->
     <div class="unit-grid stagger">
@@ -56,13 +56,6 @@ function go(id) { router.push('/listening/' + id) }
 </script>
 
 <style scoped>
-/* 与读解列表页保持完全一致的页头说明 */
-.list-desc {
-  font-size: 13px;
-  color: var(--ink-2, #888);
-  margin: 0 0 16px;
-  line-height: 1.7;
-}
 .unit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

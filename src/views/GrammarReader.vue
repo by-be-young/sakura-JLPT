@@ -1,5 +1,5 @@
 <template>
-  <div class="reader-page">
+  <div class="reader-page journal-page">
     <!-- 顶部粘性玻璃工具条 -->
     <header class="reader-bar glass-bar" :class="{ 'is-stuck': scrolled }">
       <div class="rb-main">

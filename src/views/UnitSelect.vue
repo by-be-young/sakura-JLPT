@@ -1,9 +1,9 @@
 <template>
-  <div class="container unit-page">
+  <div class="container unit-page journal-page">
     <!-- 页头 -->
     <div class="page-head" v-reveal>
       <div class="page-head-main">
-        <div class="icon-tile" aria-hidden="true">📚</div>
+        <div class="icon-tile" aria-hidden="true">{{ level }}</div>
         <div class="page-head-text">
           <h1 class="page-title">{{ level }} 单元练习</h1>
           <p class="page-sub">共 {{ unitList.length }} 个单元 · {{ levelQuestionsList.length }} 题</p>
@@ -69,8 +69,8 @@
     <!-- 空状态 -->
     <div v-else class="unit-empty surface">
       <div class="unit-empty-emoji" aria-hidden="true">📚</div>
-      <p class="unit-empty-title">当前等级还没有单元内容</p>
-      <p class="unit-empty-desc">可以先按顺序练习或随机抽题，单元题库正在补充中。</p>
+      <p class="unit-empty-title">本级暂无单元内容</p>
+      <p class="unit-empty-desc">可先按顺序或随机练习。</p>
       <div class="unit-empty-actions">
         <button class="btn btn-primary btn-sm" @click="router.push({ name: 'quiz', params: { mode: 'sequential' } })">顺序练习</button>
         <button class="btn btn-secondary btn-sm" @click="router.push({ name: 'quiz', params: { mode: 'random' } })">随机抽题</button>
@@ -80,7 +80,7 @@
     <!-- 未划分单元的题目提示 -->
     <div v-if="unassignedCount > 0" class="unassigned-note">
       <span class="unassigned-icon" aria-hidden="true">↗</span>
-      <span>另有 {{ unassignedCount }} 题未划分单元，可通过「顺序答题」或「随机抽题」练习。</span>
+      <span>另有 {{ unassignedCount }} 题未划分单元。</span>
     </div>
   </div>
 </template>

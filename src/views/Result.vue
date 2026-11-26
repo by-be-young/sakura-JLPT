@@ -1,5 +1,5 @@
 <template>
-  <div class="container result-page">
+  <div class="container result-page journal-page">
     <!-- 成绩舞台：大号分数 + 正确率进度条 -->
     <section class="res-stage" v-reveal="'zoom'">
       <div class="res-halo" aria-hidden="true"></div>

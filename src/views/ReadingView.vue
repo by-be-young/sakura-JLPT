@@ -1,5 +1,5 @@
 <template>
-  <div v-if="reading" class="container article-mode rv-page">
+  <div v-if="reading" class="container article-mode rv-page journal-page">
     <!-- 顶部粘性玻璃工具条 -->
     <header class="rv-topbar glass-bar" :class="{ 'is-stuck': scrolled }">
       <button class="back-btn rv-back" @click="$router.push('/reading')" title="返回读解列表" aria-label="返回读解列表">
@@ -33,7 +33,7 @@
       <!-- 文章（内部滚动，单屏适配） -->
       <section ref="passageRef" class="passage-box surface" :class="{ 'has-overflow': articleOverflow }" v-reveal>
         <div class="passage-head">
-          <span class="icon-tile sm amber" aria-hidden="true">📖</span>
+          <span class="icon-tile sm amber seal" aria-hidden="true">读</span>
           <div class="passage-head-text">
             <div class="passage-title">文章</div>
             <div class="passage-hint">上下滑动阅读全文</div>
@@ -89,7 +89,7 @@
         <div class="tr-copy">
           <div class="tr-title">全文翻译与难句分析</div>
           <div class="tr-hint" :class="{ ok: allAnswered }">
-            {{ allAnswered ? '已解锁，点击查看译文与逐句拆解' : '答完本篇文章全部 ' + reading.questions.length + ' 题后解锁' }}
+            {{ allAnswered ? '已解锁' : '答完 ' + reading.questions.length + ' 题解锁' }}
           </div>
         </div>
         <button class="btn tr-btn" :class="{ locked: !allAnswered }" :disabled="!allAnswered" @click="showTr = true">
@@ -116,7 +116,7 @@
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title">
         <div class="modal-head">
           <div class="modal-head-main">
-            <span class="icon-tile sm iris" aria-hidden="true">📖</span>
+            <span class="icon-tile sm iris seal" aria-hidden="true">译</span>
             <div class="modal-head-text">
               <h3 id="tr-modal-title">全文翻译与难句分析</h3>
               <div class="modal-sub">読み物{{ reading.num }} · {{ reading.unitTitle }}</div>
@@ -136,7 +136,7 @@
               <p class="an-note"><span class="an-arrow" aria-hidden="true">→</span>{{ a.note }}</p>
             </div>
           </div>
-          <p v-if="!reading.translation && (!reading.analysis || !reading.analysis.length)" class="tr-empty">本篇暂无全文翻译与难句分析内容。</p>
+          <p v-if="!reading.translation && (!reading.analysis || !reading.analysis.length)" class="tr-empty">暂无译文与解析。</p>
         </div>
       </div>
     </div>

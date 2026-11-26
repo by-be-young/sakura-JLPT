@@ -1,11 +1,12 @@
 <template>
-  <div class="container words-page">
+  <div class="container words-page journal-page">
     <!-- 页头 -->
     <div class="word-hero">
       <div class="hero-lead">
         <img class="hero-cover" src="./covers/vocabulary-red.svg" alt="红宝书 · 文字词汇" />
-        <div>
-          <div class="hero-title">🌸 背词 · 红宝书</div>
+        <div class="hero-copy">
+          <div class="hero-kicker">VOCABULARY / 红宝书</div>
+          <div class="hero-title">背词</div>
           <div class="hero-sub">{{ level }} 级 · 每日新学 · 间隔复习</div>
         </div>
       </div>
@@ -23,17 +24,14 @@
       <div class="ws-card ws-due">
         <div class="ws-label">待复习</div>
         <div class="ws-num">{{ dueCount }}</div>
-        <div class="ws-desc">{{ dueCount ? '生疏优先 · 三档自评' : '暂无复习任务' }}</div>
       </div>
       <div class="ws-card ws-fam">
         <div class="ws-label">熟词</div>
         <div class="ws-num">{{ familiarCount }}</div>
-        <div class="ws-desc">已熟练掌握</div>
       </div>
       <div class="ws-card ws-mast">
         <div class="ws-label">已背完</div>
         <div class="ws-num">{{ masteredCount }}</div>
-        <div class="ws-desc">全部题型通过</div>
       </div>
     </div>
     <div class="ws-sub" v-if="pool.length">
@@ -47,7 +45,6 @@
       <span class="rt-icon">🔁</span>
       <div class="rt-body">
         <div class="rt-title">今日待复习 {{ dueCount }} 词</div>
-        <div class="rt-desc">生疏优先排序 · 记得/模糊/不记得三档自评</div>
       </div>
       <div class="rt-progress">
         <div class="rt-fill" :style="{ width: reviewProgress + '%' }"></div>
@@ -58,7 +55,6 @@
       <span class="rt-icon">✅</span>
       <div class="rt-body">
         <div class="rt-title">今日没有待复习单词</div>
-        <div class="rt-desc">去学新词，或明天再来巩固</div>
       </div>
     </div>
 
@@ -68,7 +64,6 @@
         <span class="row-icon ic-new">📖</span>
         <div class="row-body">
           <div class="row-title">新学单词 <span v-if="unseenCount" class="row-badge">{{ unseenCount }} 未学</span></div>
-          <div class="row-desc">每次抽取 10 个新词，卡片学习后进入测验</div>
         </div>
         <span class="row-arrow">›</span>
       </div>
@@ -76,7 +71,6 @@
         <span class="row-icon ic-rv">🔁</span>
         <div class="row-body">
           <div class="row-title">复习单词 <span v-if="dueCount" class="row-badge">{{ dueCount }}</span></div>
-          <div class="row-desc">生疏优先 · 三档自评 · 错误词自动回队</div>
         </div>
         <span class="row-arrow">›</span>
       </div>
@@ -84,7 +78,6 @@
         <span class="row-icon ic-note">📝</span>
         <div class="row-body">
           <div class="row-title">我的笔记 <span v-if="noteCount" class="row-badge">{{ noteCount }}</span></div>
-          <div class="row-desc">查看 / 编辑为单词添加的笔记</div>
         </div>
         <span class="row-arrow">›</span>
       </div>
@@ -102,7 +95,7 @@
         <h3>📝 我的笔记</h3>
         <button class="btn btn-ghost btn-sm" @click="showNotes = false">关闭</button>
       </div>
-      <div v-if="noteWords.length === 0" class="notes-empty">还没有笔记，在测验或学习时可为单词添加笔记</div>
+      <div v-if="noteWords.length === 0" class="notes-empty">暂无笔记</div>
       <div v-for="w in noteWords" :key="w.id" class="note-item">
         <div class="note-word">
           <span class="note-kanji">{{ w.kanji || w.kana }}</span>
@@ -231,7 +224,6 @@ function confirmClearNotes() {
 [data-theme="dark"] .ws-bar { background: rgba(255, 255, 255, 0.1); }
 .ws-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #e8b86d, #d99a3d); }
 .ws-pct { font-size: 11px; color: #d99a3d; font-weight: 700; margin-top: 4px; }
-.ws-desc { font-size: 11px; color: var(--text-light); margin-top: 4px; line-height: 1.4; }
 .ws-sub {
   display: flex;
   gap: 16px;
@@ -269,7 +261,6 @@ function confirmClearNotes() {
 .rt-body { flex: 1; min-width: 0; }
 .rt-title { font-size: 15px; font-weight: 800; color: var(--sakura-600); }
 .review-task.done .rt-title { color: var(--green); }
-.rt-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; }
 .rt-progress {
   width: 90px;
   height: 6px;

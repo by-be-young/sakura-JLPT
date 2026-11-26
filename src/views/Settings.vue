@@ -1,7 +1,10 @@
 <template>
-  <div class="container settings-page">
-    <div class="list-header">
-      <h2>⚙️ 设置</h2>
+  <div class="container settings-page journal-page">
+    <div class="list-header settings-head">
+      <div>
+        <div class="journal-kicker">SETTINGS / PREFERENCES</div>
+        <h1>设置</h1>
+      </div>
     </div>
 
     <!-- 外观 -->
@@ -12,7 +15,6 @@
           <span class="set-icon">🎨</span>
           <div class="set-body">
             <div class="set-title">主题模式</div>
-            <div class="set-desc">深色模式适合夜间学习</div>
           </div>
           <div class="set-right">
             <div class="segmented">
@@ -44,7 +46,7 @@
           <span class="set-icon">🌸</span>
           <div class="set-body">
             <div class="set-title">每日背词目标</div>
-            <div class="set-desc">同步到背词模块的每日计划</div>
+            <div class="set-desc">同步至背词计划</div>
           </div>
           <div class="set-right">
             <input class="settings-num" type="number" min="1" max="500" :value="daily.state.settings.wordTarget"
@@ -70,7 +72,7 @@
           <span class="set-icon">📌</span>
           <div class="set-body">
             <div class="set-title">单词卡小组件</div>
-            <div class="set-desc">按当前难度 {{ level }} 出词（待复习优先，其次未学词），点击直达复习 · 本机 {{ widgetBrand }}</div>
+            <div class="set-desc">按当前难度 {{ level }} 出词 · 本机 {{ widgetBrand }}</div>
           </div>
           <div class="set-right">
             <button class="set-toggle" :class="{ on: widgetEnabled }" @click="toggleWidget"
@@ -91,7 +93,7 @@
           <span class="set-icon">↻</span>
           <div class="set-body">
             <div class="set-title">桌面直接换词</div>
-            <div class="set-desc">组件右上角「↻」点一下换下一个词，不用打开应用；多天未打开时页脚标注同步时间，仍可换词</div>
+            <div class="set-desc">右上角「↻」直接换词，无需打开应用</div>
           </div>
         </div>
         <div class="settings-row">

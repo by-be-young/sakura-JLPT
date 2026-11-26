@@ -1,0 +1,410 @@
+/* ==========================================================================
+   学习手帐 · 共享视觉层
+   仅作用于带 .journal-page 的页面；首页 / 练习中心保留自己的完整视觉。
+   目标：把二级页统一成米白纸面、衬线标题、细线分区与轻量卡片。
+   ========================================================================== */
+
+.journal-page {
+  --jp-hairline: color-mix(in srgb, var(--text) 11%, transparent);
+  --jp-paper: var(--card-grad);
+}
+
+/* ---------- 通用页头 ---------- */
+.journal-page .list-header {
+  align-items: flex-end;
+  gap: 16px;
+  padding: 4px 2px 15px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.journal-page .list-title { align-items: center; gap: 12px; min-width: 0; }
+.journal-page .list-title h1,
+.journal-page .list-title h2 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(25px, 4vw, 36px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.015em;
+  color: var(--text);
+  margin: 0;
+}
+.journal-page .list-desc {
+  max-width: 760px;
+  margin: -4px 0 18px;
+  padding-left: 12px;
+  border-left: 2px solid var(--sakura-200);
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--text-light);
+}
+
+.journal-kicker {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sakura-600);
+}
+.journal-page .hero-kicker {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sakura-600);
+  margin-bottom: 5px;
+}
+.list-title-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hero-copy { min-width: 0; }
+.journal-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 2px 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.journal-page-head h1 {
+  margin: 6px 0 0;
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: 0.015em;
+  color: var(--text);
+}
+.journal-page-head p {
+  max-width: 420px;
+  margin: 0 0 3px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--text-light);
+  text-align: right;
+}
+
+/* ---------- 背词 / 文法页头 ---------- */
+.journal-page .word-hero,
+.journal-page .study-hero {
+  align-items: flex-end;
+  gap: 16px;
+  padding: 22px 2px 18px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line);
+}
+.journal-page .word-hero .hero-lead,
+.journal-page .study-hero .hero-lead { align-items: center; gap: 14px; min-width: 0; }
+.journal-page .hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.journal-page .hero-sub { margin-top: 6px; font-size: 12px; letter-spacing: 0.02em; color: var(--text-light); }
+.journal-page .hero-badge {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--sakura-300);
+  border-radius: 50%;
+  background: transparent !important;
+  color: var(--sakura-600);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: none !important;
+}
+
+/* ---------- 背词统计卡 ---------- */
+.journal-page .ws-grid { gap: 10px; }
+.journal-page .ws-card {
+  position: relative;
+  padding: 16px 15px 15px 18px;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+.journal-page .ws-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--sakura-400);
+}
+.journal-page .ws-grid > .ws-card:nth-child(2)::before { background: var(--green); }
+.journal-page .ws-grid > .ws-card:nth-child(3)::before { background: var(--iris); }
+.journal-page .ws-grid > .ws-card:nth-child(4)::before { background: var(--amber); }
+.journal-page .ws-num { font-family: 'Noto Serif SC', serif; font-size: 25px; font-weight: 700; }
+.journal-page .ws-bar { background: var(--sakura-100) !important; }
+.journal-page .ws-fill { background: var(--grad-sakura) !important; }
+
+/* ---------- 复习任务 ---------- */
+.journal-page .review-task {
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid var(--green) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: none !important;
+}
+.journal-page .review-task.done { border-left-color: var(--border-strong) !important; }
+.journal-page .rt-title { font-family: 'Noto Serif SC', serif; font-weight: 700; }
+
+/* ---------- 文法总览 ---------- */
+.journal-page .grammar-overview {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.journal-page .go-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--sakura-300);
+  border-radius: 6px;
+  background: transparent !important;
+  color: var(--sakura-600);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  box-shadow: none;
+}
+.journal-page .go-name { font-family: 'Noto Serif SC', serif; font-size: clamp(24px, 4vw, 32px); font-weight: 700; }
+.journal-page .go-pct { font-family: 'Noto Serif SC', serif; font-weight: 700; }
+
+/* ---------- 功能卡 / 笔记 ---------- */
+.journal-page .func-card {
+  border-width: 1px !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: none;
+}
+.journal-page .func-card:hover:not(.disabled) {
+  border-color: var(--sakura-300) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.journal-page .func-icon { font-size: 26px; }
+.journal-page .notes-panel {
+  border-width: 1px !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+}
+.journal-page .notes-header h3 { font-family: 'Noto Serif SC', serif; }
+
+/* ---------- 个人页 ---------- */
+.journal-page .profile-card {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.journal-page .profile-card::after { opacity: 0.45; }
+.journal-page .profile-name { font-family: 'Noto Serif SC', serif; }
+.journal-page .panel-card {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.journal-page .panel-title { font-family: 'Noto Serif SC', serif; }
+.journal-page .seg-tabs { border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.journal-page .seg-tab { border-radius: 0; background: transparent; }
+.journal-page .seg-tab.active {
+  background: transparent !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+  border-bottom: 2px solid var(--sakura-500);
+}
+
+/* ---------- 设置页 ---------- */
+.journal-page.settings-page { counter-reset: jp-sec; }
+.journal-page .settings-group { counter-increment: jp-sec; }
+.journal-page .settings-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-bottom: 9px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.journal-page .settings-group-title::before {
+  content: '0' counter(jp-sec);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--sakura-600);
+}
+.journal-page .settings-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card-grad);
+  box-shadow: none;
+}
+.journal-page .settings-row + .settings-row { border-top: 1px dashed var(--line); }
+
+/* ---------- 单元 / 阅读卡 ---------- */
+.journal-page .unit-card,
+.journal-page .reading-card {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .journal-page .unit-card:hover,
+  .journal-page .reading-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--sakura-300) !important;
+    box-shadow: var(--card-float) !important;
+  }
+}
+.journal-page .unit-title,
+.journal-page .unit-name { font-family: 'Noto Serif SC', serif; }
+
+/* ---------- 真题 ---------- */
+.journal-page .exam-head {
+  align-items: flex-end;
+  gap: 14px;
+  padding-bottom: 15px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.journal-page .exam-head h1 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.02em;
+}
+.journal-page .exam-head .head-note { margin-left: 6px; padding-bottom: 3px; }
+.journal-page .exam-head .back-slot { margin-left: auto; padding-bottom: 2px; }
+.journal-page .pack-card {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--card-grad) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.journal-page .pack-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 52px;
+  border-radius: 5px;
+  background: transparent !important;
+  border: 1px solid var(--border-strong);
+  box-shadow: none !important;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--sakura-600) !important;
+}
+.journal-page .pack-name { font-family: 'Noto Serif SC', serif; font-weight: 700; }
+
+/* ---------- 深层页标题 ---------- */
+.journal-page .page-title {
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 0.015em;
+}
+.journal-page .icon-tile.seal {
+  background: transparent !important;
+  border: 1px solid rgba(214, 122, 145, 0.42);
+  border-radius: 4px;
+  box-shadow: none;
+  color: var(--sakura-700);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.journal-page .icon-tile.seal.sm { font-size: 13px; }
+.journal-page .surface-title { font-family: 'Noto Serif SC', serif; }
+
+/* ==========================================================================
+   移动端统一修正
+   ========================================================================== */
+@media (max-width: 760px) {
+  .journal-page .list-header { align-items: flex-start; gap: 10px; padding-bottom: 12px; }
+  .journal-page .list-title h1,
+  .journal-page .list-title h2 { font-size: clamp(24px, 7vw, 30px); }
+  .journal-page .list-desc { margin-top: -2px; font-size: 12px; line-height: 1.7; }
+  .journal-page-head { flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 2px 14px; }
+  .journal-page-head h1 { font-size: clamp(28px, 8vw, 36px); }
+  .journal-page-head p { text-align: left; max-width: none; }
+  .journal-page .word-hero,
+  .journal-page .study-hero { align-items: flex-start; padding: 18px 2px 14px; }
+  .journal-page .hero-title { font-size: clamp(28px, 8vw, 36px); }
+  .journal-page .hero-badge { width: 38px; height: 38px; font-size: 12px; }
+  .journal-page .hero-cover { width: 40px; }
+  .journal-page .ws-grid { grid-template-columns: 1fr 1fr !important; gap: 9px; }
+  .journal-page .ws-card { padding: 13px 12px 12px 15px; }
+  .journal-page .ws-num { font-size: 22px; }
+  .journal-page .grammar-overview {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px;
+    padding: 18px 16px !important;
+  }
+  .journal-page .grammar-overview .go-left { flex: 1; min-width: 0; }
+  .journal-page .grammar-overview .go-right { align-self: center !important; flex-shrink: 0; }
+  .journal-page .go-name { font-size: 22px; margin: 8px 0 6px; }
+  .journal-page .go-meta { gap: 8px; font-size: 11px; }
+  .journal-page .go-tags { margin-top: 8px; }
+  .journal-page .go-ring { width: 80px; height: 80px; }
+  .journal-page .go-ring svg { width: 80px; height: 80px; }
+  .journal-page .go-pct { font-size: 19px; }
+  .journal-page .exam-head { flex-wrap: wrap; align-items: flex-start; }
+  .journal-page .exam-head h1 { font-size: clamp(28px, 8vw, 36px); width: 100%; }
+  .journal-page .exam-head .head-note { margin-left: 0; }
+  .journal-page .exam-head .back-slot { margin-left: auto; }
+  .journal-page .pack-card { padding: 16px !important; }
+  .journal-page .settings-row {
+    display: grid !important;
+    grid-template-columns: 26px minmax(0, 1fr);
+    column-gap: 10px;
+    row-gap: 8px;
+    align-items: start;
+    padding: 14px 15px;
+  }
+  .journal-page .settings-row .set-icon { grid-column: 1; grid-row: 1; align-self: center; }
+  .journal-page .settings-row .set-body { grid-column: 2; grid-row: 1; min-width: 0; }
+  .journal-page .settings-row .set-right {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    padding-left: 0;
+    justify-content: flex-start;
+  }
+  .journal-page .settings-row .set-right .segmented {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .journal-page .settings-row .set-right .segmented button { padding: 7px 2px; }
+  .journal-page .page-head { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .journal-page .page-actions { width: auto; margin-left: auto; }
+}
+
+@media (max-width: 420px) {
+  .journal-page .ws-grid { gap: 8px; }
+  .journal-page .ws-label { font-size: 11px; }
+}

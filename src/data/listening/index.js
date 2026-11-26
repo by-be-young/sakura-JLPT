@@ -29,7 +29,7 @@ export function unitSummary(u) {
   const wordCount = u.words.groups.reduce((s, g) => s + g.list.length, 0)
   let qCount = 0
   for (const sec of u.questions.sections) {
-    if (sec.items) qCount += sec.items.length
+    if (sec.items) qCount += sec.items.reduce((s, it) => s + (it.questions ? it.questions.length : 1), 0)
     else if (sec.convs) qCount += sec.convs.reduce((s, c) => s + c.answers.length, 0)
     else if (sec.parts) qCount += sec.parts.reduce((s, p) => s + p.items.length, 0)
   }

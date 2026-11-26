@@ -1,10 +1,10 @@
 <template>
-  <div class="container words-page">
+  <div class="container words-page journal-page">
     <!-- 顶部导航 -->
     <header class="page-head">
       <div class="page-head-main">
         <button class="back-btn" @click="$router.push('/words')" title="返回背词" aria-label="返回背词">← 返回</button>
-        <span class="icon-tile study-tile" aria-hidden="true">{{ phase === 'learn' ? '📖' : '✍️' }}</span>
+        <span class="icon-tile study-tile seal" aria-hidden="true">{{ phase === 'learn' ? '学' : '测' }}</span>
         <div class="page-head-text">
           <h2 class="page-title">{{ phase === 'learn' ? '新学单词' : '学习测验' }}</h2>
           <p class="page-sub">
@@ -49,7 +49,7 @@
       <div v-if="learnIndex === learnWords.length - 1" class="learn-done empty-card">
         <div class="empty-emoji" aria-hidden="true">🎉</div>
         <div class="empty-title">本组学习完成！</div>
-        <p class="empty-desc">可以开始测验，检验这一组的掌握情况。</p>
+        <p class="empty-desc">可以开始测验。</p>
         <button class="btn btn-primary" @click="startLearnQuiz">开始本组测验</button>
       </div>
     </template>
@@ -129,7 +129,7 @@
 
       <div v-else class="quiz-result empty-card">
         <div class="empty-emoji" aria-hidden="true">{{ quizRate >= 80 ? '🎉' : quizRate >= 60 ? '🌸' : '🌱' }}</div>
-        <div class="result-title">{{ quizRate >= 80 ? '这一组掌握得不错！' : quizRate >= 60 ? '再巩固一下会更好' : '别急，多过几遍就熟了' }}</div>
+        <div class="result-title">{{ quizRate >= 80 ? '掌握得不错！' : quizRate >= 60 ? '再巩固一下' : '多过几遍' }}</div>
         <div class="result-score">答对 {{ quizCorrect }} / {{ quizQuestions.length }}</div>
         <div class="result-rate">{{ quizRate }}<small>%</small></div>
         <div class="result-actions">

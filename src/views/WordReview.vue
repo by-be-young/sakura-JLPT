@@ -1,10 +1,10 @@
 <template>
-  <div class="container words-page">
+  <div class="container words-page journal-page">
     <!-- 顶部导航 -->
     <header class="page-head">
       <div class="page-head-main">
         <button class="back-btn" @click="$router.push('/words')" title="返回背词" aria-label="返回背词">← 返回</button>
-        <span class="icon-tile review-tile" aria-hidden="true">🔁</span>
+        <span class="icon-tile review-tile seal" aria-hidden="true">复</span>
         <div class="page-head-text">
           <h2 class="page-title">复习</h2>
           <p class="page-sub">三档自评 · 记得 / 模糊 / 不记得<span class="kbd-hint"> · 快捷键 1 / 2 / 3</span></p>
@@ -45,7 +45,6 @@
             <span class="pitch-label">音调</span>{{ pitchStr }}
           </span>
         </div>
-        <div class="eval-hint">你想起来了吗？先在心中回想释义，再选择熟悉程度。</div>
         <div class="eval-actions">
           <button class="eval-btn btn-remember" title="记得 (1)" aria-label="记得，快捷键 1" @click="selfEval('remember')">
             <span class="eval-emoji" aria-hidden="true">😄</span>
@@ -133,7 +132,7 @@
         <div class="empty-emoji" aria-hidden="true">🌸</div>
         <div class="result-score">复习完成！</div>
         <div class="result-rate">本批共 {{ totalCount }} 个</div>
-        <p class="empty-desc">这一批单词已经过了一遍，记得常回来复习。</p>
+        <p class="empty-desc">本批已过完，记得回来复习。</p>
         <div class="result-actions">
           <button class="btn btn-ghost" @click="$router.push('/words')">返回背词</button>
           <button class="btn btn-primary" @click="restartReview">再来一轮</button>
@@ -507,13 +506,6 @@ function restartReview() {
   font-weight: 700;
   color: var(--sakura-600);
   opacity: 0.85;
-}
-.eval-hint {
-  max-width: 400px;
-  margin: 18px auto 24px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text-light);
 }
 
 /* 三档自评 / 判定按钮 */

@@ -11,7 +11,6 @@
         </div>
 
         <h1 class="day-greet">{{ greet() }}</h1>
-        <p class="day-sub">把今天的一小步，留给明天的自己。</p>
 
         <div class="streak-pill" :class="{ quiet: !daily.streak.value }">
           <span class="streak-mark" aria-hidden="true"></span>
@@ -155,7 +154,6 @@
           <div class="series-copy">
             <div class="series-eyebrow">JLPT 备考系列</div>
             <h3>《红蓝宝书》</h3>
-            <p>题库练习与模拟测试同属《红蓝宝书》系列，文字・語彙・文法一并覆盖。</p>
           </div>
           <div class="series-facts">
             <div><b>{{ quizStats.total || '—' }}</b><span>题库题量</span></div>
@@ -172,7 +170,6 @@
             <div class="series-card-main">
               <div class="series-card-copy">
                 <h4>题库练习</h4>
-                <p>顺序 · 随机 · 单元三种方式，按自己的节奏逐题推进。</p>
               </div>
               <div class="series-num">{{ quizStats.total || '—' }}<small>题</small></div>
             </div>
@@ -195,7 +192,6 @@
             <div class="series-card-main">
               <div class="series-card-copy">
                 <h4>模拟测试</h4>
-                <p>按回次完整作答，用一套卷子检验真实水平。</p>
               </div>
               <div class="series-num">{{ mockStats.count || '—' }}<small>套</small></div>
             </div>
@@ -229,7 +225,6 @@
         <router-link to="/exam" class="extra-card exam" v-reveal="{ delay: 40 }">
           <div class="extra-top"><span class="extra-label">真题</span><span class="extra-arrow">↗</span></div>
           <h3>整卷真题</h3>
-          <p>{{ level }} · 按套练习</p>
           <div class="extra-num">{{ examCount }}<small>题</small></div>
         </router-link>
 
@@ -237,14 +232,12 @@
           @click="readingAvailable ? null : $event.preventDefault()" v-reveal="{ delay: 100 }">
           <div class="extra-top"><span class="extra-label">读解</span><span class="extra-arrow">↗</span></div>
           <h3>阅读训练</h3>
-          <p>{{ readingAvailable ? '橙宝书 · 文章与解析' : '本级读解内容待补充' }}</p>
           <div class="extra-num">{{ readingAvailable ? readingCount : '—' }}<small>篇</small></div>
         </router-link>
 
         <router-link to="/listening" class="extra-card listening" v-reveal="{ delay: 160 }">
           <div class="extra-top"><span class="extra-label">听解</span><span class="extra-arrow">↗</span></div>
           <h3>听力单元</h3>
-          <p>绿宝书 · 单元与音频</p>
           <div class="extra-num">{{ listeningCount }}<small>单元</small></div>
         </router-link>
 
@@ -252,7 +245,6 @@
           @click="supStats.total ? null : $event.preventDefault()" v-reveal="{ delay: 220 }">
           <div class="extra-top"><span class="extra-label">补充</span><span class="extra-arrow">↗</span></div>
           <h3>补充题库</h3>
-          <p>非红蓝宝书 · 独立统计</p>
           <div class="extra-num">{{ supStats.total || '—' }}<small>题</small></div>
         </router-link>
       </div>
@@ -475,12 +467,6 @@ function greet() {
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text);
-}
-.day-sub {
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--text-light);
-  letter-spacing: 0.4px;
 }
 .streak-pill {
   display: inline-flex;
@@ -800,7 +786,6 @@ function greet() {
   color: var(--text);
   line-height: 1.25;
 }
-.series-copy p { margin-top: 6px; font-size: 11.5px; line-height: 1.65; color: var(--text-light); max-width: 520px; }
 .series-facts { display: flex; gap: 24px; flex-shrink: 0; padding-left: 10px; }
 .series-facts div { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .series-facts b { font-family: 'Noto Serif SC', serif; font-size: 22px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -834,7 +819,6 @@ function greet() {
 .series-card-main { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-top: 16px; }
 .series-card-copy { min-width: 0; }
 .series-card-copy h4 { font-family: 'Noto Serif SC', serif; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
-.series-card-copy p { margin-top: 7px; font-size: 11.5px; line-height: 1.65; color: var(--text-light); max-width: 250px; }
 .series-num {
   font-family: 'Noto Serif SC', serif;
   font-size: 36px;
@@ -919,7 +903,6 @@ function greet() {
   letter-spacing: 0.5px;
   color: var(--text);
 }
-.extra-card p { margin-top: 4px; font-size: 10.5px; color: var(--text-light); line-height: 1.5; }
 .extra-num {
   margin-top: auto;
   padding-top: 14px;
@@ -962,7 +945,6 @@ function greet() {
   .goal-ring { grid-column: 1; grid-row: 1; justify-self: center; align-self: center; }
   .day-meters { grid-column: 1; grid-row: 2; gap: 12px; }
   .week { grid-column: 1; grid-row: 3; }
-  .day-sub { display: none; }
   .streak-pill { margin-top: 18px; }
   .block-head { gap: 10px; }
   .block-copy p { display: none; }
@@ -970,7 +952,6 @@ function greet() {
   .extra-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .extra-card { min-height: 136px; padding: 15px 14px 14px; }
   .extra-card h3 { font-size: 16px; }
-  .extra-card p { font-size: 9.5px; }
   .series-head { flex-wrap: wrap; }
   .series-copy { flex-basis: calc(100% - 90px); }
   .series-card-main { align-items: flex-start; }

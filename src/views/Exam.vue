@@ -1,14 +1,21 @@
 <template>
-  <div class="container exam-page">
-    <div class="exam-head">
-      <button class="btn btn-ghost btn-sm" @click="$router.back()">← 返回</button>
-      <h1>真题专区</h1>
-      <span class="head-note">{{ level }} 真题 · 整卷随练</span>
-    </div>
+  <div class="container exam-page journal-page">
+    <header class="exam-head">
+      <div class="exam-head-copy">
+        <div class="journal-kicker">PAST PAPERS / {{ level }}</div>
+        <div class="exam-title-row">
+          <h1>真题专区</h1>
+          <span class="head-note">{{ level }} 真题 · 整卷随练</span>
+        </div>
+      </div>
+      <span class="back-slot">
+        <button class="btn btn-ghost btn-sm" @click="$router.back()">← 返回</button>
+      </span>
+    </header>
 
     <div class="pack-card" v-for="p in packs" :key="p.packId">
       <div class="pack-top">
-        <span class="pack-icon">📕</span>
+        <span class="pack-icon">真题</span>
         <div class="pack-id">
           <div class="pack-name">
             {{ p.level }} 真题
@@ -18,10 +25,6 @@
           <div class="pack-summary">{{ p.session }} 场次 · 共 {{ p.count }} 题</div>
         </div>
       </div>
-
-      <p class="pack-desc">
-        覆盖文字 / 語彙 / 文法 / 読解，按原卷顺序逐题练习。
-      </p>
 
       <div class="pack-installed">
         <div class="pi-actions">
@@ -34,7 +37,7 @@
     </div>
 
     <div v-if="!packs.length" class="pack-empty">
-      当前难度（{{ level }}）暂无真题，可通过顶部难度选择切换到 N1 / N2 / N3 / N4 / N5。
+      当前难度（{{ level }}）暂无真题，可切换顶部难度。
     </div>
   </div>
 </template>
@@ -64,13 +67,26 @@ function startPractice(p) {
 .exam-page { max-width: 860px; }
 .exam-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 14px;
+  padding-bottom: 14px;
   margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
 }
-.exam-head h1 { font-size: 22px; font-weight: 800; color: var(--text); margin: 0; }
-.head-note { font-size: 12px; color: var(--text-faint); margin-left: auto; }
+.exam-head-copy { min-width: 0; }
+.exam-title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.exam-head h1 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  margin: 0;
+}
+.head-note { font-size: 12px; color: var(--text-faint); }
+.back-slot { margin-left: auto; padding-bottom: 2px; }
 
 .pack-card {
   border-radius: var(--radius-xl);
@@ -90,11 +106,14 @@ function startPractice(p) {
 
 .pack-top { display: flex; align-items: center; gap: 14px; }
 .pack-icon {
-  width: 52px; height: 52px;
-  border-radius: 16px;
+  width: 46px; height: 52px;
+  border-radius: 5px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
-  background: rgba(255, 255, 255, 0.8);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--sakura-600);
+  background: transparent;
+  border: 1px solid var(--border-strong);
   box-shadow: 0 6px 16px rgba(244, 92, 142, 0.18);
   flex-shrink: 0;
 }
@@ -110,7 +129,6 @@ function startPractice(p) {
 [data-theme="dark"] .ver-badge { background: rgba(255, 255, 255, 0.1); }
 .pack-summary { font-size: 12px; color: var(--text-light); margin-top: 3px; }
 
-.pack-desc { font-size: 12.5px; color: var(--text-light); margin: 12px 0 0; line-height: 1.7; }
 
 .pack-installed { margin-top: 14px; }
 .pi-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

@@ -1,5 +1,5 @@
 <template>
-  <div class="container" :class="{ 'article-mode': !!currentArticle }">
+  <div class="container journal-page" :class="{ 'article-mode': !!currentArticle }">
     <div v-if="questionList.length === 0" class="empty-state">
       <div class="emoji">🌸</div>
       <p>没有可练习的题目</p>
@@ -32,9 +32,15 @@
       <div v-if="mode === 'random'" class="random-settings">
         <label class="toggle-label">
           <input type="checkbox" v-model="fullyRandom" @change="saveRandomSetting" />
-          <span>完全随机（默认优先抽取未做过的题）</span>
+          <span>完全随机</span>
         </label>
         <button class="btn btn-ghost btn-sm" @click="reshuffleRandom">🔄 重新洗牌</button>
+      </div>
+
+      <!-- 听解：整包共用一张音频二维码 -->
+      <div v-if="currentQuestion.audioQr" class="audio-bar">
+        <img class="audio-bar-qr" :src="currentQuestion.audioQr" alt="听力音频二维码" />
+        <span class="audio-bar-label">🎧 扫码播放音频</span>
       </div>
 
       <!-- 完形填空/读解：整篇文章展示（同组题切换时文章保持） -->
@@ -158,8 +164,9 @@ let flashTimer = null
 const shuffleCache = new Map()
 
 function shuffleQuestion(q) {
-  const indices = [0, 1, 2, 3]
-  for (let i = indices.length - 1; i > 0; i--) {
+  const len = Array.isArray(q.options) ? q.options.length : 4
+  const indices = Array.from({ length: len }, (_, i) => i)
+  for (let i = len - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     const tmp = indices[i]
     indices[i] = indices[j]
@@ -350,6 +357,7 @@ watch(() => [mode.value, mockId.value, unitId.value, level.value, source.value, 
 // 点击选项即自动提交
 function handleSelect(num) {
   if (showResult.value) return
+  if (num > (currentQuestion.value.options?.length || 0)) return
   // 刚结束一次滑动切题时，忽略随之而来的误触点击
   if (Date.now() - lastSwipeAt < 350) return
   selected.value = num
@@ -625,6 +633,39 @@ function goBack() {
 .type-文法 {
   background: #f3e8fd;
   color: #7a5ca5;
+}
+.type-読解 {
+  background: #fdf0e2;
+  color: #b4762e;
+}
+.type-听解 {
+  background: #e6f5ec;
+  color: #2f8f6b;
+}
+/* 听解音频二维码 */
+.audio-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 18px 10px 10px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.audio-bar-qr {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+}
+.audio-bar-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light);
 }
 /* 完形填空/读解文章面板 */
 .passage-box {

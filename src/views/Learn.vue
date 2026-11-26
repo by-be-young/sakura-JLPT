@@ -4,7 +4,7 @@
     <div v-if="!hasQuiz && !readingAvailable" class="empty-state">
       <div class="empty-kicker">LIBRARY / {{ level }}</div>
       <h1>{{ currentTitle }} · 题库准备中</h1>
-      <p>当前难度的题库正在整理。可以先去背词或学习文法，等题库上线后再回来。</p>
+      <p>题库整理中，可先去背词或学文法。</p>
       <div class="empty-actions">
         <router-link to="/words" class="empty-btn primary">去背词</router-link>
         <router-link to="/study" class="empty-btn">去学文法</router-link>
@@ -17,7 +17,6 @@
         <div class="hero-copy">
           <div class="hero-kicker"><span></span>PRACTICE / {{ level }}</div>
           <h1>练习</h1>
-          <p>{{ currentTitle }} · 红蓝宝书主线，配合专项能力训练</p>
         </div>
         <div class="hero-side">
           <span class="level-stamp">{{ level }}</span>
@@ -36,7 +35,6 @@
           <div class="series-copy">
             <div class="series-kicker">JLPT 备考系列</div>
             <h2>《红蓝宝书》</h2>
-            <p>题库练习与模拟测试同属《红蓝宝书》合集，文字・語彙・文法一并覆盖。</p>
           </div>
           <div class="series-facts">
             <div><b>{{ quizStats.total || '—' }}</b><span>题库题量</span></div>
@@ -53,7 +51,6 @@
             <div class="card-title-row">
               <div>
                 <h3>题库练习</h3>
-                <p>顺序 · 随机 · 单元三种方式，逐题巩固。</p>
               </div>
               <div class="card-number">{{ quizStats.total || '—' }}<small>题</small></div>
             </div>
@@ -77,7 +74,6 @@
             <div class="card-title-row">
               <div>
                 <h3>模拟测试</h3>
-                <p>按回次完整作答，检验真实水平。</p>
               </div>
               <div class="card-number">{{ mockStats.count || '—' }}<small>套</small></div>
             </div>
@@ -99,14 +95,12 @@
       <section class="special-block" v-reveal="{ delay: 100 }">
         <header class="special-head">
           <div><span class="special-index">02</span><h2>专项训练</h2></div>
-          <p>题库之外的单项能力</p>
         </header>
 
         <div class="special-grid">
           <router-link to="/exam" class="special-card exam">
             <div class="special-top"><span class="special-label">真题</span><span class="special-arrow">↗</span></div>
             <h3>整卷真题</h3>
-            <p>{{ examPackStats.desc }}</p>
             <div class="special-foot">
               <span class="special-num">{{ examPackStats.numText }}<small>{{ examPackStats.numUnit }}</small></span>
               <span v-if="examPackStats.tag" class="special-chip">{{ examPackStats.tag }}</span>
@@ -117,7 +111,6 @@
             @click="readingAvailable && router.push('/reading')">
             <div class="special-top"><span class="special-label">读解</span><span class="special-arrow">↗</span></div>
             <h3>阅读训练</h3>
-            <p>{{ readingAvailable ? '橙宝书 · 文章阅读与答题解析' : '本级读解内容待补充' }}</p>
             <div class="special-foot">
               <span class="special-num">{{ readingAvailable ? readingCount : '—' }}<small>篇</small></span>
               <span class="special-chip">{{ readingAvailable ? 'N1 / N2 已收录' : '待补充' }}</span>
@@ -127,7 +120,6 @@
           <router-link to="/listening" class="special-card listening">
             <div class="special-top"><span class="special-label">听解</span><span class="special-arrow">↗</span></div>
             <h3>听力单元</h3>
-            <p>绿宝书 · 词汇、题目与补充知识</p>
             <div class="special-foot">
               <span class="special-num">{{ listeningCount }}<small>单元</small></span>
               <span class="special-chip">自由练习</span>
@@ -138,7 +130,6 @@
             @click="supStats.total && router.push('/supplement')">
             <div class="special-top"><span class="special-label">补充</span><span class="special-arrow">↗</span></div>
             <h3>补充题库</h3>
-            <p>非红蓝宝书 · 独立统计</p>
             <div class="special-foot">
               <span class="special-num">{{ supStats.total || '—' }}<small>题</small></span>
               <span class="special-chip">{{ supStats.total ? '已答 ' + supStats.done + ' 题' : '优先收录 N3' }}</span>
@@ -165,7 +156,6 @@
             <span class="mode-index">01</span>
             <div class="mode-copy">
               <div class="mode-top"><h3>顺序答题</h3><span class="mode-tag">从指定题号开始</span></div>
-              <p>按题目编号从头梳理，题号会标记答题状态，适合系统复习。</p>
             </div>
             <span class="mode-arrow">→</span>
           </div>
@@ -174,7 +164,6 @@
             <span class="mode-index">02</span>
             <div class="mode-copy">
               <div class="mode-top"><h3>随机抽题</h3><span class="mode-tag">优先未做过的题</span></div>
-              <p>默认避开已完成题目，也可以切换为完全随机，检验真实水平。</p>
             </div>
             <span class="mode-arrow">→</span>
           </div>
@@ -183,7 +172,6 @@
             <span class="mode-index">03</span>
             <div class="mode-copy">
               <div class="mode-top"><h3>单元练习</h3><span class="mode-tag">按教材单元</span></div>
-              <p>按单元逐题练习，不限时，适合针对薄弱环节集中巩固。</p>
             </div>
             <span class="mode-arrow">→</span>
           </div>
@@ -200,7 +188,6 @@
             <div class="side-bar-head"><span>完成度</span><em>{{ quizStats.pct }}%</em></div>
             <div class="side-track"><span :style="{ width: quizStats.pct + '%' }"></span></div>
           </div>
-          <p class="side-note">题库练习取自《红蓝宝书》合集，与模拟测试同源。</p>
         </aside>
       </div>
     </template>
@@ -223,7 +210,6 @@
         </div>
         <div class="summary-item"><b>{{ mockStats.done }}</b><span>已完成</span></div>
         <div class="summary-item"><b>{{ mockStats.avg === null ? '—' : mockStats.avg }}</b><span>平均分</span></div>
-        <p>每一回都是一套完整试卷。作答后自动记录成绩，可反复重做。</p>
       </div>
 
       <div class="ticket-grid" v-reveal="{ delay: 80 }">
@@ -418,7 +404,6 @@ function pad(n) {
   line-height: 1.1;
   color: var(--text);
 }
-.hero-copy p { margin-top: 9px; font-size: 12px; letter-spacing: 0.4px; color: var(--text-light); }
 .hero-side { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
 .level-stamp {
   width: 58px;
@@ -493,7 +478,6 @@ function pad(n) {
   letter-spacing: 0.5px;
   color: var(--text);
 }
-.series-copy p { margin-top: 5px; font-size: 11.5px; line-height: 1.65; color: var(--text-light); max-width: 520px; }
 .series-facts { display: flex; gap: 22px; flex-shrink: 0; }
 .series-facts div { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .series-facts b { font-family: 'Noto Serif SC', serif; font-size: 22px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -523,7 +507,6 @@ function pad(n) {
 .card-index { font-family: 'Noto Serif SC', serif; font-size: 10px; letter-spacing: 1px; color: var(--text-faint); }
 .card-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-top: 16px; }
 .card-title-row h3 { font-family: 'Noto Serif SC', serif; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
-.card-title-row p { margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--text-light); max-width: 240px; }
 .card-number {
   flex-shrink: 0;
   font-family: 'Noto Serif SC', serif;
@@ -558,7 +541,6 @@ function pad(n) {
 .special-head > div { display: flex; align-items: baseline; gap: 12px; }
 .special-index { font-family: 'Noto Serif SC', serif; font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--sakura-400); }
 .special-head h2 { font-family: 'Noto Serif SC', serif; font-size: 23px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
-.special-head p { font-size: 10.5px; letter-spacing: 0.5px; color: var(--text-faint); }
 
 .special-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .special-card {
@@ -599,7 +581,6 @@ function pad(n) {
 .special-label { font-size: 9.5px; letter-spacing: 2px; font-weight: 700; color: var(--accent); }
 .special-arrow { font-size: 13px; color: var(--text-faint); transition: transform var(--dur-2); }
 .special-card h3 { margin-top: 12px; font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
-.special-card p { margin-top: 4px; font-size: 10.5px; line-height: 1.55; color: var(--text-light); }
 .special-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 14px; }
 .special-num { font-family: 'Noto Serif SC', serif; font-size: 22px; line-height: 1; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
 .special-num small { margin-left: 3px; font-size: 9px; font-weight: 600; color: var(--text-faint); }
@@ -718,7 +699,6 @@ function pad(n) {
   letter-spacing: 0.4px;
   white-space: nowrap;
 }
-.mode-copy p { margin-top: 6px; font-size: 11.5px; line-height: 1.65; color: var(--text-light); }
 .mode-arrow { flex-shrink: 0; font-size: 18px; color: var(--text-faint); transition: all var(--dur-2); }
 
 .bank-side {
@@ -744,7 +724,6 @@ function pad(n) {
 .side-bar-head em { font-style: normal; font-variant-numeric: tabular-nums; }
 .side-track { height: 4px; border-radius: 999px; background: rgba(224, 62, 116, 0.1); overflow: hidden; }
 .side-track span { display: block; height: 100%; border-radius: 999px; background: var(--grad-sakura); transition: width var(--dur-5) var(--ease-out-expo); }
-.side-note { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 10px; line-height: 1.7; color: var(--text-faint); }
 
 /* ==================== 模拟卷 ==================== */
 .mock-summary {
@@ -765,7 +744,6 @@ function pad(n) {
 .summary-item { display: flex; flex-direction: column; gap: 3px; }
 .summary-item b { font-family: 'Noto Serif SC', serif; font-size: 20px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
 .summary-item span { font-size: 9px; letter-spacing: 0.8px; color: var(--text-faint); }
-.mock-summary p { margin-left: auto; max-width: 260px; font-size: 10px; line-height: 1.65; color: var(--text-faint); text-align: right; }
 
 .ticket-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
 .ticket {
@@ -834,7 +812,6 @@ function pad(n) {
   .bank-side { position: static; }
   .mock-summary { flex-wrap: wrap; gap: 20px; }
   .summary-main { padding-right: 18px; }
-  .mock-summary p { flex-basis: 100%; max-width: none; text-align: left; margin-left: 0; }
 }
 @media (max-width: 620px) {
   .series-head { align-items: flex-start; padding: 22px 20px 18px; gap: 16px; }
@@ -852,20 +829,17 @@ function pad(n) {
   .learn-hero { padding-bottom: 20px; }
   .hero-side { display: none; }
   .hero-copy h1 { font-size: 30px; }
-  .hero-copy p { font-size: 11px; }
   .series-head { flex-wrap: wrap; }
   .series-copy { flex-basis: calc(100% - 86px); }
   .special-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .special-card { min-height: 132px; padding: 14px 13px 13px; }
   .special-card h3 { font-size: 16px; margin-top: 9px; }
-  .special-card p { font-size: 9.5px; }
   .special-foot { padding-top: 10px; }
   .special-num { font-size: 19px; }
   .special-chip { display: none; }
   .mode-card { padding: 20px 16px; gap: 13px; }
   .mode-index { width: 30px; height: 30px; }
   .mode-top h3 { font-size: 17px; }
-  .mode-copy p { font-size: 10.5px; }
   .mock-summary { gap: 16px; }
 }
 @media (max-width: 360px) {

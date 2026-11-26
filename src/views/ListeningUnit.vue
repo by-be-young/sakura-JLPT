@@ -1,7 +1,7 @@
 <template>
   <!-- 单根节点：路由页被 <Transition> 包裹，多根会破坏 out-in 过渡（历史事故） -->
   <div class="unit-root">
-  <div class="container unit-page" v-if="unit">
+  <div class="container unit-page journal-page" v-if="unit">
     <!-- ==================== 页头 ==================== -->
     <header class="page-head unit-head" v-reveal>
       <div class="page-head-main">
@@ -21,8 +21,8 @@
         </div>
       </div>
       <div v-if="unit.questionsRange || unit.knowledgeTitle" class="page-actions unit-meta">
-        <span v-if="unit.questionsRange" class="chip-pill accent">🎧 {{ unit.questionsRange }}</span>
-        <span v-if="unit.knowledgeTitle" class="chip-pill iris" :title="unit.knowledgeTitle">💡 {{ unit.knowledgeTitle }}</span>
+        <span v-if="unit.questionsRange" class="chip-pill accent">听解 · {{ unit.questionsRange }}</span>
+        <span v-if="unit.knowledgeTitle" class="chip-pill iris" :title="unit.knowledgeTitle">知识 · {{ unit.knowledgeTitle }}</span>
       </div>
     </header>
 
@@ -31,7 +31,6 @@
       <button v-for="t in tabs" :key="t.key" :id="'utab-' + t.key" type="button" class="unit-tab"
         :class="{ active: tab === t.key }" role="tab" :aria-selected="tab === t.key"
         @click="tab = t.key">
-        <span class="ut-emoji" aria-hidden="true">{{ t.emoji }}</span>
         <span class="ut-label">{{ t.label }}</span>
       </button>
     </div>
@@ -64,7 +63,6 @@
           <span class="audio-pos">第 {{ audioCard.current }} / {{ audioCard.total }} 组</span>
           <span v-if="audioCard.currentCode" class="audio-code">当前 {{ audioCard.currentCode }}</span>
         </div>
-        <p class="audio-hint">{{ audioCard.hint }}</p>
       </div>
 
       <div class="audio-play-wrap">
@@ -87,7 +85,7 @@
           <div class="block-card flip-card surface" :key="'w' + wordsIndex">
             <div class="group-head">
               <h3 class="surface-title">{{ /重要短语/.test(curWords.title) ? '表現のまとめ' : '語彙のまとめ' + curWords.group }}（{{ curWords.title }}）</h3>
-              <span v-if="curWords.audio" class="audio-tag">🎧 {{ curWords.audio }}</span>
+              <span v-if="curWords.audio" class="audio-tag">音频 {{ curWords.audio }}</span>
             </div>
             <div class="word-table">
               <div v-for="(item, i) in curWords.list" :key="i" class="word-row">
@@ -122,7 +120,7 @@
           <div class="block-card flip-card surface" :key="'q' + qIndex">
             <div class="group-head">
               <h3 class="surface-title">{{ curSec.section }}. {{ curSec.title }}</h3>
-              <span v-if="curSec.audio" class="audio-tag">🎧 {{ curSec.audio }}</span>
+              <span v-if="curSec.audio" class="audio-tag">音频 {{ curSec.audio }}</span>
             </div>
 
         <!-- 例题（kana 题型） -->
@@ -137,10 +135,13 @@
         <div v-for="item in curSec.items" :key="item.n" class="q-item">
           <div class="q-head">
             <div class="q-no">{{ item.n }}</div>
-            <span v-if="item.audio" class="q-audio">🎧 {{ item.audio }}</span>
+            <span v-if="item.audio" class="q-audio">音频 {{ item.audio }}</span>
           </div>
           <div class="q-body">
             <div v-if="item.text" class="q-text" v-html="jp(item.text, item.textFuri)"></div>
+            <div v-if="item.img" class="q-figure">
+              <img :src="item.img" :alt="'第' + item.n + '番 选项图'" loading="lazy" />
+            </div>
 
             <!-- 双问（質問1/質問2，統合理解） -->
             <template v-if="item.questions && item.questions.length">
@@ -162,13 +163,13 @@
               </div>
               <div v-if="picked(item, 0) && picked(item, 1)" class="q-detail">
                 <div v-if="item.vocab && item.vocab.length" class="q-vocab">
-                  <span class="q-script-label">📖 词汇</span>
+                  <span class="q-script-label">词汇</span>
                   <span v-for="(v, vi) in item.vocab" :key="vi" class="q-vocab-item">
                     <b v-html="jp(v.w, v.wFuri)"></b>：{{ v.m }}
                   </span>
                 </div>
                 <div v-if="item.analysis && item.analysis.length" class="q-analysis">
-                  <span class="q-script-label">💡 精讲</span>
+                  <span class="q-script-label">精讲</span>
                   <div v-for="(p, ai) in item.analysis" :key="ai" class="q-analysis-p" v-html="jp(p.t, p.tFuri)"></div>
                 </div>
                 <div v-if="item.script" class="q-script">
@@ -193,13 +194,13 @@
                 {{ picked(item).correct ? '✓ 回答正确' : '✗ 正确答案 ' + item.answer }}
               </div>
               <div v-if="item.vocab && item.vocab.length" class="q-vocab">
-                <span class="q-script-label">📖 词汇</span>
+                <span class="q-script-label">词汇</span>
                 <span v-for="(v, vi) in item.vocab" :key="vi" class="q-vocab-item">
                   <b v-html="jp(v.w, v.wFuri)"></b>：{{ v.m }}
                 </span>
               </div>
               <div v-if="item.analysis && item.analysis.length" class="q-analysis">
-                <span class="q-script-label">💡 精讲</span>
+                <span class="q-script-label">精讲</span>
                 <div v-for="(p, ai) in item.analysis" :key="ai" class="q-analysis-p" v-html="jp(p.t, p.tFuri)"></div>
               </div>
               <div v-if="item.script" class="q-script">
@@ -320,7 +321,7 @@
       class="unit-panel">
       <div class="block-card k-intro-card surface">
         <div class="k-intro-head">
-          <span class="icon-tile amber sm" aria-hidden="true">💡</span>
+          <span class="icon-tile amber sm seal" aria-hidden="true">知</span>
           <h3 class="k-title">{{ unit.knowledge.title }}</h3>
         </div>
         <p class="k-intro">{{ unit.knowledge.intro }}</p>
@@ -331,7 +332,7 @@
           <div class="block-card flip-card surface" :key="'k' + knowIndex">
             <div class="group-head">
               <h3 class="surface-title">{{ curPart.heading }}</h3>
-              <span v-if="curPart.audio" class="audio-tag">🎧 {{ curPart.audio }}</span>
+              <span v-if="curPart.audio" class="audio-tag">音频 {{ curPart.audio }}</span>
             </div>
             <p v-if="curPart.intro" class="k-part-intro">{{ curPart.intro }}</p>
             <!-- 表现卡片（kind=card）：句型+说明+中日例文 -->
@@ -412,7 +413,6 @@
               <button ref="qrCloseRef" class="modal-close" type="button" title="关闭" aria-label="关闭"
                 @click="closeQr">✕</button>
             </div>
-            <p class="qr-modal-hint">用手机扫描对应二维码播放；也可点击卡片上的二维码放大。</p>
             <div class="qr-grid">
               <div v-for="t in (audioCard ? audioCard.tracks : [])" :key="t.key" class="qr-grid-item"
                 :class="{ current: t.current }" :aria-current="t.current ? 'true' : undefined">
@@ -434,8 +434,8 @@
     </Teleport>
   </div>
   <div v-else class="container empty-tip">
-    <div class="icon-tile iris empty-ico" aria-hidden="true">🎧</div>
-    <p>当前等级（{{ level }}）暂无此单元，请从听解列表进入。</p>
+    <div class="icon-tile iris empty-ico seal" aria-hidden="true">听</div>
+    <p>本级暂无此单元。</p>
     <button class="btn btn-primary" type="button" @click="$router.push('/listening')">返回听解列表</button>
   </div>
   </div>
@@ -466,10 +466,11 @@ const questionsQrPage = computed(() => (unit.value?.questions?.sections[qIndex.v
 const knowQrPage = computed(() => (unit.value?.knowledge?.qrPages && unit.value.knowledge.qrPages[0]) || 0)
 const tab = ref(unit.value?.words?.groups?.length ? 'words' : 'questions')
 const tabs = computed(() => [
-  { key: 'words', label: '词汇', emoji: '📖' },
-  { key: 'questions', label: '题目', emoji: '📝' },
-  { key: 'knowledge', label: '补充知识', emoji: '💡' },
-].filter(t => t.key !== 'words' || (unit.value?.words?.groups?.length)))
+  { key: 'words', label: '词汇' },
+  { key: 'questions', label: '题目' },
+  { key: 'knowledge', label: '补充知识' },
+].filter(t => (t.key !== 'words' || unit.value?.words?.groups?.length)
+  && (t.key !== 'knowledge' || unit.value?.knowledge?.parts?.length)))
 
 // ===== 左右翻页卡片（参考「文法」板块分页翻书） =====
 const wordsIndex = ref(0)
@@ -717,7 +718,6 @@ const audioCard = computed(() => {
       current: Math.min(wordsIndex.value + 1, groups.length),
       total: groups.length,
       currentCode: cur?.audio || '',
-      hint: '扫码后按编号选择对应音频组，先听原声再跟读。',
       page: wordsQrPage.value,
       img: qrImg(wordsQrPage.value),
       tracks,
@@ -744,7 +744,6 @@ const audioCard = computed(() => {
       current: Math.min(qIndex.value + 1, sections.length),
       total: sections.length,
       currentCode: cur?.audio || '',
-      hint: '先扫码听录音，再作答；点击选项或「查看答案」核对。',
       page: questionsQrPage.value,
       img: qrImg(questionsQrPage.value),
       tracks,
@@ -772,7 +771,6 @@ const audioCard = computed(() => {
     current: Math.min(knowIndex.value + 1, Math.max(parts.length, 1)),
     total: Math.max(parts.length, 1),
     currentCode: cur?.audio || k.audio,
-    hint: '对照下方对比表逐组听辨，注意长短音与清浊音。',
     page: knowQrPage.value,
     img: qrImg(knowQrPage.value),
     tracks,
@@ -926,14 +924,6 @@ function optClass(item, key, qi) {
   box-shadow: 0 6px 18px -8px var(--sakura-600);
 }
 .unit-tab:active { transform: scale(0.98); }
-.ut-emoji {
-  font-size: 16px;
-  line-height: 1;
-  filter: grayscale(0.2);
-  transition: transform var(--dur-3) var(--ease-spring), filter var(--dur-2);
-}
-.unit-tab:hover .ut-emoji { filter: none; }
-.unit-tab.active .ut-emoji { filter: none; transform: translateY(-1px) scale(1.08); }
 .ut-label { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ===== 音频接入卡 ===== */
@@ -1094,7 +1084,6 @@ function optClass(item, key, qi) {
 .audio-pos { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
 .audio-code { color: var(--text-faint); }
 .audio-code::before { content: '·'; margin-right: 6px; color: var(--text-faint); }
-.audio-hint { margin-top: 5px; font-size: 11.5px; line-height: 1.55; color: var(--text-light); overflow-wrap: anywhere; }
 .audio-play-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
 .audio-play {
   position: relative;
@@ -1128,7 +1117,6 @@ function optClass(item, key, qi) {
 .qr-modal { width: min(560px, 100%); }
 .qr-modal .modal-close { width: 40px; height: 40px; }
 .qr-modal-sub { margin-top: 3px; font-size: 12px; color: var(--text-light); }
-.qr-modal-hint { margin-bottom: 14px; font-size: 12.5px; line-height: 1.7; color: var(--text-light); }
 .qr-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .qr-grid-item {
   padding: 9px;
@@ -1435,6 +1423,16 @@ function optClass(item, key, qi) {
   overflow-wrap: anywhere;
 }
 .q-text :deep(ruby) { ruby-position: over; }
+
+/* 题干配图（如图片选项题） */
+.q-figure { margin: 0 0 12px; }
+.q-figure img {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--radius-sm, 10px);
+  border: 1px solid var(--border);
+  background: #fff;
+}
 
 .q-options { display: flex; flex-direction: column; gap: 8px; }
 .q-subq { margin-top: 14px; }
@@ -1818,12 +1816,10 @@ function optClass(item, key, qi) {
   .unit-theme { margin-top: 3px; font-size: 12px; line-height: 1.5; }
   .unit-tabs { margin-bottom: 14px; }
   .unit-tab { padding: 9px 5px; gap: 5px; font-size: 13px; }
-  .ut-emoji { font-size: 15px; }
   .audio-card { grid-template-columns: 88px minmax(0, 1fr) auto; gap: 12px; padding: 13px; }
   .audio-qr { width: 88px; height: 88px; padding: 5px; }
   .audio-title { font-size: 14.5px; }
   .audio-range { font-size: 10px; padding: 2px 7px; }
-  .audio-hint { font-size: 11px; }
   .audio-play { width: 50px; height: 50px; }
   .play-tri { font-size: 15px; }
   .block-card { padding: 16px; }
@@ -1844,7 +1840,6 @@ function optClass(item, key, qi) {
   .page-btn { padding: 8px 12px; font-size: 12.5px; }
   .page-hint { display: none; }
   .qr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .qr-modal-hint { font-size: 12px; }
 }
 
 @media (max-width: 380px) {

@@ -11,7 +11,7 @@
               <strong class="upd-title">发现新版本 v{{ state.latest }}</strong>
             </div>
           </div>
-          <p class="upd-desc">当前版本 <b>v{{ state.current || '未知' }}</b> · 更新后体验最新功能</p>
+          <p class="upd-desc">当前版本 <b>v{{ state.current || '未知' }}</b></p>
           <div class="upd-actions">
             <button class="btn btn-primary btn-sm" @click="update">立即更新</button>
             <button class="btn btn-ghost btn-sm" @click="dismiss">稍后</button>
@@ -46,7 +46,7 @@
               <strong class="upd-title">更新 v{{ state.latest }} 已下载</strong>
             </div>
           </div>
-          <p class="upd-desc">重启后即可使用新版本，学习进度不会丢失。</p>
+          <p class="upd-desc">重启后生效，学习进度不受影响。</p>
           <div class="upd-actions">
             <button class="btn btn-primary btn-sm" @click="installNow">立即重启安装</button>
             <button class="btn btn-ghost btn-sm" @click="dismiss">稍后</button>

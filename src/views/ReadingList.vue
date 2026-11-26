@@ -1,20 +1,20 @@
 <template>
-  <div class="container">
+  <div class="container journal-page">
     <div class="list-header">
       <div class="list-title">
         <img class="hero-cover" src="./covers/reading-orange.svg" alt="橙宝书 · 读解" />
-        <h2>📖 {{ level }} · 读解</h2>
+        <div class="list-title-copy">
+          <div class="journal-kicker">READING / {{ level }}</div>
+          <h2>{{ level }} · 读解</h2>
+        </div>
       </div>
       <button class="btn btn-ghost btn-sm" @click="$router.push('/learn')">← 练习</button>
     </div>
-    <p class="list-desc">
-      橙宝书《新日本语能力考试{{ level }}读解》阅读训练。答完本篇文章全部题目后，可解锁查看全文翻译与难句分析。
-    </p>
 
     <div v-if="groups.length === 0" class="placeholder-card">
       <div class="emoji">📖</div>
       <h3>读解题库待补充</h3>
-      <p>当前等级的读解文章正在分批录入中，敬请期待。</p>
+      <p>本级读解文章整理中。</p>
     </div>
 
     <div v-for="g in groups" :key="g.key" class="unit-group">
@@ -79,12 +79,6 @@ function statusClass(r) {
 </script>
 
 <style scoped>
-.list-desc {
-  font-size: 13px;
-  color: var(--ink-2, #888);
-  margin: 0 0 16px;
-  line-height: 1.7;
-}
 .unit-group {
   margin-bottom: 18px;
 }

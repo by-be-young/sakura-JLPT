@@ -2,6 +2,8 @@
   <div class="question-card">
     <div class="question-sentence" v-html="displaySentence"></div>
 
+    <img v-if="question.img" class="question-img" :src="question.img" alt="题目配图" />
+
     <div class="options-list" role="group" aria-label="选项">
       <button v-for="(opt, idx) in question.options" :key="idx" type="button"
         class="option-item"
@@ -91,6 +93,14 @@ function optionClass(idx) {
 
 <style scoped>
 .question-card { min-width: 0; }
+
+.question-img {
+  display: block;
+  max-width: 100%;
+  max-height: 380px;
+  margin: -6px auto 16px;
+  object-fit: contain;
+}
 
 /* ---------- 题干 ---------- */
 .question-sentence {

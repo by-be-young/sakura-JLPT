@@ -5,7 +5,7 @@
       <div class="eb-card">
         <div class="eb-emoji">🫧</div>
         <div class="eb-title">这个页面出了点小问题</div>
-        <div class="eb-desc">其他功能不受影响，可以重新加载或先回首页继续学习。</div>
+        <div class="eb-desc">可重新加载，或先回首页。</div>
         <div class="eb-detail" v-if="detail">{{ detail }}</div>
         <div class="eb-actions">
           <button class="btn btn-primary btn-sm" @click="reload">重新加载</button>
